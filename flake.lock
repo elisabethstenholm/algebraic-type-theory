@@ -96,16 +96,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1782422138,
-        "narHash": "sha256-BB1oUF2dxKyHd18pRDjQ3FJud7i5MF7SmmyBTd7gHZI=",
-        "ref": "main",
-        "rev": "3cc385f5d8251d891830ad13fbf654429ffaa1e8",
-        "revCount": 99,
+        "lastModified": 1782769833,
+        "narHash": "sha256-0/2H3cK2EzTkxMgWwjdHlA8zMHBGTcsNXybvIgjCjjQ=",
+        "ref": "elli",
+        "rev": "b05291f9834a31937c7a7f2d9b634df2b9be775c",
+        "revCount": 100,
         "type": "git",
         "url": "ssh://git@git.app.uib.no/Hakon.Gylterud/unilib.git"
       },
       "original": {
-        "ref": "main",
+        "ref": "elli",
         "type": "git",
         "url": "ssh://git@git.app.uib.no/Hakon.Gylterud/unilib.git"
       }
