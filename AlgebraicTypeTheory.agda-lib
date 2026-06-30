@@ -1,0 +1,4 @@
+name: AlgebraicTypeTheory
+depend: UniLib
+include: src
+flags: --no-import-sorts --without-K --guardedness
