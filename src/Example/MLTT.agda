@@ -86,4 +86,4 @@ instance
 
 MLTTDSV : DependentSortVocabulary
 DependentSortVocabulary.sort MLTTDSV = MLTTSort
-DependentSortVocabulary.wellfounded MLTTDSV = Wellfounded.atLevel ★
+DependentSortVocabulary.wellfoundedness MLTTDSV = Wellfounded.atLevel ★

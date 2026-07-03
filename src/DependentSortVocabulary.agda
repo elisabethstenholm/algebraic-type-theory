@@ -1,6 +1,6 @@
 module DependentSortVocabulary where
 
-open import Foundation.Primitive
+open import Foundation.Base
 import Foundation.Structure.Wild.Semicategory as Semicategory
 open Semicategory using (Semicategory)
 import Foundation.Structure.Wellfounded as Wellfounded
@@ -13,4 +13,6 @@ record DependentSortVocabulary
   constructor dependentSortVocabulary
   field
     sort : Semicategory o a
-    wellfounded : Wellfounded.Bounded (λ x y → Semicategory.Hom sort y x)
+    wellfoundedness : Wellfounded.Bounded (flip (Semicategory.Hom sort))
+
+open DependentSortVocabulary public

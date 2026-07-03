@@ -1,5 +1,6 @@
 module Example.Category where
 
+open import Foundation.Axioms
 open import Foundation.Base
 import Foundation.Structure.Wild.Semicategory as Semicategory
 open Semicategory using (Semicategory; asSemicategory)
@@ -10,8 +11,13 @@ import Foundation.Structure.Wellfounded as Wellfounded
 open Wellfounded using (Wellfounded)
 import Foundation.Structure.Accessible as Accessible
 open Accessible using (Accessible)
+open import Foundation.Structure.Wild.SemiYoneda
+open import Foundation.Structure.Appliable
+open import Foundation.Structure.Wild.Semifunctor
 
 open import DependentSortVocabulary
+open import Sequent
+open Sequent.Sequent
 
 -- The dependent sort vocabulary for categories is the semicategory given by
 --
@@ -83,4 +89,118 @@ instance
 
 CategoryDSV : DependentSortVocabulary
 DependentSortVocabulary.sort CategoryDSV = CategorySort
-DependentSortVocabulary.wellfounded CategoryDSV = Wellfounded.atLevel ★
+DependentSortVocabulary.wellfoundedness CategoryDSV = Wellfounded.atLevel ★
+
+
+-- Sequents
+
+-- x : Ob ⊢ id : Hom x x
+data id-onObjects : Judgment → Type lzero where
+  x : id-onObjects Ob
+
+idSequent : ⦃ _ : FunExt ⦄ → Sequent CategorySort
+context idSequent =
+  record
+    { onObjects = id-onObjects
+    ; semifunctorial = record
+        { mappable = record { map = onMorphisms }
+        ; preservesComposition = record { preserves-composition = preservesComposition } } }
+  where
+    onMorphisms : ∀ {j j'} → Dependency j j' → id-onObjects j → id-onObjects j'
+    onMorphisms () x
+
+    preservesComposition~ : ∀ {j j' j''} (f : Dependency j j') (g : Dependency j' j'')
+                          → onMorphisms (g ∙ f) ~ onMorphisms g ∙ onMorphisms f
+    preservesComposition~ () _ x
+
+    preservesComposition : ∀ {j j' j''} (f : Dependency j j') (g : Dependency j' j'')
+                         → onMorphisms (g ∙ f) ＝ onMorphisms g ∙ onMorphisms f
+    preservesComposition f g = funExt (preservesComposition~ f g)
+
+judgmentForm idSequent = Hom
+arguments idSequent = 
+  record
+    { component = component
+    ; natural = record
+        { naturality = natural } }
+  where
+    component : (j : Judgment) → SemiCoYoneda CategorySort Hom ⟨ j ⟩ → context idSequent ⟨ j ⟩
+    component Ob Hom-sc = x
+    component Ob Hom-tg = x
+
+    natural~ : ∀ {j j'} (d : Dependency j j')
+             → context idSequent ⟨ d ⟩ ∙ component j ~ component j' ∙ SemiCoYoneda CategorySort Hom ⟨ d ⟩
+    natural~ () Hom-sc
+    natural~ () Hom-tg
+
+    natural : ∀ {j j'} (d : Dependency j j')
+            → context idSequent ⟨ d ⟩ ∙ component j ＝ component j' ∙ SemiCoYoneda CategorySort Hom ⟨ d ⟩
+    natural = funExt ∘ natural~
+
+-- ⊢ t : Ob
+tSequent : ⦃ _ : FunExt ⦄ → Sequent CategorySort
+context tSequent =
+  record
+    { onObjects = λ j → 𝟘
+    ; semifunctorial = record
+        { mappable = record { map = λ f () }
+        ; preservesComposition = record { preserves-composition = λ f g → refl } } }
+judgmentForm tSequent = Ob
+arguments tSequent =
+  record
+    { component = λ j ()
+    ; natural = record
+        { naturality = λ f → refl } }
+
+-- x : Ob, f g : Hom x t ⊢ f = g
+data tEq-onObjects : Judgment → Type lzero where
+  x : tEq-onObjects Ob
+  t : tEq-onObjects Ob
+  f : tEq-onObjects Hom
+  g : tEq-onObjects Hom
+
+tEqSequent : ⦃ _ : FunExt ⦄ → Sequent CategorySort
+context tEqSequent =
+  record
+    { onObjects = tEq-onObjects
+    ; semifunctorial = record
+        { mappable = record { map = onMorphisms }
+        ; preservesComposition = record { preserves-composition = preservesComposition } } }
+  where
+    onMorphisms : ∀ {j j'} → Dependency j j' → tEq-onObjects j → tEq-onObjects j'
+    onMorphisms Hom-sc f = x
+    onMorphisms Hom-tg f = t
+    onMorphisms Hom-sc g = x
+    onMorphisms Hom-tg g = t
+
+    preservesComposition~ : ∀ {j j' j''} (f : Dependency j j') (g : Dependency j' j'')
+                          → onMorphisms (g ∙ f) ~ onMorphisms g ∙ onMorphisms f
+    preservesComposition~ Hom-sc ()
+    preservesComposition~ Hom-tg ()
+
+    preservesComposition : ∀ {j j' j''} (f : Dependency j j') (g : Dependency j' j'')
+                         → onMorphisms (g ∙ f) ＝ onMorphisms g ∙ onMorphisms f
+    preservesComposition α β = funExt (preservesComposition~ α β)
+judgmentForm tEqSequent = Eq
+arguments tEqSequent = 
+  record
+    { component = component
+    ; natural = record
+        { naturality = natural } }
+  where
+    component : (j : Judgment) → SemiCoYoneda CategorySort Eq ⟨ j ⟩ → context tEqSequent ⟨ j ⟩
+    component Ob Eq-sc = x
+    component Ob Eq-tg = t
+    component Hom Eq-lhs = f
+    component Hom Eq-rhs = g
+
+    natural~ : ∀ {j j'} (d : Dependency j j')
+             → context tEqSequent ⟨ d ⟩ ∙ component j ~ component j' ∙ SemiCoYoneda CategorySort Eq ⟨ d ⟩
+    natural~ Hom-sc Eq-lhs = refl
+    natural~ Hom-sc Eq-rhs = refl
+    natural~ Hom-tg Eq-lhs = refl
+    natural~ Hom-tg Eq-rhs = refl
+
+    natural : ∀ {j j'} (d : Dependency j j')
+            → context tEqSequent ⟨ d ⟩ ∙ component j ＝ component j' ∙ SemiCoYoneda CategorySort Eq ⟨ d ⟩
+    natural = funExt ∘ natural~
