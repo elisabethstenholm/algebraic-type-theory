@@ -5,6 +5,8 @@ open import Foundation
 import Foundation.Structure.Wild.Semicategory as Semicategory
 open Semicategory using (Semicategory)
 open Semicategory.Semicategory
+import Foundation.Structure.Categorical as Categorical
+open Categorical using (Categorical)
 import Foundation.Structure.Wild.Semifunctor as Semifunctor
 open Semifunctor using (Semifunctor)
 import Foundation.Structure.Semifunctorial as Semifunctorial
@@ -18,120 +20,162 @@ open import Foundation.Structure.PreservesComposition
   using (PreservesComposition; preserves-composition)
 open import Foundation.Structure.Semifunctorial using (Semifunctorial)
 import Foundation.Structure.Wild.SeminaturalTransformation as SeminaturalTransformation
-open Foundation.Structure.Wild.SeminaturalTransformation using (natural; _⟹_)
+open Foundation.Structure.Wild.SeminaturalTransformation using (natural)
 import Foundation.Structure.Natural as Natural
 open import Foundation.Structure.Natural using (Natural)
+open import Foundation.Structure.Composable using (Composable)
+open import Foundation.Structure.Appliable using (Appliable)
+open import Foundation.Structure.Identity using (Identity)
 
 open import DependentSortVocabulary
 
-record Sequent
-  {i : Level}
-  (𝒥 : Semicategory i i)
-  ⦃ _ : FunExt ⦄
-  : Type (lsuc i) where
-  constructor sequent
+record Context
+  {o a : Level}
+  (𝒥 : Semicategory o a)
+  (i : Level)
+  : Type (o ⊔ a ⊔ lsuc i) where
+  constructor mkContext
   field
-    context : Semifunctor 𝒥 (TypeSemicategory i)
-    judgmentForm : Semicategory.Ob 𝒥
-    arguments : (SemiCoYoneda 𝒥 judgmentForm) ⟹ context
+    semifunctor : Semifunctor 𝒥 (TypeSemicategory i)
 
-module ExtendedSemiCoYoneda {o a : Level} (𝒞 : Semicategory o a) (c : Ob 𝒞) where
-
-  open Semicategory.Reasoning 𝒞
-
-  onObjects : Ob 𝒞 → Type (o ⊔ a)
-  onObjects d = (Hom 𝒞 c d) + (d ＝ c)
-
-  onMorphisms : ∀ {d d'} → Hom 𝒞 d d' → onObjects d → onObjects d'
-  onMorphisms f (inl g) = inl (f ∙ g)
-  onMorphisms f (inr refl) = inl f
-
-  preservesComposition~ : ∀ {d d' d''} (f : Hom 𝒞 d d') (g : Hom 𝒞 d' d'')
-                        → onMorphisms (g ∙ f) ~ onMorphisms g ∘ onMorphisms f
-  preservesComposition~ g h (inl f) = ap inl (sym ∙-associative)
-  preservesComposition~ g h (inr refl) = refl
+module _ {o a i : Level} {𝒥 : Semicategory o a} where
 
   instance
-    mappable : Mappable 𝟙 _ _ _ _ _ (λ _ → Ob 𝒞) (λ i → Type i) (Hom 𝒞) (λ A B → A → B) _ onObjects
-    mappable = record { map = onMorphisms }
+    appliableOnObjectsContext : Appliable (Context 𝒥 i) (Ob 𝒥) (λ _ _ → Type i)
+    appliableOnObjectsContext = record { function = λ Γ j → Context.semifunctor Γ ⟨ j ⟩ }
 
-    preservesComposition : ⦃ FunExt ⦄
-                         → PreservesComposition _ _ _ _ _ _ (λ _ → Ob 𝒞) (λ i → Type i) _ (Hom 𝒞) (λ A B → A → B) _ onObjects (λ _ _ → _＝_)
-    preservesComposition = record { preserves-composition = λ f g → funExt (preservesComposition~ f g) }
+    appliableOnMorphismsContext : {j j' : Ob 𝒥} → Appliable (Context 𝒥 i) (Hom 𝒥 j j') (λ Γ _ → Γ ⟨ j ⟩ → Γ ⟨ j' ⟩)
+    appliableOnMorphismsContext = record { function = λ Γ f → Context.semifunctor Γ ⟨ f ⟩ }
 
-    semifunctorial : ⦃ FunExt ⦄
-                   → Semifunctorial _ _ _ _ _ _ (λ _ → Ob 𝒞) (λ i → Type i) _ (Hom 𝒞) (λ A B → A → B) _ onObjects (λ _ _ → _＝_)
-    semifunctorial = record {}
+record ContextMorphism
+  {o a i j : Level}
+  {𝒥 : Semicategory o a}
+  (Γ : Context 𝒥 i)
+  (Δ : Context 𝒥 j)
+  : Type (o ⊔ a ⊔ i ⊔ j) where
+  constructor mkContextMorphism
+  field
+    component : (j : Ob 𝒥) → Γ ⟨ j ⟩ → Δ ⟨ j ⟩
+    naturality : {j j' : Ob 𝒥} (f : Hom 𝒥 j j')
+               → Δ ⟨ f ⟩ ∘ component j ＝ component j' ∘ Γ ⟨ f ⟩
 
-ExtendedSemiCoYoneda : ⦃ FunExt ⦄
-                     → {o a : Level} (𝒞 : Semicategory o a) (c : Ob 𝒞)
-                     → Semifunctor 𝒞 (TypeSemicategory (o ⊔ a))
-Semifunctor.onObjects (ExtendedSemiCoYoneda 𝒞 c) = ExtendedSemiCoYoneda.onObjects 𝒞 c
-Semifunctor.semifunctorial (ExtendedSemiCoYoneda 𝒞 c) = Semifunctorial.atLevel ★
+infixl -10 _⇒_
+_⇒_ : ∀ {o a i j} {𝒥 : Semicategory o a}
+     → Context 𝒥 i → Context 𝒥 j → Type (o ⊔ a ⊔ i ⊔ j)
+Γ ⇒ Δ = ContextMorphism Γ Δ
+
+module _ {o a : Level} {𝒥 : Semicategory o a} where
+
+  instance
+    appliableContextMorphism : ∀ {i j} {Γ : Context 𝒥 i} {Δ : Context 𝒥 j}
+                             → Appliable (ContextMorphism Γ Δ) (Ob 𝒥) (λ _ j → Γ ⟨ j ⟩ → Δ ⟨ j ⟩)
+    appliableContextMorphism = record { function = λ ϵ → ContextMorphism.component ϵ }
+
+    composableContext : Composable _ _ _ (Context 𝒥) ContextMorphism
+    composableContext =
+      record
+        { composition = λ ϵ δ → record
+            { component = λ j → δ ⟨ j ⟩ ∙ ϵ ⟨ j ⟩ 
+            ; naturality = λ {j j'} f
+                → ap (δ ⟨ j' ⟩ ∘_) (ContextMorphism.naturality ϵ f)
+                ∙ ap (_∘ ϵ ⟨ j ⟩) (ContextMorphism.naturality δ f) } }
+
+    identityContextMorphism : Identity _ _ _ (Context 𝒥) ContextMorphism
+    identityContextMorphism =
+      record
+        { identity = record
+            { component = λ j → id
+            ; naturality = identity } }
+
+𝒴 : ⦃ FunExt ⦄ → ∀ {o a} {𝒥 : Semicategory o a} (j : Ob 𝒥) → Context 𝒥 a
+𝒴 {𝒥 = 𝒥} j = record { semifunctor = SemiCoYoneda 𝒥 j }
+
+record Extension
+  ⦃ _ : FunExt ⦄
+  {o a i : Level}
+  {𝒥 : Semicategory o a}
+  (Γ : Context 𝒥 i)
+  : Type (o ⊔ a ⊔ i) where
+  constructor mkExtension
+  field
+    judgmentForm : Ob 𝒥
+    arguments : 𝒴 judgmentForm ⇒ Γ
+
+record Sequent
+  ⦃ _ : FunExt ⦄
+  {o a i : Level}
+  (𝒥 : Semicategory o a)
+  : Type (o ⊔ a ⊔ lsuc i) where
+  constructor mkSequent
+  field
+    context : Context 𝒥 i
+    extension : Extension context
+
+infix 20 _⋊_
+_⋊_ : ⦃ _ : FunExt ⦄
+    → {o a i : Level} {𝒥 : Semicategory o a}
+    → (Γ : Context 𝒥 i) → Extension Γ → Context 𝒥 (o ⊔ i)
+_⋊_ {o} {a} {i} {𝒥} Γ ext =
+  record { semifunctor = record
+             { onObjects = onObjects
+             ; semifunctorial = record
+                 { mappable = record { map = onMorphisms }
+                 ; preservesComposition = record
+                     { preserves-composition = λ f g → funExt (preservesComposition~ f g) } } } }
   where
-    open Semicategory.Reasoning 𝒞
-    open ExtendedSemiCoYoneda 𝒞 c
+    open Semicategory.Reasoning 𝒥
+    open Semifunctor.Reasoning (Context.semifunctor Γ)
 
-module ContextExtension ⦃ _ : FunExt ⦄ {i : Level}
-  {𝒥 : Semicategory i i} (s : Sequent 𝒥) where
+    onObjects : Ob 𝒥 → Type (o ⊔ i)
+    onObjects j = (Γ ⟨ j ⟩) + (j ＝ Extension.judgmentForm ext)
 
-  private
-    Γ = Sequent.context s
-    J = Sequent.judgmentForm s
-    α = Sequent.arguments s
+    onMorphisms : ∀ {j j'} → Hom 𝒥 j j' → onObjects j → onObjects j'
+    onMorphisms f (inl x) = inl ((Γ ⟨ f ⟩) x)
+    onMorphisms {j' = j'} f (inr refl) = inl ((Extension.arguments ext ⟨ j' ⟩) f)
 
-  open Semicategory.Reasoning 𝒥
-  open Semifunctor.Reasoning Γ
-  open SeminaturalTransformation.Reasoning α
+    preservesComposition~ : ∀ {j j' j''} (f : Hom 𝒥 j j') (g : Hom 𝒥 j' j'')
+                          → onMorphisms (g ∙ f) ~ onMorphisms g ∘ onMorphisms f
+    preservesComposition~ f g (inl x) = ap (λ h → inl (h x)) (preserves-composition f g)
+      where open Semicategory.Reasoning (TypeSemicategory i)
+    preservesComposition~ f g (inr refl) = ap (λ h → inl (h f)) (sym (ContextMorphism.naturality (Extension.arguments ext) g))
 
-  onObjects : Ob 𝒥 → Type i
-  onObjects j = (Γ ⟨ j ⟩) + (j ＝ J)
+ι : ⦃ _ : FunExt ⦄
+  → {o a i : Level} {𝒥 : Semicategory o a}
+  → {Γ : Context 𝒥 i} {ϵ : Extension Γ}
+  → Γ ⇒ Γ ⋊ ϵ
+ι = record
+      { component = λ j → inl
+      ; naturality = identity }
 
-  onMorphisms : ∀ {j j'} → Hom 𝒥 j j' → onObjects j → onObjects j'
-  onMorphisms f (inl x) = inl ((Γ ⟨ f ⟩) x)
-  onMorphisms {j' = j'} f (inr refl) = inl ((α ⟨ j' ⟩) f)
+YonedaExtension : ⦃ _ : FunExt ⦄
+                → {o a : Level} {𝒥 : Semicategory o a}
+                → (j : Ob 𝒥)
+                → Extension (𝒴 {𝒥 = 𝒥} j)
+YonedaExtension j =
+  record
+    { judgmentForm = j
+    ; arguments = identity }
 
-  preservesComposition~ : ∀ {j j' j''} (f : Hom 𝒥 j j') (g : Hom 𝒥 j' j'')
-                        → onMorphisms (g ∙ f) ~ onMorphisms g ∘ onMorphisms f
-  preservesComposition~ f g (inl x) = ap (λ h → inl (h x)) (preserves-composition f g)
-    where open Semicategory.Reasoning (TypeSemicategory i)
-  preservesComposition~ f g (inr refl) = ap (λ h → inl (h f)) (sym (natural α g))
+𝒴⁺ : ⦃ _ : FunExt ⦄
+     → {o a : Level} {𝒥 : Semicategory o a}
+     → (j : Ob 𝒥)
+     → Context 𝒥 (o ⊔ a)
+𝒴⁺ j = 𝒴 j ⋊ YonedaExtension j
 
-  instance
-    mappable : Mappable 𝟙 𝟙 _ _ _ _ (λ _ → Ob 𝒥) (λ _ → Type i) (Hom 𝒥) (λ A B → A → B) _ onObjects
-    mappable = record { map = onMorphisms }
+ext⁺ : ⦃ _ : FunExt ⦄
+     → {o a i : Level} {𝒥 : Semicategory o a}
+     → {Γ : Context 𝒥 i} (ϵ : Extension Γ)
+     → 𝒴⁺ (Extension.judgmentForm ϵ) ⇒ Γ ⋊ ϵ
+ext⁺ {𝒥 = 𝒥} {Γ = Γ} ϵ =
+  record
+    { component = component
+    ; naturality = funExt ∘ naturality~ }
+  where
+    component : (j : Ob 𝒥) → (𝒴⁺ {𝒥 = 𝒥} (Extension.judgmentForm ϵ)) ⟨ j ⟩ → (Γ ⋊ ϵ) ⟨ j ⟩
+    component j (inl x) = inl ((Extension.arguments ϵ ⟨ j ⟩) x)
+    component j (inr refl) = inr refl
 
-  module _ where
-    open Semicategory.Reasoning (TypeSemicategory i)
-
-    instance
-      preservesComposition : PreservesComposition _ _ _ _ _ _ (λ _ → Ob 𝒥) (λ _ → Type i) _ (Hom 𝒥) (λ A B → A → B) _ onObjects (λ _ _ → _＝_)
-      preservesComposition = record { preserves-composition = λ f g → funExt (preservesComposition~ f g) }
-
-      semifunctorial : Semifunctorial _ _ _ _ _ _ (λ _ → Ob 𝒥) (λ _ → Type i) _ (Hom 𝒥) (λ A B → A → B) _ onObjects (λ _ _ → _＝_)
-      semifunctorial = record {}
-
-  extension : Semifunctor 𝒥 (TypeSemicategory i)
-  extension = 
-    record
-      { onObjects = onObjects
-      ; semifunctorial = Semifunctorial.atLevel ★ }
-    where open Semicategory.Reasoning (TypeSemicategory i)
-
-  ι : (j : Ob 𝒥) → Γ ⟨ j ⟩ → extension ⟨ j ⟩
-  ι j = inl
-
-  module _ where
-    open Semicategory.Reasoning (TypeSemicategory i)
-
-    instance
-      naturalExtension : Natural _ _ _ _ _ _ (λ _ → Ob 𝒥) (λ _ → Type i) _ (Hom 𝒥) (λ A B → A → B) _ _
-                           (Γ ⟨_⟩) (extension ⟨_⟩) (λ _ _ → _＝_) ι
-      naturalExtension =  record { naturality = identity }
-
-  context→extension : Γ ⟹ extension
-  context→extension = 
-    record
-      { component = ι
-      ; natural = Natural.atLevel ★ }
-    where open Semicategory.Reasoning (TypeSemicategory i)
+    naturality~ : {j j' : Ob 𝒥} (f : Hom 𝒥 j j')
+                → (Γ ⋊ ϵ) ⟨ f ⟩ ∘ component j ~ component j' ∘ (𝒴⁺ {𝒥 = 𝒥} (Extension.judgmentForm ϵ)) ⟨ f ⟩
+    naturality~ f (inl x) = ap (λ h → inl (h x)) (ContextMorphism.naturality (Extension.arguments ϵ) f)
+    naturality~ f (inr refl) = refl
