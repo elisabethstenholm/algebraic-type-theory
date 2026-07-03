@@ -38,11 +38,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1783017046,
-        "narHash": "sha256-Tq7QoNdAnMm/3pK88iJ7tnDoPechDoDagZsP1qi/qN4=",
+        "lastModified": 1783108756,
+        "narHash": "sha256-edsp/GouhE1zkbCEmYXyFt+NhViHsiGLFBmLsfWQFgk=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "1043a0c2aa942b9714d0da604c6df319e9f75e48",
+        "rev": "acdec5076157176fd30795b78da9236926540613",
         "type": "github"
       },
       "original": {
@@ -96,11 +96,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783016983,
-        "narHash": "sha256-PDYCF2gYyQB5d2VDUCnJVXA9xX1Do07sl9O4jDPoCJg=",
+        "lastModified": 1783108851,
+        "narHash": "sha256-6Nm7BWWw5rRPwb/+gjzr08ejtwdFcHfg52jxpuunyzM=",
         "ref": "elli",
-        "rev": "0c2f3ba9142eca3c817c461b1a1400ccedf1725e",
-        "revCount": 130,
+        "rev": "a593615d7d0a4b4bdf1a18575271722d55cfabe8",
+        "revCount": 132,
         "type": "git",
         "url": "ssh://git@git.app.uib.no/Hakon.Gylterud/unilib.git"
       },
