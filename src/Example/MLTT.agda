@@ -81,9 +81,8 @@ accessible EqTy = accessibleEqTy
 accessible EqEl = accessibleEqEl
 
 instance
-  wellfounded : Wellfounded 𝟙 (λ _ → lzero) (λ _ _ → lzero) (λ _ → Judgment) (λ x y → Dependency y x)
-  wellfounded = Wellfounded.wellfounded accessible
+  wellfoundedMLTT : Wellfounded 𝟙 (λ _ → lzero) (λ _ _ → lzero) (λ _ → Judgment) (λ x y → Dependency y x)
+  wellfoundedMLTT = Wellfounded.wellfounded accessible
 
 MLTTDSV : DependentSortVocabulary
-DependentSortVocabulary.sort MLTTDSV = MLTTSort
-DependentSortVocabulary.wellfoundedness MLTTDSV = Wellfounded.atLevel ★
+MLTTDSV = record { semicategory = MLTTSort; wellfounded = Wellfounded.atLevel ★ }
