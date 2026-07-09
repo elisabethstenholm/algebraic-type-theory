@@ -18,7 +18,7 @@ record SequentMorphism
   constructor mkSequentMorphism
   field
     sequentMorphism : ContextMorphism
-                        (Sequent.context s₁ ⋊ Sequent.extension s₁)
+                        (Sequent.context s₁ ⋊ₑ Sequent.extension s₁)
                         (Sequent.context s₂)
 open SequentMorphism
 
@@ -27,7 +27,7 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : Semicategory o a} where
   instance
     appliableSequentMorphism : ∀ {i₁ i₂} {s₁ : Sequent 𝒥 i₁} {s₂ : Sequent 𝒥 i₂}
                              → Appliable (SequentMorphism s₁ s₂) (Ob 𝒥)
-                                 (λ _ j → Sequent.context s₁ ⋊ Sequent.extension s₁ ⟨ j ⟩ → Sequent.context s₂ ⟨ j ⟩)
+                                 (λ _ j → Sequent.context s₁ ⋊ₑ Sequent.extension s₁ ⟨ j ⟩ → Sequent.context s₂ ⟨ j ⟩)
     appliableSequentMorphism = record { function = ContextMorphism.component ∘ sequentMorphism }
 
     composableSequentMorphism : Composable _ _ _ (Sequent 𝒥) SequentMorphism
