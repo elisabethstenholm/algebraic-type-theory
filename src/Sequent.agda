@@ -394,15 +394,29 @@ _⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
         respectsCollapseRelation : {x y : Γ ⟨ j₀ ⟩}
                                  → CollapseRelation col j₀ x y → [ (Γ ⟨ f ⟩) x ] ＝ [ (Γ ⟨ f ⟩) y ]
         respectsCollapseRelation collapseRelation =
-          ap [_] ?
-             -- (sym (ap (λ σ → σ (inr (inr refl))) (ContextMorphism.natural (Collapse.arguments col) f))
-             -- ∙ ap (λ σ → σ (inr (inl refl))) (ContextMorphism.natural (Collapse.arguments col) f))
+          ap [_]
+             (sym (ap (λ σ → σ (inr (inr refl))) (ContextMorphism.natural (Collapse.arguments col) f))
+             ∙ ap (λ σ → σ (inr (inl refl))) (ContextMorphism.natural (Collapse.arguments col) f))
 
     preservesComposition~ : ∀ {j₀ j₁ j₂} (f : Hom 𝒥 j₀ j₁) (g : Hom 𝒥 j₁ j₂)
                           → onMorphisms (g ∙ f) ~ onMorphisms g ∘ onMorphisms f
-    preservesComposition~ f g x = {!!}
+    preservesComposition~ {j₀} {j₁} {j₂} f g =
+      elim
+        (λ x → onMorphisms (g ∙ f) x ＝ onMorphisms g (onMorphisms f x))
+        {!!}
+        {!!}
+        {!!}
+      -- begin
+      --   rec ([_] ∘ (Γ ⟨ g ∙ f ⟩)) _ x                        ⟦ {!!} ⟧
+      --   rec ([_] ∘ (Γ ⟨ g ⟩)) _ (rec ([_] ∘ (Γ ⟨ f ⟩)) _ x)  ∎
+      where
+        open FromAllSetQuotients (Γ ⟨ j₀ ⟩) (CollapseRelation col j₀)
+        open FromAllSetQuotients (Γ ⟨ j₁ ⟩) (CollapseRelation col j₁)
+        open FromAllSetQuotients (Γ ⟨ j₂ ⟩) (CollapseRelation col j₂)
     {-
-    rec ([_] ∘ (Γ ⟨ g ⟩)) respectsCollapseRelation (rec ([_] ∘ (Γ ⟨ f ⟩)) respectsCollapseRelation x)
+    rec ([_] ∘ (Γ ⟨ g ∙ f ⟩)) _
+    ＝
+    rec ([_] ∘ (Γ ⟨ g ⟩)) _ (rec ([_] ∘ (Γ ⟨ f ⟩)) _ x)
     -}
 
 infix 20 _⋊_
