@@ -40,7 +40,7 @@ data Dependency : (j j' : Judgment) → Type lzero where
   EqTy-rhs    : Dependency EqTy Ty
 
 instance
-  composable : Composable 𝟙 (λ _ → lzero) (λ _ _ → lzero) (λ _ → Judgment) Dependency
+  composable : Composable 𝟙 (λ _ → Judgment) Dependency
   Composable.composition composable typeOf ()
   Composable.composition composable EqEl-typeOf ()
   Composable.composition composable EqEl-lhs typeOf = EqEl-typeOf
@@ -48,7 +48,7 @@ instance
   Composable.composition composable EqTy-lhs ()
   Composable.composition composable EqTy-rhs ()
 
-  associativeComposition : AssociativeComposition (λ _ _ → lzero) Dependency (λ _ _ → _＝_)
+  associativeComposition : AssociativeComposition Dependency (λ _ _ → _＝_)
   AssociativeComposition.⨾-associative associativeComposition {f = typeOf} {g = ()} {h = h}
   AssociativeComposition.⨾-associative associativeComposition {f = EqEl-typeOf} {g = ()} {h = h}
   AssociativeComposition.⨾-associative associativeComposition {f = EqEl-lhs} {g = typeOf} {h = ()}
@@ -56,32 +56,32 @@ instance
   AssociativeComposition.⨾-associative associativeComposition {f = EqTy-lhs} {g = ()} {h = h}
   AssociativeComposition.⨾-associative associativeComposition {f = EqTy-rhs} {g = ()} {h = h}
 
-  semicategorical : Semicategorical 𝟙 (λ _ → lzero) (λ _ _ → lzero) (λ _ → Judgment) (λ _ _ → lzero) Dependency (λ _ _ → _＝_)
+  semicategorical : Semicategorical 𝟙 (λ _ → Judgment) Dependency (λ _ _ → _＝_)
   semicategorical = record {}
 
 MLTTSort : Semicategory lzero lzero
 MLTTSort = asSemicategory (λ _ → Judgment) Dependency ★
 
-accessibleTy : Accessible 𝟙 (λ _ → lzero) (λ _ _ → lzero) (λ _ → Judgment) (λ x y → Dependency y x) Ty
+accessibleTy : Accessible 𝟙 (λ _ → Judgment) (λ x y → Dependency y x) Ty
 accessibleTy = Accessible.accessible λ { Ty () ; El () ; EqTy () ; EqEl () }
 
-accessibleEl : Accessible 𝟙 (λ _ → lzero) (λ _ _ → lzero) (λ _ → Judgment) (λ x y → Dependency y x) El
+accessibleEl : Accessible 𝟙 (λ _ → Judgment) (λ x y → Dependency y x) El
 accessibleEl = Accessible.accessible λ { Ty typeOf → accessibleTy ; El () ; EqTy () ; EqEl () }
 
-accessibleEqTy : Accessible 𝟙 (λ _ → lzero) (λ _ _ → lzero) (λ _ → Judgment) (λ x y → Dependency y x) EqTy
+accessibleEqTy : Accessible 𝟙 (λ _ → Judgment) (λ x y → Dependency y x) EqTy
 accessibleEqTy = Accessible.accessible λ { Ty EqTy-lhs → accessibleTy ; Ty EqTy-rhs → accessibleTy ; El () ; EqTy () ; EqEl () }
 
-accessibleEqEl : Accessible 𝟙 (λ _ → lzero) (λ _ _ → lzero) (λ _ → Judgment) (λ x y → Dependency y x) EqEl
+accessibleEqEl : Accessible 𝟙 (λ _ → Judgment) (λ x y → Dependency y x) EqEl
 accessibleEqEl = Accessible.accessible λ { Ty EqEl-typeOf → accessibleTy ; El EqEl-lhs → accessibleEl ; El EqEl-rhs → accessibleEl ; EqTy () ; EqEl () }
 
-accessible : (x : Judgment) → Accessible 𝟙 (λ _ → lzero) (λ _ _ → lzero) (λ _ → Judgment) (λ x y → Dependency y x) x
+accessible : (x : Judgment) → Accessible 𝟙 (λ _ → Judgment) (λ x y → Dependency y x) x
 accessible Ty = accessibleTy
 accessible El = accessibleEl
 accessible EqTy = accessibleEqTy
 accessible EqEl = accessibleEqEl
 
 instance
-  wellfoundedMLTT : Wellfounded 𝟙 (λ _ → lzero) (λ _ _ → lzero) (λ _ → Judgment) (λ x y → Dependency y x)
+  wellfoundedMLTT : Wellfounded 𝟙 (λ _ → Judgment) (λ x y → Dependency y x)
   wellfoundedMLTT = Wellfounded.wellfounded accessible
 
 MLTTDSV : DependentSortVocabulary

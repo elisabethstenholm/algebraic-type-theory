@@ -9,10 +9,12 @@ open import Foundation.DependentPair.Equivalence
 open import Foundation.HomotopyLevels
 open import Foundation.Reasoning
 open import Foundation.StructuredMap
+open import Foundation.Structure.Whiskerable
 open import Foundation.Structure.Wild.Semi
 open Semicategory.Semicategory
 open import Foundation.Structure.Wild.TypeSemicategory
 open import Foundation.Structure.Wild.SemiYoneda
+open import Foundation.SetQuotient
 
 
 record Context
@@ -96,7 +98,7 @@ record ContextMorphismEquality
   field
     component≈ : ContextMorphism.component α ~ ContextMorphism.component β
     natural≈   : {j₀ j₁ : Ob 𝒥} (h : Hom 𝒥 j₀ j₁)
-               → ContextMorphism.natural α h ⨾ (Γ ⟨ h ⟩ ◁ component≈ j₁)
+               → ContextMorphism.natural α h ⨾ ((Γ ⟨ h ⟩) ◁ component≈ j₁)
                ＝ (component≈ j₀ ▷ Δ ⟨ h ⟩) ⨾ ContextMorphism.natural β h
 
 open ContextMorphismEquality
@@ -162,7 +164,7 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : Semicategory o a} where
                              → Appliable (ContextMorphism Γ Δ) (Ob 𝒥) (λ _ j → Γ ⟨ j ⟩ → Δ ⟨ j ⟩)
     appliableContextMorphism = record { function = λ ϵ → ContextMorphism.component ϵ }
 
-    composableContextMorphism : Composable _ _ _ (Context 𝒥) ContextMorphism
+    composableContextMorphism : Composable _ (Context 𝒥) ContextMorphism
     composableContextMorphism =
       record
         { composition = λ ϵ δ → record
@@ -171,7 +173,7 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : Semicategory o a} where
                 → ap (δ ⟨ j₁ ⟩ ∘_) (ContextMorphism.natural ϵ f)
                 ∙ ap (_∘ ϵ ⟨ j₀ ⟩) (ContextMorphism.natural δ f) } }
 
-    associativeCompositionContextMorphism : AssociativeComposition _ (ContextMorphism { 𝒥 = 𝒥 }) (λ _ _ → _＝_)
+    associativeCompositionContextMorphism : AssociativeComposition (ContextMorphism { 𝒥 = 𝒥 }) (λ _ _ → _＝_)
     associativeCompositionContextMorphism =
       record
         { ⨾-associative = λ {A = A} {B = B} {C = C} {D = D} {f = α} {g = β} {h = γ} →
@@ -211,15 +213,40 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : Semicategory o a} where
             ap (_∘ αj₀) (ap (γj₁ ∘_) nβ)            ⟦ sym ∙-unitₗ ⟧
             (ap (_∘ αj₀) (ap (γj₁ ∘_) nβ)) ⨾ refl    ∎
 
-    identityContextMorphism : Identity _ _ _ (Context 𝒥) ContextMorphism
+    identityContextMorphism : Identity _ (Context 𝒥) ContextMorphism
     identityContextMorphism =
       record
         { identity = record
             { component = λ j → id
             ; natural = identity } }
 
-𝒴 : ⦃ FunExt ⦄ → ∀ {o a} {𝒥 : Semicategory o a} (j : Ob 𝒥) → Context 𝒥 a
+𝒴 : ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : Semicategory o a} (j : Ob 𝒥) → Context 𝒥 a
 𝒴 {𝒥 = 𝒥} j = record { semifunctor = SemiCoYoneda 𝒥 j }
+
+𝒴⁺⁺ : ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : Semicategory o a} (j : Ob 𝒥) → Context 𝒥 (o ⊔ a)
+𝒴⁺⁺ {o} {a} {𝒥} j = 
+  record { semifunctor = record
+           { onObjects = onObjects
+           ; semifunctorial = record
+               { mappable = record { map = onMorphisms }
+               ; preservesComposition = record
+                   { preserves-composition = λ f g → funExt (preservesComposition~ f g) } } } }
+  where
+  open Semicategory.Reasoning 𝒥
+
+  onObjects : Ob 𝒥 → Type (o ⊔ a)
+  onObjects j₁ = Hom 𝒥 j j₁ + ((j₁ ＝ j) + (j₁ ＝ j))
+
+  onMorphisms : ∀ {j₁ j₂} → Hom 𝒥 j₁ j₂ → onObjects j₁ → onObjects j₂
+  onMorphisms f (inl g) = inl (f ∙ g)
+  onMorphisms f (inr (inl refl)) = inl f
+  onMorphisms f (inr (inr refl)) = inl f
+
+  preservesComposition~ : ∀ {j₁ j₂ j₃} (f : Hom 𝒥 j₁ j₂) (g : Hom 𝒥 j₂ j₃)
+                        → onMorphisms (g ∙ f) ~ onMorphisms g ∘ onMorphisms f
+  preservesComposition~ f g (inl h) = ap inl (sym ∙-associative)
+  preservesComposition~ f g (inr (inl refl)) = refl
+  preservesComposition~ f g (inr (inr refl)) = refl
 
 record Extension
   ⦃ _ : FunExt ⦄
@@ -232,6 +259,26 @@ record Extension
     judgmentForm : Ob 𝒥
     arguments : 𝒴 judgmentForm ⇒ Γ
 
+record Collapse
+  ⦃ _ : FunExt ⦄
+  {o a i : Level}
+  {𝒥 : Semicategory o a}
+  (Γ : Context 𝒥 i)
+  : Type (o ⊔ a ⊔ i) where
+  constructor mkCollapse
+  field
+    judgmentForm : Ob 𝒥
+    arguments : 𝒴⁺⁺ judgmentForm ⇒ Γ
+
+data ExtensionOrCollapse
+  ⦃ _ : FunExt ⦄
+  {o a i : Level}
+  {𝒥 : Semicategory o a}
+  (Γ : Context 𝒥 i)
+  : Type (o ⊔ a ⊔ i) where
+  extend : Extension Γ → ExtensionOrCollapse Γ
+  collapse : Collapse Γ → ExtensionOrCollapse Γ
+
 record Sequent
   ⦃ _ : FunExt ⦄
   {o a : Level}
@@ -241,13 +288,13 @@ record Sequent
   constructor mkSequent
   field
     context : Context 𝒥 i
-    extension : Extension context
+    extensionOrCollapse : ExtensionOrCollapse context
 
-infix 20 _⋊_
-_⋊_ : ⦃ _ : FunExt ⦄
+infix 20 _⋊ₑ_
+_⋊ₑ_ : ⦃ _ : FunExt ⦄
     → {o a i : Level} {𝒥 : Semicategory o a}
     → (Γ : Context 𝒥 i) → Extension Γ → Context 𝒥 (o ⊔ i)
-_⋊_ {o} {a} {i} {𝒥} Γ ext =
+_⋊ₑ_ {o} {a} {i} {𝒥} Γ ext =
   record { semifunctor = record
              { onObjects = onObjects
              ; semifunctorial = record
@@ -274,7 +321,7 @@ _⋊_ {o} {a} {i} {𝒥} Γ ext =
 ι : ⦃ _ : FunExt ⦄
   → {o a i : Level} {𝒥 : Semicategory o a}
   → {Γ : Context 𝒥 i} {ϵ : Extension Γ}
-  → Γ ⇒ Γ ⋊ ϵ
+  → Γ ⇒ Γ ⋊ₑ ϵ
 ι = record
       { component = λ j → inl
       ; natural = identity }
@@ -288,45 +335,141 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : Semicategory o a} where
       ; arguments = identity }
 
   𝒴⁺ : (j : Ob 𝒥) → Context 𝒥 (o ⊔ a)
-  𝒴⁺ j = 𝒴 j ⋊ YonedaExtension j
+  𝒴⁺ j = 𝒴 j ⋊ₑ YonedaExtension j
 
-  ext : {i : Level} {Γ : Context 𝒥 i} (ϵ : Extension Γ)
-      → 𝒴⁺ (Extension.judgmentForm ϵ) ⇒ Γ ⋊ ϵ
-  ext {Γ = Γ} ϵ =
+  ⇒⋊ₑ : {i : Level} {Γ : Context 𝒥 i} (ϵ : Extension Γ)
+      → 𝒴⁺ (Extension.judgmentForm ϵ) ⇒ Γ ⋊ₑ ϵ
+  ⇒⋊ₑ {Γ = Γ} ϵ =
     record
       { component = component
       ; natural = funExt ∘ natural~ }
     where
-      component : (j : Ob 𝒥) → (𝒴⁺ (Extension.judgmentForm ϵ)) ⟨ j ⟩ → (Γ ⋊ ϵ) ⟨ j ⟩
+      component : (j : Ob 𝒥) → (𝒴⁺ (Extension.judgmentForm ϵ)) ⟨ j ⟩ → (Γ ⋊ₑ ϵ) ⟨ j ⟩
       component j (inl x) = inl ((Extension.arguments ϵ ⟨ j ⟩) x)
       component j (inr refl) = inr refl
 
       natural~ : {j₀ j₁ : Ob 𝒥} (f : Hom 𝒥 j₀ j₁)
-               → (Γ ⋊ ϵ) ⟨ f ⟩ ∘ component j₀ ~ component j₁ ∘ (𝒴⁺ (Extension.judgmentForm ϵ)) ⟨ f ⟩
+               → (Γ ⋊ₑ ϵ) ⟨ f ⟩ ∘ component j₀ ~ component j₁ ∘ (𝒴⁺ (Extension.judgmentForm ϵ)) ⟨ f ⟩
       natural~ f (inl x) = ap (λ h → inl (h x)) (ContextMorphism.natural (Extension.arguments ϵ) f)
       natural~ f (inr refl) = refl
 
-  𝒴⁺⁺ : (j : Ob 𝒥) → Context 𝒥 (o ⊔ a)
-  𝒴⁺⁺ j = 
-    record { semifunctor = record
+data CollapseRelation
+  ⦃ _ : FunExt ⦄
+  {o a i : Level}
+  {𝒥 : Semicategory o a}
+  {Γ : Context 𝒥 i}
+  (c : Collapse Γ)
+  : (j' : Ob 𝒥) → Γ ⟨ j' ⟩ → Γ ⟨ j' ⟩ → Type (o ⊔ i) where
+  collapseRelation : CollapseRelation c
+                                      (Collapse.judgmentForm c)
+                                      ((Collapse.arguments c ⟨ Collapse.judgmentForm c ⟩) (inr (inl refl)))
+                                      ((Collapse.arguments c ⟨ Collapse.judgmentForm c ⟩) (inr (inr refl)))
+
+infix 20 _⋊ₖ_
+_⋊ₖ_ : ⦃ _ : FunExt ⦄
+     → ⦃ _ : AllSetQuotients ⦄
+     → {o a i : Level} {𝒥 : Semicategory o a}
+     → (Γ : Context 𝒥 i) → Collapse Γ → Context 𝒥 (o ⊔ i)
+_⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
+  record { semifunctor = record
              { onObjects = onObjects
              ; semifunctorial = record
                  { mappable = record { map = onMorphisms }
                  ; preservesComposition = record
                      { preserves-composition = λ f g → funExt (preservesComposition~ f g) } } } }
-    where
+  where
     open Semicategory.Reasoning 𝒥
+    open Semifunctor.Reasoning (Context.semifunctor Γ)
 
-    onObjects : Ob 𝒥 → Type (o ⊔ a)
-    onObjects j₁ = Hom 𝒥 j j₁ + ((j₁ ＝ j) + (j₁ ＝ j))
+    onObjects : Ob 𝒥 → Type (o ⊔ i)
+    onObjects j = (Γ ⟨ j ⟩) ⁄ CollapseRelation col j
+      where
+        open FromAllSetQuotients (Γ ⟨ j ⟩) (CollapseRelation col j)
 
-    onMorphisms : ∀ {j₁ j₂} → Hom 𝒥 j₁ j₂ → onObjects j₁ → onObjects j₂
-    onMorphisms f (inl g) = inl (f ∙ g)
-    onMorphisms f (inr (inl refl)) = inl f
-    onMorphisms f (inr (inr refl)) = inl f
+    onMorphisms : ∀ {j₀ j₁} → Hom 𝒥 j₀ j₁ → onObjects j₀ → onObjects j₁
+    onMorphisms {j₀} {j₁} f = rec ([_] ∘ (Γ ⟨ f ⟩)) respectsCollapseRelation
+      where
+        open FromAllSetQuotients (Γ ⟨ j₀ ⟩) (CollapseRelation col j₀) hiding (isSet-setQuotient)
+        open FromAllSetQuotients (Γ ⟨ j₁ ⟩) (CollapseRelation col j₁)
 
-    preservesComposition~ : ∀ {j₁ j₂ j₃} (f : Hom 𝒥 j₁ j₂) (g : Hom 𝒥 j₂ j₃)
+        respectsCollapseRelation : {x y : Γ ⟨ j₀ ⟩}
+                                 → CollapseRelation col j₀ x y → [ (Γ ⟨ f ⟩) x ] ＝ [ (Γ ⟨ f ⟩) y ]
+        respectsCollapseRelation collapseRelation =
+          ap [_]
+             (sym (ap (λ σ → σ (inr (inr refl))) (ContextMorphism.natural (Collapse.arguments col) f))
+             ∙ ap (λ σ → σ (inr (inl refl))) (ContextMorphism.natural (Collapse.arguments col) f))
+
+    preservesComposition~ : ∀ {j₀ j₁ j₂} (f : Hom 𝒥 j₀ j₁) (g : Hom 𝒥 j₁ j₂)
                           → onMorphisms (g ∙ f) ~ onMorphisms g ∘ onMorphisms f
-    preservesComposition~ f g (inl h) = ap inl (sym ∙-associative)
-    preservesComposition~ f g (inr (inl refl)) = refl
-    preservesComposition~ f g (inr (inr refl)) = refl
+    preservesComposition~ {j₀} {j₁} {j₂} f g x = 
+      elim
+        (λ x → onMorphisms (g ∙ f) x ＝ onMorphisms g (onMorphisms f x))
+        set
+        preserves
+        resp
+        x
+      where
+        -- TODO: find out why it cannot figure out which isSet instance to use without hiding
+        open FromAllSetQuotients (Γ ⟨ j₀ ⟩) (CollapseRelation col j₀) hiding (isSet-setQuotient)
+        open FromAllSetQuotients (Γ ⟨ j₁ ⟩) (CollapseRelation col j₁) hiding (isSet-setQuotient)
+        open FromAllSetQuotients (Γ ⟨ j₂ ⟩) (CollapseRelation col j₂)
+        open Semifunctor.Reasoning (Context.semifunctor Γ)
+        open Semicategory.Reasoning (TypeSemicategory i)
+
+        set : ∀ q → isSet (onMorphisms (g ∙ f) q ＝ onMorphisms g (onMorphisms f q))
+        set q = raise-level (pathLevel (onMorphisms (g ∙ f) q) (onMorphisms g (onMorphisms f q)))
+
+        preserves : (x : Γ ⟨ j₀ ⟩) → onMorphisms (g ∙ f) ([ x ]) ＝ onMorphisms g (onMorphisms f ([ x ]))
+        preserves x =
+          begin
+            onMorphisms (g ∙ f) ([ x ])            ⟦ rec-β ([_] ∘ (Γ ⟨ g ∙ f ⟩)) _ x ⟧
+            [ (Γ ⟨ g ∙ f ⟩) x ]                    ⟦ ap (λ σ → [ σ x ]) (preserves-composition f g) ⟧
+            [ (Γ ⟨ g ⟩) ((Γ ⟨ f ⟩) x) ]            ⟦ sym (rec-β ([_] ∘ (Γ ⟨ g ⟩)) _ ((Γ ⟨ f ⟩) x)) ⟧
+            onMorphisms g ([ (Γ ⟨ f ⟩) x ])        ⟦ ap (onMorphisms g) (sym p) ⟧
+            onMorphisms g (onMorphisms f ([ x ]))  ∎
+          where
+            p : onMorphisms f ([ x ]) ＝ [ (Γ ⟨ f ⟩) x ]
+            p = rec-β ⦃ bset = FromAllSetQuotients.isSet-setQuotient (Γ ⟨ j₁ ⟩) (CollapseRelation col j₁) ⦄ ([_] ∘ (Γ ⟨ f ⟩)) _ x
+
+        resp : {x y : Γ ⟨ j₀ ⟩} (r : CollapseRelation col j₀ x y)
+             → tr (λ x → onMorphisms (g ∙ f) x ＝ onMorphisms g (onMorphisms f x))
+                  (respects r)
+                  (preserves x)
+               ＝ preserves y
+        resp r = allEqual _ _
+
+σ : ⦃ _ : FunExt ⦄
+  → ⦃ _ : AllSetQuotients ⦄
+  → {o a i : Level} {𝒥 : Semicategory o a}
+  → {Γ : Context 𝒥 i} {c : Collapse Γ}
+  → Γ ⇒ Γ ⋊ₖ c
+σ {𝒥 = 𝒥} {Γ = Γ} {c = c} = record
+  { component = component
+  ; natural = funExt ∘ natural }
+  where
+    component : ∀ j → Γ ⟨ j ⟩ → Γ ⋊ₖ c ⟨ j ⟩
+    component j = [_]
+      where
+        open FromAllSetQuotients (Γ ⟨ j ⟩) (CollapseRelation c j)
+
+    natural : ∀ {j₀ j₁} (f : Hom 𝒥 j₀ j₁) → Γ ⋊ₖ c ⟨ f ⟩ ∘ component j₀ ~ component j₁ ∘ Γ ⟨ f ⟩
+    natural {j₀} {j₁} f = rec-β ([_] ∘ (Γ ⟨ f ⟩)) _
+      where
+        open FromAllSetQuotients (Γ ⟨ j₀ ⟩) (CollapseRelation c j₀) hiding (isSet-setQuotient)
+        open FromAllSetQuotients (Γ ⟨ j₁ ⟩) (CollapseRelation c j₁)
+
+infix 20 _⋊_
+_⋊_ : ⦃ _ : FunExt ⦄
+    → ⦃ _ : AllSetQuotients ⦄
+    → {o a i : Level} {𝒥 : Semicategory o a}
+    → (Γ : Context 𝒥 i) → ExtensionOrCollapse Γ → Context 𝒥 (o ⊔ i)
+Γ ⋊ extend ext = Γ ⋊ₑ ext
+Γ ⋊ collapse col = Γ ⋊ₖ col
+
+→⋊ : ⦃ _ : FunExt ⦄
+   → ⦃ _ : AllSetQuotients ⦄
+   → {o a i : Level} {𝒥 : Semicategory o a}
+   → (s : Sequent 𝒥 i)
+   → Sequent.context s ⇒ Sequent.context s ⋊ Sequent.extensionOrCollapse s
+→⋊ (mkSequent context (extend x)) = ι
+→⋊ (mkSequent context (collapse x)) = σ
