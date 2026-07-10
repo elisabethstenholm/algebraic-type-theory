@@ -386,14 +386,24 @@ _⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
         open FromAllSetQuotients (Γ ⟨ j ⟩) (CollapseRelation col j)
 
     onMorphisms : ∀ {j₀ j₁} → Hom 𝒥 j₀ j₁ → onObjects j₀ → onObjects j₁
-    onMorphisms {j₀} {j₁} f = map-SetQuotient {R = (CollapseRelation col j₀)} {!!} {!!} -- (Γ ⟨ j₀ ⟩) ⁄ Rj₀ → (Γ ⟨ j₁ ⟩) ⁄ Rj₁
+    onMorphisms {j₀} {j₁} f = rec ([_] ∘ (Γ ⟨ f ⟩)) respectsCollapseRelation
       where
-        open FromAllSetQuotients (Γ ⟨ j₀ ⟩) (CollapseRelation col j₀)
+        open FromAllSetQuotients (Γ ⟨ j₀ ⟩) (CollapseRelation col j₀) hiding (setQuotient-isSet)
         open FromAllSetQuotients (Γ ⟨ j₁ ⟩) (CollapseRelation col j₁)
+
+        respectsCollapseRelation : {x y : Γ ⟨ j₀ ⟩}
+                                 → CollapseRelation col j₀ x y → [ (Γ ⟨ f ⟩) x ] ＝ [ (Γ ⟨ f ⟩) y ]
+        respectsCollapseRelation collapseRelation =
+          ap [_] ?
+             -- (sym (ap (λ σ → σ (inr (inr refl))) (ContextMorphism.natural (Collapse.arguments col) f))
+             -- ∙ ap (λ σ → σ (inr (inl refl))) (ContextMorphism.natural (Collapse.arguments col) f))
 
     preservesComposition~ : ∀ {j₀ j₁ j₂} (f : Hom 𝒥 j₀ j₁) (g : Hom 𝒥 j₁ j₂)
                           → onMorphisms (g ∙ f) ~ onMorphisms g ∘ onMorphisms f
-    preservesComposition~ f g = {!!}
+    preservesComposition~ f g x = {!!}
+    {-
+    rec ([_] ∘ (Γ ⟨ g ⟩)) respectsCollapseRelation (rec ([_] ∘ (Γ ⟨ f ⟩)) respectsCollapseRelation x)
+    -}
 
 infix 20 _⋊_
 _⋊_ : ⦃ _ : FunExt ⦄
