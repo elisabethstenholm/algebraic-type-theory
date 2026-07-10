@@ -400,24 +400,39 @@ _⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
 
     preservesComposition~ : ∀ {j₀ j₁ j₂} (f : Hom 𝒥 j₀ j₁) (g : Hom 𝒥 j₁ j₂)
                           → onMorphisms (g ∙ f) ~ onMorphisms g ∘ onMorphisms f
-    preservesComposition~ {j₀} {j₁} {j₂} f g =
+    preservesComposition~ {j₀} {j₁} {j₂} f g x =
       elim
         (λ x → onMorphisms (g ∙ f) x ＝ onMorphisms g (onMorphisms f x))
-        {!!}
-        {!!}
-        {!!}
-      -- begin
-      --   rec ([_] ∘ (Γ ⟨ g ∙ f ⟩)) _ x                        ⟦ {!!} ⟧
-      --   rec ([_] ∘ (Γ ⟨ g ⟩)) _ (rec ([_] ∘ (Γ ⟨ f ⟩)) _ x)  ∎
+        set
+        preserves
+        resp
+        x
       where
-        open FromAllSetQuotients (Γ ⟨ j₀ ⟩) (CollapseRelation col j₀)
-        open FromAllSetQuotients (Γ ⟨ j₁ ⟩) (CollapseRelation col j₁)
+        -- TODO: find out why it cannot figure out which isSet instance to use without hiding
+        open FromAllSetQuotients (Γ ⟨ j₀ ⟩) (CollapseRelation col j₀) hiding (setQuotient-isSet)
+        open FromAllSetQuotients (Γ ⟨ j₁ ⟩) (CollapseRelation col j₁) hiding (setQuotient-isSet)
         open FromAllSetQuotients (Γ ⟨ j₂ ⟩) (CollapseRelation col j₂)
-    {-
-    rec ([_] ∘ (Γ ⟨ g ∙ f ⟩)) _
-    ＝
-    rec ([_] ∘ (Γ ⟨ g ⟩)) _ (rec ([_] ∘ (Γ ⟨ f ⟩)) _ x)
-    -}
+        open Semifunctor.Reasoning (Context.semifunctor Γ)
+        open Semicategory.Reasoning (TypeSemicategory i)
+
+        set : ∀ q → isSet (onMorphisms (g ∙ f) q ＝ onMorphisms g (onMorphisms f q))
+        set q = raise-level (pathLevel (onMorphisms (g ∙ f) q) (onMorphisms g (onMorphisms f q)))
+
+        preserves : (x : Γ ⟨ j₀ ⟩) → onMorphisms (g ∙ f) ([ x ]) ＝ onMorphisms g (onMorphisms f ([ x ]))
+        preserves x =
+          begin
+            onMorphisms (g ∙ f) ([ x ])            ⟦ rec-β ⟧
+            [ (Γ ⟨ g ∙ f ⟩) x ]                    ⟦ ap (λ σ → [ σ x ]) (preserves-composition f g) ⟧
+            [ (Γ ⟨ g ⟩) ((Γ ⟨ f ⟩) x) ]            ⟦ rec-β ⟧
+            onMorphisms g ([ (Γ ⟨ f ⟩) x ])        ⟦ ap (onMorphisms g) rec-β ⟧
+            onMorphisms g (onMorphisms f ([ x ]))  ∎
+
+        resp : {x y : Γ ⟨ j₀ ⟩} (r : CollapseRelation col j₀ x y)
+             → tr (λ x → onMorphisms (g ∙ f) x ＝ onMorphisms g (onMorphisms f x))
+                  (respects r)
+                  (preserves x)
+               ＝ preserves y
+        resp r = allEqual _ _
 
 infix 20 _⋊_
 _⋊_ : ⦃ _ : FunExt ⦄
