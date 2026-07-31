@@ -59,7 +59,7 @@ record SequentStructure
   ⦃ _ : FunExt ⦄
   ⦃ _ : AllSetQuotients ⦄
   {o a : Level}
-  {𝒥 : Semicategory o a}
+  (𝒥 : Semicategory o a)
   (so sa i : Level)
   : Type (o ⊔ a ⊔ lsuc so ⊔ lsuc sa ⊔ lsuc i) where
   constructor mkSequentStructure
