@@ -1,84 +1,53 @@
 module Example.MLTT where
 
-open import Foundation.Base
-import Foundation.Structure.Wild.Semicategory as Semicategory
-open Semicategory using (Semicategory; asSemicategory)
-open import Foundation.Structure.Semicategorical
-open import Foundation.Structure.Composable
-open import Foundation.Structure.Associativity
+open import Foundation
+open import Foundation.Axioms
+open import Foundation.Structure.Wild.Semi
+open Semicategory.Semicategory
 import Foundation.Structure.Wellfounded as Wellfounded
 open Wellfounded using (Wellfounded)
 import Foundation.Structure.Accessible as Accessible
 open Accessible using (Accessible)
 
 open import DependentSortVocabulary
+open import Sequent
 
 -- The dependent sort vocabulary for Martin-Löf type theory is the semicategory given by
 --
---   EqTy      EqEl
---    ||        ||
--- lhs||rhs  lhs||rhs
---    ↓↓        ↓↓
 --    Ty <----- El
 --       typeOf
 --
---
--- and the equality: typeOf ∘ lhs = typeOf ∘ rhs
+
 
 data Judgment : Type lzero where
   Ty   : Judgment
   El   : Judgment
-  EqTy : Judgment
-  EqEl : Judgment
 
 data Dependency : (j j' : Judgment) → Type lzero where
   typeOf      : Dependency El Ty
-  EqEl-typeOf : Dependency EqEl Ty
-  EqEl-lhs    : Dependency EqEl El
-  EqEl-rhs    : Dependency EqEl El
-  EqTy-lhs    : Dependency EqTy Ty
-  EqTy-rhs    : Dependency EqTy Ty
 
 instance
-  composable : Composable 𝟙 (λ _ → Judgment) Dependency
-  Composable.composition composable typeOf ()
-  Composable.composition composable EqEl-typeOf ()
-  Composable.composition composable EqEl-lhs typeOf = EqEl-typeOf
-  Composable.composition composable EqEl-rhs typeOf = EqEl-typeOf
-  Composable.composition composable EqTy-lhs ()
-  Composable.composition composable EqTy-rhs ()
+  composableDependency : Composable 𝟙 (λ _ → Judgment) Dependency
+  Composable.composition composableDependency typeOf ()
 
-  associativeComposition : AssociativeComposition Dependency (λ _ _ → _＝_)
-  AssociativeComposition.⨾-associative associativeComposition {f = typeOf} {g = ()} {h = h}
-  AssociativeComposition.⨾-associative associativeComposition {f = EqEl-typeOf} {g = ()} {h = h}
-  AssociativeComposition.⨾-associative associativeComposition {f = EqEl-lhs} {g = typeOf} {h = ()}
-  AssociativeComposition.⨾-associative associativeComposition {f = EqEl-rhs} {g = typeOf} {h = ()}
-  AssociativeComposition.⨾-associative associativeComposition {f = EqTy-lhs} {g = ()} {h = h}
-  AssociativeComposition.⨾-associative associativeComposition {f = EqTy-rhs} {g = ()} {h = h}
+  associativeCompositionDependency : AssociativeComposition Dependency (λ _ _ → _＝_)
+  AssociativeComposition.⨾-associative associativeCompositionDependency {f = typeOf} {g = ()} {h = h}
 
-  semicategorical : Semicategorical 𝟙 (λ _ → Judgment) Dependency (λ _ _ → _＝_)
-  semicategorical = record {}
+  semicategoricalDependency : Semicategorical 𝟙 (λ _ → Judgment) Dependency (λ _ _ → _＝_)
+  semicategoricalDependency = record {}
 
 MLTTSort : Semicategory lzero lzero
 MLTTSort = asSemicategory (λ _ → Judgment) Dependency ★
 
 accessibleTy : Accessible 𝟙 (λ _ → Judgment) (λ x y → Dependency y x) Ty
-accessibleTy = Accessible.accessible λ { Ty () ; El () ; EqTy () ; EqEl () }
+accessibleTy = Accessible.accessible λ { Ty () ; El () }
 
 accessibleEl : Accessible 𝟙 (λ _ → Judgment) (λ x y → Dependency y x) El
-accessibleEl = Accessible.accessible λ { Ty typeOf → accessibleTy ; El () ; EqTy () ; EqEl () }
-
-accessibleEqTy : Accessible 𝟙 (λ _ → Judgment) (λ x y → Dependency y x) EqTy
-accessibleEqTy = Accessible.accessible λ { Ty EqTy-lhs → accessibleTy ; Ty EqTy-rhs → accessibleTy ; El () ; EqTy () ; EqEl () }
-
-accessibleEqEl : Accessible 𝟙 (λ _ → Judgment) (λ x y → Dependency y x) EqEl
-accessibleEqEl = Accessible.accessible λ { Ty EqEl-typeOf → accessibleTy ; El EqEl-lhs → accessibleEl ; El EqEl-rhs → accessibleEl ; EqTy () ; EqEl () }
+accessibleEl = Accessible.accessible λ { Ty typeOf → accessibleTy ; El () }
 
 accessible : (x : Judgment) → Accessible 𝟙 (λ _ → Judgment) (λ x y → Dependency y x) x
 accessible Ty = accessibleTy
 accessible El = accessibleEl
-accessible EqTy = accessibleEqTy
-accessible EqEl = accessibleEqEl
 
 instance
   wellfoundedMLTT : Wellfounded 𝟙 (λ _ → Judgment) (λ x y → Dependency y x)
@@ -86,3 +55,82 @@ instance
 
 MLTTDSV : DependentSortVocabulary
 MLTTDSV = record { semicategory = MLTTSort; wellfounded = Wellfounded.atLevel ★ }
+
+
+-- ########### Sequents ###########
+
+-- ⊢ X Type
+
+typeSequent : ⦃ _ : FunExt ⦄ → Sequent MLTTSort lzero
+Sequent.context typeSequent = emptyContext MLTTSort lzero
+Sequent.extensionOrCollapse typeSequent = extend
+  record
+    { judgmentForm = Ty
+    ; arguments = record
+        { component = λ j ()
+        ; natural = λ f → refl } }
+
+-- ########### Rules ###########
+
+-- ========== Unit type ========
+
+-- Type former
+--
+--   ---------------
+--     ⊢ Unit Type
+
+-- Introduction rule
+--
+--   ---------------
+--    ⊢ unit : Unit
+
+-- Elimination rule
+--
+--    ⊢ A Type  ⊢ a : A
+--   --------------------------
+--    x : Unit ⊢ unit-elim : A
+
+
+-- ======== Sum type ==========
+
+-- Type former
+--
+--    ⊢ A Type  ⊢ B Type
+--   --------------------
+--       ⊢ A + B Type
+
+-- Introduction rules
+--
+--    ⊢ A Type  ⊢ B Type
+--   ---------------------
+--    x : A ⊢ inl : A + B
+
+--    ⊢ A Type  ⊢ B Type
+--   ---------------------
+--    x : B ⊢ inr : A + B
+
+-- Elimination rule
+--
+--    ⊢ A Type  ⊢ B Type  x : A + B ⊢ C Type
+--       x : A ⊢ f : C  y : B ⊢ g : C
+--   -----------------------------------------
+--         x : A + B ⊢ sum-elim : C
+
+
+-- ========= Natural numbers ==========
+
+-- Type former
+--
+--   -------------
+--    ⊢ Nat Type
+
+-- Introduction rule
+--
+--   ----------------------------------
+--    x : Nat + Unit ⊢ nat-intro : Nat
+
+-- Elimination rule
+--
+--    x : Nat ⊢ A Type  ⊢ f₀ : A(nat-intro(inr(unit)))  x : Nat, a : A(x) ⊢ f : A(nat-intro(inl(x)))
+--   -----------------------------------------------------------------------------------------------
+--                                 x : Nat ⊢ nat-elim : A

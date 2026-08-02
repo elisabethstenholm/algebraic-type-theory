@@ -22,8 +22,7 @@ open import SequentStructure
 -- Ob   Hom
 --   <--
 --    tg
---
--- and the equalities: sc ∘ lhs = sc ∘ rhs and tg ∘ lhs = tg ∘ rhs
+
 
 data Judgment : Type lzero where
   Ob  : Judgment
@@ -113,13 +112,7 @@ extensionOrCollapse idSequent = extend
 
 -- ⊢ t : Ob
 tSequent : ⦃ _ : FunExt ⦄ → Sequent CategorySort lzero
-context tSequent =
-  record
-    { semifunctor = record
-      { onObjects = λ j → 𝟘
-      ; semifunctorial = record
-          { mappable = record { map = λ f () }
-          ; preservesComposition = record { preserves-composition = λ f g → refl } } } }
+context tSequent = emptyContext CategorySort lzero
 extensionOrCollapse tSequent = extend
   record
     { judgmentForm = Ob
@@ -187,12 +180,12 @@ tSequent⇒tEqSequent =
         ; natural = funExt ∘ natural } }
   where
     component : (j : Judgment)
-              → context tSequent ⋊ extensionOrCollapse tSequent ⟨ j ⟩
+              → (context tSequent ⋊ extensionOrCollapse tSequent) ⟨ j ⟩
               → context tEqSequent ⟨ j ⟩
     component Ob (inr refl) = t
 
     natural : {j₀ j₁ : Judgment} → (d : JudgmentDependency j₀ j₁)
-            → context tEqSequent ⟨ d ⟩ ∘ component j₀ ~ component j₁ ∘ context tSequent ⋊ extensionOrCollapse tSequent ⟨ d ⟩
+            → context tEqSequent ⟨ d ⟩ ∘ component j₀ ~ component j₁ ∘ (context tSequent ⋊ extensionOrCollapse tSequent) ⟨ d ⟩
     natural Hom-sc (inl ())
     natural Hom-sc (inr ())
     natural Hom-tg (inl ())

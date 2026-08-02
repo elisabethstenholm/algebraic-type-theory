@@ -17,6 +17,8 @@ open import Foundation.Structure.Wild.SemiYoneda
 open import Foundation.SetQuotient
 
 
+-- ============ Contexts ===============
+
 record Context
   {o a : Level}
   (𝒥 : Semicategory o a)
@@ -34,6 +36,17 @@ module _ {o a i : Level} {𝒥 : Semicategory o a} where
 
     appliableOnMorphismsContext : {j₀ j₁ : Ob 𝒥} → Appliable (Context 𝒥 i) (Hom 𝒥 j₀ j₁) (λ Γ _ → Γ ⟨ j₀ ⟩ → Γ ⟨ j₁ ⟩)
     appliableOnMorphismsContext = record { function = λ Γ f → Context.semifunctor Γ ⟨ f ⟩ }
+
+emptyContext : {o a : Level} (𝒥 : Semicategory o a) (i : Level) → Context 𝒥 i
+emptyContext 𝒥 i =
+  record
+    { semifunctor = record
+      { onObjects = λ j → 𝟘
+      ; semifunctorial = record
+          { mappable = record { map = λ f () }
+          ; preservesComposition = record { preserves-composition = λ f g → refl } } } }
+
+-- ============= Context morphisms ===========
 
 record ContextMorphism
   {o a i j : Level}
@@ -61,9 +74,6 @@ ContextMorphism≃Σ .retraction .retractionBack (component , nat) =
   record { component = component ; natural = nat }
 ContextMorphism≃Σ .retraction .isRetraction _ = refl
 
--- A natural transformation is a structured map whose underlying datum is its
--- component family, a *dependent* map `(A : Ob C) → Hom D (Γ A) (Δ A)`: `ε [ A ]`
--- is the component at `A`, and `structureOf ε` recovers the naturality witness.
 instance
   ContextMorphism-isStructuredMap :
     ∀ {o a i j} {𝒥 : Semicategory o a} {Γ : Context 𝒥 i} {Δ : Context 𝒥 j}
@@ -100,10 +110,9 @@ record ContextMorphismEquality
     natural≈   : {j₀ j₁ : Ob 𝒥} (h : Hom 𝒥 j₀ j₁)
                → ContextMorphism.natural α h ⨾ ((Γ ⟨ h ⟩) ◁ component≈ j₁)
                ＝ (component≈ j₀ ▷ Δ ⟨ h ⟩) ⨾ ContextMorphism.natural β h
-
 open ContextMorphismEquality
 
--- Characterisation of the identity type on ContextMorphism
+-- Characterisation of the identity type on context morphisms
 
 module _ {o a i j} {𝒥 : Semicategory o a} {Γ : Context 𝒥 i} {Δ : Context 𝒥 j} where
 
@@ -207,10 +216,10 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : Semicategory o a} where
                 ＝ (ap (_∘ αj₀) ((ap (_∘ βj₀) nγ) ⨾ (ap (γj₁ ∘_) nβ))) ⨾ (ap ((γj₁ ∘ βj₁) ∘_) nα)
         lemma αj₀ _ _ _ _ γj₁ _ _ _ _ _ _ _ _ refl nβ refl =
           begin
-            ap (γj₁ ∘_) ((ap (_∘ αj₀) nβ) ⨾ refl)    ⟦ ap (ap (γj₁ ∘_)) ∙-unitₗ ⟧
-            ap (γj₁ ∘_) (ap (_∘ αj₀) nβ)            ⟦ sym (ap-∘ (γj₁ ∘_) (_∘ αj₀) nβ) ⟧
-            ap (λ g → γj₁ ∘ g ∘ αj₀) nβ             ⟦ ap-∘ (_∘ αj₀) (γj₁ ∘_) nβ ⟧
-            ap (_∘ αj₀) (ap (γj₁ ∘_) nβ)            ⟦ sym ∙-unitₗ ⟧
+            ap (γj₁ ∘_) ((ap (_∘ αj₀) nβ) ⨾ refl)    ⟪ ap (ap (γj₁ ∘_)) ∙-unitₗ ⟫
+            ap (γj₁ ∘_) (ap (_∘ αj₀) nβ)            ⟪ sym (ap-∘ (γj₁ ∘_) (_∘ αj₀) nβ) ⟫
+            ap (λ g → γj₁ ∘ g ∘ αj₀) nβ             ⟪ ap-∘ (_∘ αj₀) (γj₁ ∘_) nβ ⟫
+            ap (_∘ αj₀) (ap (γj₁ ∘_) nβ)            ⟪ sym ∙-unitₗ ⟫
             (ap (_∘ αj₀) (ap (γj₁ ∘_) nβ)) ⨾ refl    ∎
 
     identityContextMorphism : Identity _ (Context 𝒥) ContextMorphism
@@ -219,6 +228,10 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : Semicategory o a} where
         { identity = record
             { component = λ j → id
             ; natural = identity } }
+
+
+
+-- ============== Yoneda contexts ==============
 
 𝒴 : ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : Semicategory o a} (j : Ob 𝒥) → Context 𝒥 a
 𝒴 {𝒥 = 𝒥} j = record { semifunctor = SemiCoYoneda 𝒥 j }
@@ -247,6 +260,9 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : Semicategory o a} where
   preservesComposition~ f g (inl h) = ap inl (sym ∙-associative)
   preservesComposition~ f g (inr (inl refl)) = refl
   preservesComposition~ f g (inr (inr refl)) = refl
+
+
+-- =============== Context extension and collapse ==============
 
 record Extension
   ⦃ _ : FunExt ⦄
@@ -278,6 +294,9 @@ data ExtensionOrCollapse
   : Type (o ⊔ a ⊔ i) where
   extend : Extension Γ → ExtensionOrCollapse Γ
   collapse : Collapse Γ → ExtensionOrCollapse Γ
+
+
+-- ================ Sequents ===============
 
 record Sequent
   ⦃ _ : FunExt ⦄
@@ -387,9 +406,9 @@ _⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
         open FromAllSetQuotients (Γ ⟨ j ⟩) (CollapseRelation col j)
 
     onMorphisms : ∀ {j₀ j₁} → Hom 𝒥 j₀ j₁ → onObjects j₀ → onObjects j₁
-    onMorphisms {j₀} {j₁} f = rec ([_] ∘ (Γ ⟨ f ⟩)) respectsCollapseRelation
+    onMorphisms {j₀} {j₁} f = ⁄-rec ([_] ∘ (Γ ⟨ f ⟩)) respectsCollapseRelation
       where
-        open FromAllSetQuotients (Γ ⟨ j₀ ⟩) (CollapseRelation col j₀) hiding (isSet-setQuotient)
+        open FromAllSetQuotients (Γ ⟨ j₀ ⟩) (CollapseRelation col j₀)
         open FromAllSetQuotients (Γ ⟨ j₁ ⟩) (CollapseRelation col j₁)
 
         respectsCollapseRelation : {x y : Γ ⟨ j₀ ⟩}
@@ -402,7 +421,7 @@ _⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
     preservesComposition~ : ∀ {j₀ j₁ j₂} (f : Hom 𝒥 j₀ j₁) (g : Hom 𝒥 j₁ j₂)
                           → onMorphisms (g ∙ f) ~ onMorphisms g ∘ onMorphisms f
     preservesComposition~ {j₀} {j₁} {j₂} f g x = 
-      elim
+      ⁄-elim
         (λ x → onMorphisms (g ∙ f) x ＝ onMorphisms g (onMorphisms f x))
         set
         preserves
@@ -410,8 +429,8 @@ _⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
         x
       where
         -- TODO: find out why it cannot figure out which isSet instance to use without hiding
-        open FromAllSetQuotients (Γ ⟨ j₀ ⟩) (CollapseRelation col j₀) hiding (isSet-setQuotient)
-        open FromAllSetQuotients (Γ ⟨ j₁ ⟩) (CollapseRelation col j₁) hiding (isSet-setQuotient)
+        open FromAllSetQuotients (Γ ⟨ j₀ ⟩) (CollapseRelation col j₀)
+        open FromAllSetQuotients (Γ ⟨ j₁ ⟩) (CollapseRelation col j₁)
         open FromAllSetQuotients (Γ ⟨ j₂ ⟩) (CollapseRelation col j₂)
         open Semifunctor.Reasoning (Context.semifunctor Γ)
         open Semicategory.Reasoning (TypeSemicategory i)
@@ -422,14 +441,14 @@ _⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
         preserves : (x : Γ ⟨ j₀ ⟩) → onMorphisms (g ∙ f) ([ x ]) ＝ onMorphisms g (onMorphisms f ([ x ]))
         preserves x =
           begin
-            onMorphisms (g ∙ f) ([ x ])            ⟦ rec-β ([_] ∘ (Γ ⟨ g ∙ f ⟩)) _ x ⟧
-            [ (Γ ⟨ g ∙ f ⟩) x ]                    ⟦ ap (λ σ → [ σ x ]) (preserves-composition f g) ⟧
-            [ (Γ ⟨ g ⟩) ((Γ ⟨ f ⟩) x) ]            ⟦ sym (rec-β ([_] ∘ (Γ ⟨ g ⟩)) _ ((Γ ⟨ f ⟩) x)) ⟧
-            onMorphisms g ([ (Γ ⟨ f ⟩) x ])        ⟦ ap (onMorphisms g) (sym p) ⟧
+            onMorphisms (g ∙ f) ([ x ])            ⟪ ⁄-rec-β ([_] ∘ (Γ ⟨ g ∙ f ⟩)) _ x ⟫
+            [ (Γ ⟨ g ∙ f ⟩) x ]                    ⟪ ap (λ σ → [ σ x ]) (preserves-composition f g) ⟫
+            [ (Γ ⟨ g ⟩) ((Γ ⟨ f ⟩) x) ]            ⟪ sym (⁄-rec-β ([_] ∘ (Γ ⟨ g ⟩)) _ ((Γ ⟨ f ⟩) x)) ⟫
+            onMorphisms g ([ (Γ ⟨ f ⟩) x ])        ⟪ ap (onMorphisms g) (sym p) ⟫
             onMorphisms g (onMorphisms f ([ x ]))  ∎
           where
             p : onMorphisms f ([ x ]) ＝ [ (Γ ⟨ f ⟩) x ]
-            p = rec-β ⦃ bset = FromAllSetQuotients.isSet-setQuotient (Γ ⟨ j₁ ⟩) (CollapseRelation col j₁) ⦄ ([_] ∘ (Γ ⟨ f ⟩)) _ x
+            p = ⁄-rec-β ([_] ∘ (Γ ⟨ f ⟩)) _ x
 
         resp : {x y : Γ ⟨ j₀ ⟩} (r : CollapseRelation col j₀ x y)
              → tr (λ x → onMorphisms (g ∙ f) x ＝ onMorphisms g (onMorphisms f x))
@@ -447,15 +466,15 @@ _⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
   { component = component
   ; natural = funExt ∘ natural }
   where
-    component : ∀ j → Γ ⟨ j ⟩ → Γ ⋊ₖ c ⟨ j ⟩
+    component : ∀ j → Γ ⟨ j ⟩ → (Γ ⋊ₖ c) ⟨ j ⟩
     component j = [_]
       where
         open FromAllSetQuotients (Γ ⟨ j ⟩) (CollapseRelation c j)
 
-    natural : ∀ {j₀ j₁} (f : Hom 𝒥 j₀ j₁) → Γ ⋊ₖ c ⟨ f ⟩ ∘ component j₀ ~ component j₁ ∘ Γ ⟨ f ⟩
-    natural {j₀} {j₁} f = rec-β ([_] ∘ (Γ ⟨ f ⟩)) _
+    natural : ∀ {j₀ j₁} (f : Hom 𝒥 j₀ j₁) → (Γ ⋊ₖ c) ⟨ f ⟩ ∘ component j₀ ~ component j₁ ∘ Γ ⟨ f ⟩
+    natural {j₀} {j₁} f = ⁄-rec-β ([_] ∘ (Γ ⟨ f ⟩)) _
       where
-        open FromAllSetQuotients (Γ ⟨ j₀ ⟩) (CollapseRelation c j₀) hiding (isSet-setQuotient)
+        open FromAllSetQuotients (Γ ⟨ j₀ ⟩) (CollapseRelation c j₀)
         open FromAllSetQuotients (Γ ⟨ j₁ ⟩) (CollapseRelation c j₁)
 
 infix 20 _⋊_
@@ -473,3 +492,4 @@ _⋊_ : ⦃ _ : FunExt ⦄
    → Sequent.context s ⇒ Sequent.context s ⋊ Sequent.extensionOrCollapse s
 →⋊ (mkSequent context (extend x)) = ι
 →⋊ (mkSequent context (collapse x)) = σ
+

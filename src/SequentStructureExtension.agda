@@ -29,7 +29,6 @@ record SequentStructureExtension
                          → (g : Hom (SequentStructure.sequentDependency s) d₀ d₁)
                          → realiseDependency d₁ ((dependency ⟨ g ⟩) f)
                          ＝ realiseDependency d₀ f ∙ SequentStructure.sequent s ⟨ g ⟩
-
 open SequentStructureExtension
 
 
