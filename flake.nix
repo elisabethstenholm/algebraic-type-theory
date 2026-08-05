@@ -1,10 +1,9 @@
 {
   description = "Algebraic type theory";
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs";
     flake-utils.url = "github:numtide/flake-utils";
     unilib.url = "git+ssh://git@git.app.uib.no/Hakon.Gylterud/unilib.git?ref=elli";
-    unilib.inputs.nixpkgs.follows = "nixpkgs";
+    nixpkgs.follows = "unilib/nixpkgs";
   };
 
   outputs = { self, nixpkgs, flake-utils, unilib }:

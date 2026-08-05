@@ -38,15 +38,16 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1785613878,
-        "narHash": "sha256-x3dsb5rD+mH9fXyZ5ipScHjRkEQwpNkoWmc6Hi56dQA=",
+        "lastModified": 1785747939,
+        "narHash": "sha256-D740uKsMbgsfK2oaDenJLLPIZfq7W0/g4KN/Fls8eKs=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "d52342a184a6b8fc4072d22a8d6ae65ff7434101",
+        "rev": "104240a772428cc2e20d8fd86c9ddbb886bbaff2",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -54,7 +55,10 @@
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs",
+        "nixpkgs": [
+          "unilib",
+          "nixpkgs"
+        ],
         "unilib": "unilib"
       }
     },
@@ -91,21 +95,19 @@
     "unilib": {
       "inputs": {
         "flake-utils": "flake-utils_2",
-        "nixpkgs": [
-          "nixpkgs"
-        ]
+        "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1785613906,
-        "narHash": "sha256-Y9aYQb//V4UxPhrcChxib4mkHExfwpZ04I/Llh5vTBg=",
-        "ref": "elli",
-        "rev": "6b711c05bb0be058d273b342dcb7ac6a0811e786",
-        "revCount": 244,
+        "lastModified": 1785926742,
+        "narHash": "sha256-LH2lEUbyUnF4z2zfV9ZUCOvpH2WdDl+0qmPORTwk63Y=",
+        "ref": "main",
+        "rev": "315879a1a2b57cf0573721d9c2c55d2f2efbdecf",
+        "revCount": 261,
         "type": "git",
         "url": "ssh://git@git.app.uib.no/Hakon.Gylterud/unilib.git"
       },
       "original": {
-        "ref": "elli",
+        "ref": "main",
         "type": "git",
         "url": "ssh://git@git.app.uib.no/Hakon.Gylterud/unilib.git"
       }
