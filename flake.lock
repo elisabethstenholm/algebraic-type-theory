@@ -98,16 +98,16 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1785926742,
-        "narHash": "sha256-LH2lEUbyUnF4z2zfV9ZUCOvpH2WdDl+0qmPORTwk63Y=",
-        "ref": "main",
-        "rev": "315879a1a2b57cf0573721d9c2c55d2f2efbdecf",
-        "revCount": 261,
+        "lastModified": 1786230347,
+        "narHash": "sha256-O+wyaQSXYoGNo5dehaQScCeN/MiRP3HxQRqiQMkbEKM=",
+        "ref": "elli",
+        "rev": "e2dc11b55c60344a6214ea467a056c5396ef441f",
+        "revCount": 271,
         "type": "git",
         "url": "ssh://git@git.app.uib.no/Hakon.Gylterud/unilib.git"
       },
       "original": {
-        "ref": "main",
+        "ref": "elli",
         "type": "git",
         "url": "ssh://git@git.app.uib.no/Hakon.Gylterud/unilib.git"
       }

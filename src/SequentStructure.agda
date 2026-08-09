@@ -1,59 +1,15 @@
 module SequentStructure where
 
-open import Foundation
-open import Foundation.Axioms
-open import Foundation.Reasoning
-open import Foundation.Structure.Wild.Semi
+open import Prelude
+open import Axioms
+open import Homotopy.SetQuotient
+open import Algebra.Wild.Semi
 open Semicategory.Semicategory
 
+open import Context
 open import Sequent
 
-record SequentMorphism
-  ⦃ _ : FunExt ⦄
-  ⦃ _ : AllSetQuotients ⦄
-  {o a i₁ i₂ : Level}
-  {𝒥 : Semicategory o a}
-  (s₁ : Sequent 𝒥 i₁)
-  (s₂ : Sequent 𝒥 i₂)
-  : Type (o ⊔ a ⊔ lsuc i₁ ⊔ lsuc i₂) where
-  constructor mkSequentMorphism
-  field
-    sequentMorphism : ContextMorphism
-                        (Sequent.context s₁ ⋊ Sequent.extensionOrCollapse s₁)
-                        (Sequent.context s₂)
-open SequentMorphism
-
-module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : Semicategory o a} where
-
-  instance
-    appliableSequentMorphism : ∀ {i₁ i₂} {s₁ : Sequent 𝒥 i₁} {s₂ : Sequent 𝒥 i₂}
-                             → Appliable (SequentMorphism s₁ s₂) (Ob 𝒥)
-                                 (λ _ j → (Sequent.context s₁ ⋊ Sequent.extensionOrCollapse s₁) ⟨ j ⟩ → Sequent.context s₂ ⟨ j ⟩)
-    appliableSequentMorphism = record { function = ContextMorphism.component ∘ sequentMorphism }
-
-    composableSequentMorphism : Composable _ (Sequent 𝒥) SequentMorphism
-    composableSequentMorphism =
-      record
-        { composition = λ {B = B} f g → record
-          { sequentMorphism = sequentMorphism g ∙ →⋊ B ∙ sequentMorphism f } }
-
-    associativeCompositionSequentMorphism : AssociativeComposition (SequentMorphism { 𝒥 = 𝒥 }) (λ _ _ → _＝_)
-    associativeCompositionSequentMorphism =
-      record
-        { ⨾-associative = λ {B = B} {C = C} {f = f} {g = g} {h = h} → ap mkSequentMorphism
-          (begin
-            sequentMorphism h ∙ (→⋊ C ∙ (sequentMorphism g ∙ (→⋊ B ∙ sequentMorphism f)))  ⟪ ap (sequentMorphism h ∙_) (∙-associative {g = sequentMorphism g}) ⟫
-            sequentMorphism h ∙ ((→⋊ C ∙ sequentMorphism g) ∙ (→⋊ B ∙ sequentMorphism f))  ⟪ ∙-associative {g = →⋊ C ∙ sequentMorphism g} ⟫
-            (sequentMorphism h ∙ (→⋊ C ∙ sequentMorphism g)) ∙ (→⋊ B ∙ sequentMorphism f)  ∎) }
-
-    sequentSemicategorical : Semicategorical _ (Sequent 𝒥) SequentMorphism (λ _ _ → _＝_)
-    sequentSemicategorical = record {}
-
-SequentSemicategory : ⦃ _ : FunExt ⦄
-                    → ⦃ _ : AllSetQuotients ⦄
-                    → {o a : Level} (𝒥 : Semicategory o a) (i : Level)
-                    → Semicategory (o ⊔ a ⊔ lsuc i) (o ⊔ a ⊔ lsuc i)
-SequentSemicategory 𝒥 i = asSemicategory (Sequent 𝒥) SequentMorphism i
+-- ============= Sequent structures ============
 
 record SequentStructure
   ⦃ _ : FunExt ⦄
@@ -64,8 +20,8 @@ record SequentStructure
   : Type (o ⊔ a ⊔ lsuc so ⊔ lsuc sa ⊔ lsuc i) where
   constructor mkSequentStructure
   field
-    sequentDependency : Semicategory so sa
-    sequent : Semifunctor (sequentDependency ᵒᵖ) (SequentSemicategory 𝒥 i)
+    dependency : Semicategory so sa
+    sequent : Semifunctor (dependency ᵒᵖ) (SequentSemicategory 𝒥 i)
 
 data EmptyOb (so : Level) : Type so where
 
@@ -91,8 +47,16 @@ module _ {co ca : Level} (𝒞 : Semicategory co ca) where
   emptySemifunctorOnObjects : {so : Level} → EmptyOb so → Ob 𝒞
   emptySemifunctorOnObjects ()
 
-  emptySemifunctor : (so sa : Level) → Semifunctor (emptySemicategory so sa ᵒᵖ) 𝒞
+  emptySemifunctor : (so sa : Level) → Semifunctor (emptySemicategory so sa) 𝒞
   emptySemifunctor so sa =
+    record
+      { onObjects = emptySemifunctorOnObjects
+      ; semifunctorial = record
+        { mappable = record { map = λ { {A = ()} } }
+        ; preservesComposition = record { preserves-composition = λ { {A = ()} } } } }
+
+  emptySemifunctorᵒᵖ : (so sa : Level) → Semifunctor (emptySemicategory so sa ᵒᵖ) 𝒞
+  emptySemifunctorᵒᵖ so sa =
     record
       { onObjects = emptySemifunctorOnObjects
       ; semifunctorial = record
@@ -102,5 +66,39 @@ module _ {co ca : Level} (𝒞 : Semicategory co ca) where
 emptySequentStructure : ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level}
                       → (𝒥 : Semicategory o a) (so sa i : Level)
                       → SequentStructure 𝒥 so sa i
-SequentStructure.sequentDependency (emptySequentStructure 𝒥 so sa i) = emptySemicategory so sa
-SequentStructure.sequent (emptySequentStructure 𝒥 so sa i) = emptySemifunctor (SequentSemicategory 𝒥 i) so sa
+emptySequentStructure 𝒥 so sa i =
+  record
+    { dependency = emptySemicategory so sa
+    ; sequent = emptySemifunctorᵒᵖ (SequentSemicategory 𝒥 i) so sa }
+
+-- =============== Morphisms of sequent structures ===============
+
+dependenciesOf : {so sa : Level} (𝒟 : Semicategory so sa) → Ob 𝒟 → Type (so ⊔ sa)
+dependenciesOf 𝒟 x = ∑[ y ∶ Ob 𝒟 ] Hom 𝒟 x y
+
+mapDependencies : {so₀ sa₀ so₁ sa₁ : Level}
+                  {𝒞 : Semicategory so₀ sa₀} {𝒟 : Semicategory so₁ sa₁}
+                → (F : Semifunctor 𝒞 𝒟) (x : Ob 𝒞)
+                → dependenciesOf 𝒞 x → dependenciesOf 𝒟 (F ⟨ x ⟩)
+mapDependencies F x (y , f) = F ⟨ y ⟩ , F ⟨ f ⟩
+
+record SequentStructureMorphism
+  ⦃ _ : FunExt ⦄
+  ⦃ _ : AllSetQuotients ⦄
+  {o a so₀ sa₀ i₀ so₁ sa₁ i₁ : Level}
+  {𝒥 : Semicategory o a}
+  (sd : SequentStructure 𝒥 so₀ sa₀ i₀)
+  (sc : SequentStructure 𝒥 so₁ sa₁ i₁)
+  (j : Level)
+  : Type (o ⊔ a ⊔ so₀ ⊔ sa₀ ⊔ i₀ ⊔ so₁ ⊔ sa₁ ⊔ i₁ ⊔ lsuc j) where
+  constructor mkSequentStructureMorphism
+  field
+    onDependencies : Semifunctor (SequentStructure.dependency sd) (SequentStructure.dependency sc)
+    dependenciesEquivalence : (x : Ob (SequentStructure.dependency sd))
+                            → isEquivalence (mapDependencies onDependencies x)
+    -- TODO: add terms to the base context
+    baseContext : Context 𝒥 j
+    contextEquivalence : (x : Ob (SequentStructure.dependency sd))
+                       → baseContext + Sequent.context (SequentStructure.sequent sd ⟨ x ⟩)
+                       ≈ Sequent.context (SequentStructure.sequent sc ⟨ onDependencies ⟨ x ⟩ ⟩)
+    -- TODO: add naturality condition wrt onDependencies and SequentStructure.sequent

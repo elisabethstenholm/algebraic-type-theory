@@ -1,6 +1,6 @@
 module DependentSortVocabulary where
 
-open import Foundation
+open import Prelude
 
 open import WellfoundedSemicategory public
 

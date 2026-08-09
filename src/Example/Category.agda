@@ -1,16 +1,20 @@
 module Example.Category where
 
-open import Foundation
-open import Foundation.Axioms
-import Foundation.Structure.Wellfounded as Wellfounded
+open import Prelude
+open import Axioms
+open import Homotopy.SetQuotient
+open import Structure.Associativity
+open import Structure.Composable
+import Structure.Wellfounded as Wellfounded
 open Wellfounded using (Wellfounded)
-import Foundation.Structure.Accessible as Accessible
+import Structure.Accessible as Accessible
 open Accessible using (Accessible)
-open import Foundation.Structure.Wild.Semi
+open import Algebra.Wild.Semi
 open Semicategory
-open import Foundation.Structure.Wild.SemiYoneda
+open import Algebra.Wild.SemiYoneda
 
 open import DependentSortVocabulary
+open import Context
 open import Sequent
 open Sequent.Sequent
 open import SequentStructure

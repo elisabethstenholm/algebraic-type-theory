@@ -1,14 +1,17 @@
 module Example.MLTT where
 
-open import Foundation
-open import Foundation.Axioms
-open import Foundation.Structure.Wild.Semi
+open import Prelude
+open import Axioms
+open import Structure.Associativity
+open import Structure.Composable
+open import Algebra.Wild.Semi
 open Semicategory.Semicategory
-import Foundation.Structure.Wellfounded as Wellfounded
+import Structure.Wellfounded as Wellfounded
 open Wellfounded using (Wellfounded)
-import Foundation.Structure.Accessible as Accessible
+import Structure.Accessible as Accessible
 open Accessible using (Accessible)
 
+open import Context
 open import DependentSortVocabulary
 open import Sequent
 
@@ -57,18 +60,6 @@ MLTTDSV : DependentSortVocabulary
 MLTTDSV = record { semicategory = MLTTSort; wellfounded = Wellfounded.atLevel ★ }
 
 
--- ########### Sequents ###########
-
--- ⊢ X Type
-
-typeSequent : ⦃ _ : FunExt ⦄ → Sequent MLTTSort lzero
-Sequent.context typeSequent = emptyContext MLTTSort lzero
-Sequent.extensionOrCollapse typeSequent = extend
-  record
-    { judgmentForm = Ty
-    ; arguments = record
-        { component = λ j ()
-        ; natural = λ f → refl } }
 
 -- ########### Rules ###########
 
@@ -78,6 +69,65 @@ Sequent.extensionOrCollapse typeSequent = extend
 --
 --   ---------------
 --     ⊢ Unit Type
+
+
+
+{-
+
+R1
+--  ⊢ A Type  ⊢ B Type
+-- --------------------
+--   ⊢ A × B Type
+
+The extended sequent structure
+
+A <- AB -> B
+
+
+
+Rule morphism from R1 to R2
+
+Functor from semi category of R1 to semicategory of R2
+
+  <--
+A     X
+  <--
+
+
+R2
+--    ⊢ A Type  ⊢ X Type
+-- -----------------------
+--    x : A ⊢ Δ : X
+
+  ⊢ A Type  x : A ⊢ t :
+--------------------------
+ x : A ⊢ proj₀ (Δ x) = x
+
+-- X -> A × A
+
+
+ ⊢ A Type    X := A Type, x : X ⊢ f : A
+-----------------------------------------
+      X := A Type  ⊢ λ : X → X
+
+A <- fA <- λ
+
+
+
+
+
+
+ ⊢ A Type        X := A Type, a : A, b : A ⊢ a + b : A                        ⊢ 1 : A      X := A type, x : X, e := 1 : X ⊢ f := e + x : X      X := A Type ⊢ t := λ x . 1 + x : A → A
+
+ X := A Type ⊢ λ x . x + b : A → A
+---------------------------------------------------------------------------------------------------------------------------------------------------
+  ⊢ λ x . 1 + x = λ x . x + 1
+
+
+
+
+
+-}
 
 -- Introduction rule
 --
