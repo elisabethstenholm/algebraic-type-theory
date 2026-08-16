@@ -11,8 +11,10 @@ open Wellfounded using (Wellfounded)
 import Structure.Accessible as Accessible
 open Accessible using (Accessible)
 
+open import Data.Bool
+
 open import Context
-open import DependentSortVocabulary
+open import DependentSortVocabulary hiding (Judgment)
 open import Sequent
 
 -- The dependent sort vocabulary for Martin-Löf type theory is the semicategory given by
@@ -56,8 +58,32 @@ instance
   wellfoundedMLTT : Wellfounded 𝟙 (λ _ → Judgment) (λ x y → Dependency y x)
   wellfoundedMLTT = Wellfounded.wellfounded accessible
 
+judgment-isSet : isSet Judgment
+judgment-isSet = retract-level toBool fromBool retract Bool-isSet
+  where
+    toBool : Judgment → Bool {lzero}
+    toBool Ty = true
+    toBool El = false
+
+    fromBool : Bool {lzero} → Judgment
+    fromBool true  = Ty
+    fromBool false = El
+
+    retract : fromBool ∘ toBool ~ id
+    retract Ty = refl
+    retract El = refl
+
+dependency-isSet : {j j' : Judgment} → isSet (Dependency j j')
+dependency-isSet {Ty} {_}  = retract-level (λ ()) (λ ()) (λ ()) (𝟘-isLevel {lzero})
+dependency-isSet {El} {Ty} = retract-level (λ _ → ★) (λ _ → typeOf) (λ { typeOf → refl }) (𝟙-isLevel {lzero})
+dependency-isSet {El} {El} = retract-level (λ ()) (λ ()) (λ ()) (𝟘-isLevel {lzero})
+
 MLTTDSV : DependentSortVocabulary
-MLTTDSV = record { semicategory = MLTTSort; wellfounded = Wellfounded.atLevel ★ }
+MLTTDSV =
+  record
+    { semicategory = MLTTSort
+    ; judgmentForms-isSet = judgment-isSet
+    ; judgmentDependencies-isSet = dependency-isSet }
 
 
 

@@ -6,51 +6,41 @@ open import Homotopy.SetQuotient
 open import Structure.Associativity
 open import Structure.Composable
 open import Structure.PreservesComposition
+open import Structure.Reasoning
 open import Structure.Symmetric
 open import Algebra.Wild.Semi
 open Semicategory.Semicategory
 open import Algebra.Wild.TypeSemicategory
 
+open import DependentSortVocabulary
+open import Context
 open import Sequent
 open import SequentStructure
+open SequentDependencyStructure
 
-record SequentStructureExtension
-  ⦃ _ : FunExt ⦄
-  ⦃ _ : AllSetQuotients ⦄
-  {o a so sa i : Level}
-  {𝒥 : Semicategory o a}
-  (s : SequentStructure 𝒥 so sa i)
-  : Type (o ⊔ a ⊔ lsuc i ⊔ so ⊔ lsuc sa) where
-  constructor mkSequentStructureExtension
-  field
-    dependency : Semifunctor (SequentStructure.dependency s) (TypeSemicategory sa)
-    head : Sequent 𝒥 i
-    realiseDependency : (d : Ob (SequentStructure.dependency s))
-                      → dependency ⟨ d ⟩
-                      → SequentMorphism (SequentStructure.sequent s ⟨ d ⟩) head
-    coherenceRealisation : {d₀ d₁ : Ob (SequentStructure.dependency s)}
-                         → (f : dependency ⟨ d₀ ⟩) 
-                         → (g : Hom (SequentStructure.dependency s) d₀ d₁)
-                         → realiseDependency d₁ ((dependency ⟨ g ⟩) f)
-                         ＝ realiseDependency d₀ f ∙ SequentStructure.sequent s ⟨ g ⟩
-open SequentStructureExtension
+SequentStructureWithExtension : ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
+                              → {o a : Level} (𝒥 : DependentSortVocabulary {o} {a})
+                              → (so sa i : Level)
+                              → Type (o ⊔ a ⊔ lsuc so ⊔ lsuc sa ⊔ lsuc i)
+SequentStructureWithExtension {o = o}  𝒥 so sa i = SequentDependencyStructure 𝒥 so sa i (Sequent 𝒥 i) Sequent.context
 
-emptySequentStructureExtension : ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a so sa : Level} (𝒥 : Semicategory o a) (i : Level)
-                               → Sequent 𝒥 i → SequentStructureExtension (emptySequentStructure 𝒥 so sa i)
-emptySequentStructureExtension {so = so} {sa = sa} 𝒥 i s =
+emptySequentStructureWithExtension : ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a so sa : Level} (𝒥 : DependentSortVocabulary {o} {a}) (i : Level)
+                                   → Sequent 𝒥 i → SequentStructureWithExtension 𝒥 so sa i
+emptySequentStructureWithExtension {so = so} {sa = sa} 𝒥 i s =
   record
-    { dependency = emptySemifunctor (TypeSemicategory sa) so sa
-    ; head = s
+    { head = s
+    ; sequentStructure = emptySequentStructure 𝒥 so sa i
+    ; dependency = emptySemifunctor (TypeSemicategory sa) so sa
     ; realiseDependency = λ ()
     ; coherenceRealisation = λ { {()} } }
 
 
 module ExtendedSequentStructure ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
-  {o a so sa i : Level} {𝒥 : Semicategory o a}
-  (s : SequentStructure 𝒥 so sa i) (e : SequentStructureExtension s) where
+  {o a so sa i : Level} {𝒥 : DependentSortVocabulary {o} {a}}
+  (e : SequentStructureWithExtension 𝒥 so sa i) where
 
-  𝒟 = SequentStructure.dependency s
-  ℱ = SequentStructure.sequent s
+  𝒟 = SequentStructure.dependency (sequentStructure e)
+  ℱ = SequentStructure.sequent (sequentStructure e)
 
   open Semicategory.Reasoning 𝒟
   open Semicategory.Reasoning (𝒟 ᵒᵖ)
@@ -108,7 +98,7 @@ module ExtendedSequentStructure ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
   homMap : {x y : ob} → hom y x → SequentMorphism (obMap x) (obMap y)
   homMap {injOb x} {injOb y} (include f) = ℱ ⟨ f ⟩
   homMap {newOb} {injOb y} (include ())
-  homMap {injOb x} {newOb} (include f) = realiseDependency e x f
+  homMap {injOb x} {newOb} (include f) = mkSequentMorphism (→⋊ (head e) ∙ realiseDependency e x f)
   homMap {newOb} {newOb} (include ())
 
   preserves : {A B C : ob} (f : hom A B) (g : hom B C)
@@ -117,7 +107,11 @@ module ExtendedSequentStructure ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
     where
       open Semifunctor.Reasoning ℱ renaming (preservesCompositionₛ to pres)
       open Semicategory.Reasoning (SequentSemicategory 𝒥 i)
-  preserves {newOb} {injOb y} {injOb z} (include f) (include g) = coherenceRealisation e f g
+  preserves {newOb} {injOb y} {injOb z} (include f) (include g) = ap mkSequentMorphism
+    (begin
+      →⋊ (head e) ∙ realiseDependency e z ((dependency e ⟨ g ⟩) f)                         ⟪ ap (→⋊ (head e) ∙_) (coherenceRealisation e f g) ⟫
+      →⋊ (head e) ∙ (realiseDependency e y f ∙ SequentMorphism.sequentMorphism (ℱ ⟨ g ⟩))  ⟪ ∙-associative {g = realiseDependency e y f} ⟫
+      (→⋊ (head e) ∙ realiseDependency e y f) ∙ SequentMorphism.sequentMorphism (ℱ ⟨ g ⟩)  ∎)
   preserves {A} {injOb x} {newOb} f (include ())
   preserves {injOb x} {newOb} {C} (include ()) g
   preserves {newOb} {newOb} {C} (include ()) g
@@ -137,14 +131,13 @@ module ExtendedSequentStructure ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
       ; sequent = sequent }
 
 extendSequentStructure : ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
-                       → {o a so sa i : Level} {𝒥 : Semicategory o a}
-                       → (s : SequentStructure 𝒥 so sa i) (e : SequentStructureExtension s)
+                       → {o a so sa i : Level} {𝒥 : DependentSortVocabulary {o} {a}}
+                       → SequentStructureWithExtension 𝒥 so sa i
                        → SequentStructure 𝒥 so sa i
-extendSequentStructure s e = ExtendedSequentStructure.extended s e
+extendSequentStructure e = ExtendedSequentStructure.extended e
 
-infix 20 _⋊ₛ_
-_⋊ₛ_ : ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
-     → {o a so sa i : Level} {𝒥 : Semicategory o a}
-     → (s : SequentStructure 𝒥 so sa i) → SequentStructureExtension s
-     → SequentStructure 𝒥 so sa i
-s ⋊ₛ e = extendSequentStructure s e
+⋊ₛ_ : ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
+    → {o a so sa i : Level} {𝒥 : DependentSortVocabulary {o} {a}}
+    → SequentStructureWithExtension 𝒥 so sa i
+    → SequentStructure 𝒥 so sa i
+⋊ₛ_ = extendSequentStructure

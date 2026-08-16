@@ -75,7 +75,7 @@ Every import that is not a module of this repo comes from UniLib (source: the st
 ## Conventions in this repo
 
 - Universe levels are explicit and pervasive: `o a` for the vocabulary semicategory, `i` for contexts, `so sa` for the sequent-dependency semicategory. Extension raises a context's level from `i` to `o ⊔ i`.
-- Records get a `constructor`, and are frequently defined by copattern matching on the projections (`context idSequent = …` / `extensionOrCollapse idSequent = …`) rather than as a `record { … }` literal.
-- Naturality is stated as an equality of functions and proved by `funExt ∘ natural~`, where `natural~` is a pointwise homotopy defined by pattern matching in a `where` block. Follow that split; the pointwise version is where the actual case analysis lives.
+- Records should be constructed using `record { … }` literal.
+- Naturality is stated as an equality of functions and proved by `funExt ∘ natural~`, where `natural~` is a pointwise homotopy defined by pattern matching in a `where` block.
 - Use `Foundation.Reasoning` for coherence proofs.
 - Keep comments to a minimum, adding them only if absolutely necessary, and keep them diegetic.

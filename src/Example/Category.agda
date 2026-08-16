@@ -11,9 +11,10 @@ import Structure.Accessible as Accessible
 open Accessible using (Accessible)
 open import Algebra.Wild.Semi
 open Semicategory
-open import Algebra.Wild.SemiYoneda
+open import Data.Bool
+open import Homotopy.StructuredType
 
-open import DependentSortVocabulary
+open import DependentSortVocabulary hiding (Judgment; JudgmentDependency)
 open import Context
 open import Sequent
 open Sequent.Sequent
@@ -65,8 +66,44 @@ instance
   wellfoundedCategory : Wellfounded 𝟙 (λ _ → Judgment) (λ x y → JudgmentDependency y x)
   wellfoundedCategory = Wellfounded.wellfounded accessible
 
+judgment-isSet : isSet Judgment
+judgment-isSet = retract-level toBool fromBool retract Bool-isSet
+  where
+    toBool : Judgment → Bool {lzero}
+    toBool Ob  = true
+    toBool Hom = false
+
+    fromBool : Bool {lzero} → Judgment
+    fromBool true  = Ob
+    fromBool false = Hom
+
+    retract : fromBool ∘ toBool ~ id
+    retract Ob  = refl
+    retract Hom = refl
+
+judgmentDependency-isSet : {j j' : Judgment} → isSet (JudgmentDependency j j')
+judgmentDependency-isSet {Ob}  {_}   = retract-level (λ ()) (λ ()) (λ ()) (𝟘-isLevel {lzero})
+judgmentDependency-isSet {Hom} {Hom} = retract-level (λ ()) (λ ()) (λ ()) (𝟘-isLevel {lzero})
+judgmentDependency-isSet {Hom} {Ob}  = retract-level toBool fromBool retract Bool-isSet
+  where
+    toBool : JudgmentDependency Hom Ob → Bool {lzero}
+    toBool Hom-sc = true
+    toBool Hom-tg = false
+
+    fromBool : Bool {lzero} → JudgmentDependency Hom Ob
+    fromBool true  = Hom-sc
+    fromBool false = Hom-tg
+
+    retract : fromBool ∘ toBool ~ id
+    retract Hom-sc = refl
+    retract Hom-tg = refl
+
 CategoryDSV : DependentSortVocabulary
-CategoryDSV = record { semicategory = CategorySort; wellfounded = Wellfounded.atLevel ★ }
+CategoryDSV =
+  record
+    { semicategory = CategorySort
+    ; judgmentForms-isSet = judgment-isSet
+    ; judgmentDependencies-isSet = judgmentDependency-isSet }
 
 
 -- Sequents
@@ -75,11 +112,18 @@ CategoryDSV = record { semicategory = CategorySort; wellfounded = Wellfounded.at
 data id-onObjects : Judgment → Type lzero where
   x : id-onObjects Ob
 
-idSequent : ⦃ _ : FunExt ⦄ → Sequent CategorySort lzero
+id-onObjects-isSet : (j : Judgment) → isSet (id-onObjects j)
+id-onObjects-isSet Ob  = retract-level (λ _ → ★) (λ _ → x) (λ { x → refl }) (𝟙-isLevel {lzero})
+id-onObjects-isSet Hom = retract-level (λ ()) (λ ()) (λ ()) (𝟘-isLevel {lzero})
+
+id-entries : Judgment → hSet lzero
+id-entries j = id-onObjects j has-level id-onObjects-isSet j
+
+idSequent : ⦃ _ : FunExt ⦄ → Sequent CategoryDSV lzero
 context idSequent =
   record
     { semifunctor = record
-      { onObjects = id-onObjects
+      { onObjects = id-entries
       ; semifunctorial = record
           { mappable = record { map = onMorphisms }
           ; preservesComposition = record { preserves-composition = preservesComposition } } } }
@@ -88,11 +132,11 @@ context idSequent =
     onMorphisms () x
 
     preservesComposition~ : ∀ {j j' j''} (f : JudgmentDependency j j') (g : JudgmentDependency j' j'')
-                          → onMorphisms (g ∙ f) ~ onMorphisms g ∙ onMorphisms f
+                          → onMorphisms (g ∙ f) ~ onMorphisms g ∘ onMorphisms f
     preservesComposition~ () _ x
 
     preservesComposition : ∀ {j j' j''} (f : JudgmentDependency j j') (g : JudgmentDependency j' j'')
-                         → onMorphisms (g ∙ f) ＝ onMorphisms g ∙ onMorphisms f
+                         → onMorphisms (g ∙ f) ＝ onMorphisms g ∘ onMorphisms f
     preservesComposition f g = funExt (preservesComposition~ f g)
 extensionOrCollapse idSequent = extend
   record
@@ -101,22 +145,22 @@ extensionOrCollapse idSequent = extend
       { component = component
       ; natural = natural } }
   where
-    component : (j : Judgment) → SemiCoYoneda CategorySort Hom ⟨ j ⟩ → context idSequent ⟨ j ⟩
+    component : (j : Judgment) → JudgmentDependency Hom j → id-onObjects j
     component Ob Hom-sc = x
     component Ob Hom-tg = x
 
     natural~ : ∀ {j j'} (d : JudgmentDependency j j')
-             → context idSequent ⟨ d ⟩ ∙ component j ~ component j' ∙ SemiCoYoneda CategorySort Hom ⟨ d ⟩
+             → context idSequent ⟨ d ⟩ ∘ component j ~ component j' ∘ 𝒴 {𝒥 = CategoryDSV} Hom ⟨ d ⟩
     natural~ () Hom-sc
     natural~ () Hom-tg
 
     natural : ∀ {j j'} (d : JudgmentDependency j j')
-            → context idSequent ⟨ d ⟩ ∙ component j ＝ component j' ∙ SemiCoYoneda CategorySort Hom ⟨ d ⟩
+            → context idSequent ⟨ d ⟩ ∘ component j ＝ component j' ∘ 𝒴 {𝒥 = CategoryDSV} Hom ⟨ d ⟩
     natural = funExt ∘ natural~
 
 -- ⊢ t : Ob
-tSequent : ⦃ _ : FunExt ⦄ → Sequent CategorySort lzero
-context tSequent = emptyContext CategorySort lzero
+tSequent : ⦃ _ : FunExt ⦄ → Sequent CategoryDSV lzero
+context tSequent = emptyContext CategoryDSV lzero
 extensionOrCollapse tSequent = extend
   record
     { judgmentForm = Ob
@@ -131,11 +175,42 @@ data tEq-onObjects : Judgment → Type lzero where
   f : tEq-onObjects Hom
   g : tEq-onObjects Hom
 
-tEqSequent : ⦃ _ : FunExt ⦄ → Sequent CategorySort lzero
+tEq-onObjects-isSet : (j : Judgment) → isSet (tEq-onObjects j)
+tEq-onObjects-isSet Ob = retract-level toBool fromBool retract Bool-isSet
+  where
+    toBool : tEq-onObjects Ob → Bool {lzero}
+    toBool x = true
+    toBool t = false
+
+    fromBool : Bool {lzero} → tEq-onObjects Ob
+    fromBool true  = x
+    fromBool false = t
+
+    retract : fromBool ∘ toBool ~ id
+    retract x = refl
+    retract t = refl
+tEq-onObjects-isSet Hom = retract-level toBool fromBool retract Bool-isSet
+  where
+    toBool : tEq-onObjects Hom → Bool {lzero}
+    toBool f = true
+    toBool g = false
+
+    fromBool : Bool {lzero} → tEq-onObjects Hom
+    fromBool true  = f
+    fromBool false = g
+
+    retract : fromBool ∘ toBool ~ id
+    retract f = refl
+    retract g = refl
+
+tEq-entries : Judgment → hSet lzero
+tEq-entries j = tEq-onObjects j has-level tEq-onObjects-isSet j
+
+tEqSequent : ⦃ _ : FunExt ⦄ → Sequent CategoryDSV lzero
 context tEqSequent =
   record
     { semifunctor = record
-      { onObjects = tEq-onObjects
+      { onObjects = tEq-entries
       ; semifunctorial = record
           { mappable = record { map = onMorphisms }
           ; preservesComposition = record { preserves-composition = preservesComposition } } } }
@@ -147,12 +222,12 @@ context tEqSequent =
     onMorphisms Hom-tg g = t
 
     preservesComposition~ : ∀ {j j' j''} (f : JudgmentDependency j j') (g : JudgmentDependency j' j'')
-                          → onMorphisms (g ∙ f) ~ onMorphisms g ∙ onMorphisms f
+                          → onMorphisms (g ∙ f) ~ onMorphisms g ∘ onMorphisms f
     preservesComposition~ Hom-sc ()
     preservesComposition~ Hom-tg ()
 
     preservesComposition : ∀ {j j' j''} (f : JudgmentDependency j j') (g : JudgmentDependency j' j'')
-                         → onMorphisms (g ∙ f) ＝ onMorphisms g ∙ onMorphisms f
+                         → onMorphisms (g ∙ f) ＝ onMorphisms g ∘ onMorphisms f
     preservesComposition α β = funExt (preservesComposition~ α β)
 extensionOrCollapse tEqSequent = collapse
   record
@@ -161,7 +236,9 @@ extensionOrCollapse tEqSequent = collapse
         { component = component
         ; natural = funExt ∘ natural~ } }
   where
-    component : (j : Judgment) → 𝒴⁺⁺ {𝒥 = CategorySort} Hom ⟨ j ⟩ → context tEqSequent ⟨ j ⟩
+    component : (j : Judgment)
+              → JudgmentDependency Hom j + ((j ＝ Hom) + (j ＝ Hom))
+              → tEq-onObjects j
     component Ob (inl Hom-sc) = x
     component Ob (inl Hom-tg) = t
     component Ob (inr (inl ()))
@@ -170,7 +247,7 @@ extensionOrCollapse tEqSequent = collapse
     component Hom (inr (inr refl)) = g
 
     natural~ : ∀ {j j'} (d : JudgmentDependency j j')
-             → context tEqSequent ⟨ d ⟩ ∙ component j ~ component j' ∙ 𝒴⁺⁺ {𝒥 = CategorySort} Hom ⟨ d ⟩
+             → context tEqSequent ⟨ d ⟩ ∘ component j ~ component j' ∘ 𝒴⁺⁺ {𝒥 = CategoryDSV} Hom ⟨ d ⟩
     natural~ Hom-sc (inr (inl refl)) = refl
     natural~ Hom-sc (inr (inr refl)) = refl
     natural~ Hom-tg (inr (inl refl)) = refl
@@ -178,22 +255,26 @@ extensionOrCollapse tEqSequent = collapse
 
 tSequent⇒tEqSequent : ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ → SequentMorphism tSequent tEqSequent
 tSequent⇒tEqSequent =
-  record
-    { sequentMorphism = record
-        { component = component
-        ; natural = funExt ∘ natural } }
+  record { sequentMorphism = →⋊ tEqSequent ∙ intoTEqContext }
   where
-    component : (j : Judgment)
-              → (context tSequent ⋊ extensionOrCollapse tSequent) ⟨ j ⟩
-              → context tEqSequent ⟨ j ⟩
-    component Ob (inr refl) = t
+    intoTEqContext : (context tSequent ⋊ extensionOrCollapse tSequent) ⇒ context tEqSequent
+    intoTEqContext =
+      record
+        { component = component
+        ; natural = funExt ∘ natural }
+      where
+        component : (j : Judgment)
+                  → ⌞ (context tSequent ⋊ extensionOrCollapse tSequent) ⟨ j ⟩ ⌟
+                  → tEq-onObjects j
+        component Ob (inr refl) = t
 
-    natural : {j₀ j₁ : Judgment} → (d : JudgmentDependency j₀ j₁)
-            → context tEqSequent ⟨ d ⟩ ∘ component j₀ ~ component j₁ ∘ (context tSequent ⋊ extensionOrCollapse tSequent) ⟨ d ⟩
-    natural Hom-sc (inl ())
-    natural Hom-sc (inr ())
-    natural Hom-tg (inl ())
-    natural Hom-tg (inr ())
+        natural : {j₀ j₁ : Judgment} → (d : JudgmentDependency j₀ j₁)
+                → context tEqSequent ⟨ d ⟩ ∘ component j₀
+                  ~ component j₁ ∘ (context tSequent ⋊ extensionOrCollapse tSequent) ⟨ d ⟩
+        natural Hom-sc (inl ())
+        natural Hom-sc (inr ())
+        natural Hom-tg (inl ())
+        natural Hom-tg (inr ())
 
 -- Sequent structure
 
@@ -220,7 +301,7 @@ OperationSemicategory = asSemicategory (λ _ → Operation) OperationDependency 
 
 OperationSemifunctor : ⦃ _ : FunExt ⦄
                      → ⦃ _ : AllSetQuotients ⦄
-                     → Semifunctor (OperationSemicategory ᵒᵖ) (SequentSemicategory CategorySort lzero)
+                     → Semifunctor (OperationSemicategory ᵒᵖ) (SequentSemicategory CategoryDSV lzero)
 OperationSemifunctor = 
   record
     { onObjects = onObjects
@@ -230,7 +311,7 @@ OperationSemifunctor =
         ; preservesComposition = record
             { preserves-composition = preservesComposition } } }
   where
-    onObjects : (o : Operation) → Sequent CategorySort lzero
+    onObjects : (o : Operation) → Sequent CategoryDSV lzero
     onObjects Id-intro = idSequent
     onObjects T-intro = tSequent
     onObjects THom-eq = tEqSequent
