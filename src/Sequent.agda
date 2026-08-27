@@ -49,9 +49,7 @@ record SequentMorphism
   : Type (o ⊔ a ⊔ lsuc i₁ ⊔ lsuc i₂) where
   constructor mkSequentMorphism
   field
-    sequentMorphism : ContextMorphism
-                        (Sequent.context s₁ ⋊ Sequent.extensionOrCollapse s₁)
-                        (Sequent.context s₂ ⋊ Sequent.extensionOrCollapse s₂)
+    sequentMorphism : ContextMorphism (extendedContext s₁) (extendedContext s₂)
 open SequentMorphism
 
 module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : DependentSortVocabulary {o} {a}} where
@@ -59,7 +57,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
   instance
     appliableSequentMorphism : ∀ {i₁ i₂} {s₁ : Sequent 𝒥 i₁} {s₂ : Sequent 𝒥 i₂}
                              → Appliable (SequentMorphism s₁ s₂) (type (Judgment 𝒥))
-                                 (λ _ j → ⌞ (Sequent.context s₁ ⋊ Sequent.extensionOrCollapse s₁) ⟨ j ⟩ ⌟ → ⌞ (Sequent.context s₂ ⋊ Sequent.extensionOrCollapse s₂) ⟨ j ⟩ ⌟)
+                                 (λ _ j → ⌞ (extendedContext s₁) ⟨ j ⟩ ⌟ → ⌞ (extendedContext s₂) ⟨ j ⟩ ⌟)
     appliableSequentMorphism = record { function = ContextMorphism.component ∘ sequentMorphism }
 
     composableSequentMorphism : Composable _ (Sequent 𝒥) SequentMorphism
@@ -84,3 +82,46 @@ SequentSemicategory : ⦃ _ : FunExt ⦄
                     → {o a : Level} (𝒥 : DependentSortVocabulary {o} {a}) (i : Level)
                     → Semicategory (o ⊔ a ⊔ lsuc i) (o ⊔ a ⊔ lsuc i)
 SequentSemicategory 𝒥 i = asSemicategory (Sequent 𝒥) SequentMorphism i
+
+
+-- =================== Sequent equivalences ===================
+
+record SequentEquivalence
+  ⦃ _ : FunExt ⦄
+  ⦃ _ : AllSetQuotients ⦄
+  {o a i₁ i₂ : Level}
+  {𝒥 : DependentSortVocabulary {o} {a}}
+  (s₁ : Sequent 𝒥 i₁)
+  (s₂ : Sequent 𝒥 i₂)
+  : Type (o ⊔ a ⊔ lsuc i₁ ⊔ lsuc i₂) where
+  constructor mkSequentEquivalence
+  field
+    sequentEquivalence : ContextEquivalence (extendedContext s₁) (extendedContext s₂)
+open SequentEquivalence
+
+
+module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : DependentSortVocabulary {o} {a}} where
+
+  toSequentMorphism : ∀ {i₁ i₂} {s₁ : Sequent 𝒥 i₁} {s₂ : Sequent 𝒥 i₂}
+                    → SequentEquivalence s₁ s₂ → SequentMorphism s₁ s₂
+  toSequentMorphism = mkSequentMorphism ∘ ContextEquivalence.morphism ∘ sequentEquivalence
+
+  instance
+    appliableSequentEquivalence : ∀ {i₁ i₂} {s₁ : Sequent 𝒥 i₁} {s₂ : Sequent 𝒥 i₂}
+                                → Appliable (SequentEquivalence s₁ s₂) (type (Judgment 𝒥))
+                                    (λ _ j → ⌞ (extendedContext s₁) ⟨ j ⟩ ⌟ → ⌞ (extendedContext s₂) ⟨ j ⟩ ⌟)
+    appliableSequentEquivalence = record { function = ContextMorphism.component ∘ ContextEquivalence.morphism ∘ sequentEquivalence }
+
+    composableSequentEquivalence : Composable _ (Sequent 𝒥) SequentEquivalence
+    composableSequentEquivalence =
+      record
+        { composition = λ e₁ e₂ → record
+          { sequentEquivalence = sequentEquivalence e₁ ⨾ sequentEquivalence e₂ } }
+
+    associativeCompositionSequentEquivalence : AssociativeComposition (SequentEquivalence { 𝒥 = 𝒥 }) (λ _ _ → _＝_)
+    associativeCompositionSequentEquivalence =
+      record
+        { ⨾-associative = λ {f = f} {g = g} {h = h} → ap mkSequentEquivalence
+          (⨾-associative { f = sequentEquivalence f }
+                         { g = sequentEquivalence g }
+                         { h = sequentEquivalence h }) }

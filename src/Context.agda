@@ -4,6 +4,7 @@ open import Prelude
 open import Axioms
 open import Homotopy.Equality
 open import Homotopy.Equality.StructureIdentity
+open import Homotopy.Fibre
 open import Foundation.DependentFunction.Equivalence
 open import Foundation.DependentPair.Equivalence
 open import Homotopy.Levels
@@ -303,6 +304,33 @@ record ContextEquivalence
 instance
   sameyContext : ∀ {o a} {𝒥 : DependentSortVocabulary {o} {a}} → Samey Level (Context 𝒥)
   sameyContext = record { samey = ContextEquivalence }
+
+module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary {o} {a}} where
+
+  eqContextEquivalence : {i j : Level} {Γ : Context 𝒥 i} {Δ : Context 𝒥 j}
+                         (e₀ e₁ : ContextEquivalence Γ Δ)
+                       → ContextEquivalence.morphism e₀ ＝ ContextEquivalence.morphism e₁
+                       → e₀ ＝ e₁
+  eqContextEquivalence (mkContextEquivalence α w) (mkContextEquivalence _ w') refl =
+    ap (mkContextEquivalence α) (allEqual w w')
+
+  instance
+    appliableContextEquivalence : ∀ {i j} {Γ : Context 𝒥 i} {Δ : Context 𝒥 j}
+                                → Appliable (ContextEquivalence Γ Δ) (type (Judgment 𝒥)) (λ _ j → ⌞ Γ ⟨ j ⟩ ⌟ → ⌞ Δ ⟨ j ⟩ ⌟)
+    appliableContextEquivalence = record { function = ContextMorphism.component ∘ ContextEquivalence.morphism }
+
+    composableContextEquivalence : Composable _ (Context 𝒥) ContextEquivalence
+    composableContextEquivalence =
+      record
+        { composition = λ e₀ e₁ → record
+            { morphism = ContextEquivalence.morphism e₀ ⨾ ContextEquivalence.morphism e₁
+            ; component-isEquivalence = λ j →
+                ≃→isEquivalence (  isEquivalence→≃ (ContextEquivalence.component-isEquivalence e₀ j)
+                                ⨾  isEquivalence→≃ (ContextEquivalence.component-isEquivalence e₁ j)) } }
+
+    associativeCompositionContextEquivalence : AssociativeComposition (ContextEquivalence { 𝒥 = 𝒥 }) (λ _ _ → _＝_)
+    associativeCompositionContextEquivalence =
+      record { ⨾-associative = eqContextEquivalence _ _ (eq (record { component≈ = identity })) }
 
 
 -- ============== Yoneda contexts ==============

@@ -1,5 +1,25 @@
 {
   "nodes": {
+    "agda-mcp": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1787767657,
+        "narHash": "sha256-vEPw6VKKgDTr1ibiSXtNIhPdMxlhJO4ATTntvuj69IE=",
+        "ref": "refs/heads/main",
+        "rev": "e1ab333f1065dfd9f1e51c12c7428382159f35e7",
+        "revCount": 12,
+        "type": "git",
+        "url": "file:///home/elisabeth/Repos/agda-mcp"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:///home/elisabeth/Repos/agda-mcp"
+      }
+    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
@@ -54,6 +74,7 @@
     },
     "root": {
       "inputs": {
+        "agda-mcp": "agda-mcp",
         "flake-utils": "flake-utils",
         "nixpkgs": [
           "unilib",
@@ -98,11 +119,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1786864730,
-        "narHash": "sha256-gtdMJWH3hE7eFuUL6urClC56A4ECQqgSfH+/QOIMjZU=",
+        "lastModified": 1787679681,
+        "narHash": "sha256-eBQbCXhwa/QJ0zVMOfQ8b6vzo0n9kHRZA+jwEtDln7k=",
         "ref": "elli",
-        "rev": "93284fd3129c1829d1789d2247279a03bf236c4d",
-        "revCount": 284,
+        "rev": "696a20fe9fcff48c34861f9938f11e12f4c81223",
+        "revCount": 292,
         "type": "git",
         "url": "ssh://git@git.app.uib.no/Hakon.Gylterud/unilib.git"
       },
