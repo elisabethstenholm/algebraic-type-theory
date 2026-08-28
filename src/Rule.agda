@@ -23,7 +23,7 @@ record Rule
   ⦃ _ : FunExt ⦄
   ⦃ _ : AllSetQuotients ⦄
   {o a : Level}
-  (𝒥 : DependentSortVocabulary {o} {a})
+  (𝒥 : DependentSortVocabulary o a)
   (so sa i : Level)
   : Type (o ⊔ a ⊔ lsuc so ⊔ lsuc sa ⊔ lsuc i) where
   constructor mkRule
@@ -32,9 +32,9 @@ record Rule
 open Rule
 
 ruleWithEmptyPremises : ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
-                      → {o a so sa : Level} (𝒥 : DependentSortVocabulary {o} {a}) (i : Level)
+                      → {o a so sa i : Level} {𝒥 : DependentSortVocabulary o a}
                       → Sequent 𝒥 i → Rule 𝒥 so sa i
-ruleWithEmptyPremises {so = so} {sa = sa} 𝒥 i s =
+ruleWithEmptyPremises {so = so} {sa = sa} {i = i} {𝒥} s =
   record
     { rule = record
       { head = s
@@ -45,7 +45,7 @@ ruleWithEmptyPremises {so = so} {sa = sa} 𝒥 i s =
 
 
 module ExtendedSequentStructure ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
-  {o a so sa i : Level} {𝒥 : DependentSortVocabulary {o} {a}}
+  {o a so sa i : Level} {𝒥 : DependentSortVocabulary o a}
   (e : Rule 𝒥 so sa i) where
 
   𝒟 = SequentStructure.dependency (sequentStructure (rule e))
@@ -140,13 +140,14 @@ module ExtendedSequentStructure ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
       ; sequent = sequent }
 
 extendSequentStructure : ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
-                       → {o a so sa i : Level} {𝒥 : DependentSortVocabulary {o} {a}}
+                       → {o a so sa i : Level} {𝒥 : DependentSortVocabulary o a}
                        → Rule 𝒥 so sa i
                        → SequentStructure 𝒥 so sa i
 extendSequentStructure e = ExtendedSequentStructure.extended e
 
+infix 20 ⋊ₛ_
 ⋊ₛ_ : ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
-    → {o a so sa i : Level} {𝒥 : DependentSortVocabulary {o} {a}}
+    → {o a so sa i : Level} {𝒥 : DependentSortVocabulary o a}
     → Rule 𝒥 so sa i
     → SequentStructure 𝒥 so sa i
 ⋊ₛ_ = extendSequentStructure

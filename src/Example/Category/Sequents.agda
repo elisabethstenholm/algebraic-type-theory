@@ -1,4 +1,4 @@
-module Example.Category where
+module Example.Category.Sequents where
 
 open import Prelude
 open import Axioms
@@ -11,7 +11,6 @@ import Structure.Accessible as Accessible
 open Accessible using (Accessible)
 open import Algebra.Wild.Semi
 open Semicategory
-open import Data.Bool
 open import Homotopy.StructuredType
 
 open import DependentSortVocabulary hiding (Judgment; JudgmentDependency)
@@ -20,115 +19,35 @@ open import Sequent
 open Sequent.Sequent
 open import SequentStructure
 
--- The dependent sort vocabulary for categories is the semicategory given by
---
---    sc
---   <--
--- Ob   Hom
---   <--
---    tg
-
-
-data Judgment : Type lzero where
-  Ob  : Judgment
-  Hom : Judgment
-
-data JudgmentDependency : (j j' : Judgment) → Type lzero where
-  Hom-sc : JudgmentDependency Hom Ob
-  Hom-tg : JudgmentDependency Hom Ob
-
-instance
-  composableJudgment : Composable 𝟙 (λ _ → Judgment) JudgmentDependency
-  Composable.composition composableJudgment Hom-sc ()
-  Composable.composition composableJudgment Hom-tg ()
-
-  associativeCompositionJudgment : AssociativeComposition JudgmentDependency (λ _ _ → _＝_)
-  AssociativeComposition.⨾-associative associativeCompositionJudgment {f = Hom-sc} {g = ()} {h = h}
-  AssociativeComposition.⨾-associative associativeCompositionJudgment {f = Hom-tg} {g = ()} {h = h}
-
-  semicategoricalJudgment : Semicategorical 𝟙 (λ _ → Judgment) JudgmentDependency (λ _ _ → _＝_)
-  semicategoricalJudgment = record {}
-
-CategorySort : Semicategory lzero lzero
-CategorySort = asSemicategory (λ _ → Judgment) JudgmentDependency ★
-
-accessibleOb : Accessible 𝟙 (λ _ → Judgment) (λ x y → JudgmentDependency y x) Ob
-accessibleOb = Accessible.accessible λ { Ob () ; Hom () }
-
-accessibleHom : Accessible 𝟙 (λ _ → Judgment) (λ x y → JudgmentDependency y x) Hom
-accessibleHom = Accessible.accessible λ { Ob Hom-sc → accessibleOb ; Ob Hom-tg → accessibleOb ; Hom () }
-
-accessible : (x : Judgment) → Accessible 𝟙 (λ _ → Judgment) (λ x y → JudgmentDependency y x) x
-accessible Ob = accessibleOb
-accessible Hom = accessibleHom
-
-instance
-  wellfoundedCategory : Wellfounded 𝟙 (λ _ → Judgment) (λ x y → JudgmentDependency y x)
-  wellfoundedCategory = Wellfounded.wellfounded accessible
-
-judgment-isSet : isSet Judgment
-judgment-isSet = retract-level toBool fromBool retract Bool-isSet
-  where
-    toBool : Judgment → Bool {lzero}
-    toBool Ob  = true
-    toBool Hom = false
-
-    fromBool : Bool {lzero} → Judgment
-    fromBool true  = Ob
-    fromBool false = Hom
-
-    retract : fromBool ∘ toBool ~ id
-    retract Ob  = refl
-    retract Hom = refl
-
-judgmentDependency-isSet : {j j' : Judgment} → isSet (JudgmentDependency j j')
-judgmentDependency-isSet {Ob}  {_}   = retract-level (λ ()) (λ ()) (λ ()) (𝟘-isLevel {lzero})
-judgmentDependency-isSet {Hom} {Hom} = retract-level (λ ()) (λ ()) (λ ()) (𝟘-isLevel {lzero})
-judgmentDependency-isSet {Hom} {Ob}  = retract-level toBool fromBool retract Bool-isSet
-  where
-    toBool : JudgmentDependency Hom Ob → Bool {lzero}
-    toBool Hom-sc = true
-    toBool Hom-tg = false
-
-    fromBool : Bool {lzero} → JudgmentDependency Hom Ob
-    fromBool true  = Hom-sc
-    fromBool false = Hom-tg
-
-    retract : fromBool ∘ toBool ~ id
-    retract Hom-sc = refl
-    retract Hom-tg = refl
-
-CategoryDSV : DependentSortVocabulary
-CategoryDSV =
-  record
-    { semicategory = CategorySort
-    ; judgmentForms-isSet = judgment-isSet
-    ; judgmentDependencies-isSet = judgmentDependency-isSet }
-
+open import Example.Category.DependentSortVocabulary
 
 -- Sequents
 
+-- =============== Identity homomorphism intro ===============
 -- x : Ob ⊢ id : Hom x x
-data id-onObjects : Judgment → Type lzero where
-  x : id-onObjects Ob
 
-id-onObjects-isSet : (j : Judgment) → isSet (id-onObjects j)
-id-onObjects-isSet Ob  = retract-level (λ _ → ★) (λ _ → x) (λ { x → refl }) (𝟙-isLevel {lzero})
-id-onObjects-isSet Hom = retract-level (λ ()) (λ ()) (λ ()) (𝟘-isLevel {lzero})
+data id-onObjects-Type : Judgment → Type lzero where
+  x : id-onObjects-Type Ob
 
-id-entries : Judgment → hSet lzero
-id-entries j = id-onObjects j has-level id-onObjects-isSet j
+id-onObjects-isSet : (j : Judgment) → isSet (id-onObjects-Type j)
+id-onObjects-isSet j = ofLevel (λ x y → fromAllEqual (allEq x y))
+  where
+    allEq : (y z : id-onObjects-Type j) (p q : y ＝ z) → p ＝ q
+    allEq x x refl refl = refl
+
+id-onObjects : Judgment → hSet lzero
+id-onObjects j = id-onObjects-Type j has-level id-onObjects-isSet j
 
 idSequent : ⦃ _ : FunExt ⦄ → Sequent CategoryDSV lzero
 context idSequent =
   record
     { semifunctor = record
-      { onObjects = id-entries
+      { onObjects = id-onObjects
       ; semifunctorial = record
           { mappable = record { map = onMorphisms }
           ; preservesComposition = record { preserves-composition = preservesComposition } } } }
   where
-    onMorphisms : ∀ {j j'} → JudgmentDependency j j' → id-onObjects j → id-onObjects j'
+    onMorphisms : ∀ {j j'} → JudgmentDependency j j' → ⌞ id-onObjects j ⌟ → ⌞ id-onObjects j' ⌟
     onMorphisms () x
 
     preservesComposition~ : ∀ {j j' j''} (f : JudgmentDependency j j') (g : JudgmentDependency j' j'')
@@ -145,7 +64,7 @@ extensionOrCollapse idSequent = extend
       { component = component
       ; natural = natural } }
   where
-    component : (j : Judgment) → JudgmentDependency Hom j → id-onObjects j
+    component : (j : Judgment) → JudgmentDependency Hom j → ⌞ id-onObjects j ⌟
     component Ob Hom-sc = x
     component Ob Hom-tg = x
 
@@ -158,7 +77,10 @@ extensionOrCollapse idSequent = extend
             → context idSequent ⟨ d ⟩ ∘ component j ＝ component j' ∘ 𝒴 {𝒥 = CategoryDSV} Hom ⟨ d ⟩
     natural = funExt ∘ natural~
 
+
+-- =================== Terminal object intro ===================
 -- ⊢ t : Ob
+
 tSequent : ⦃ _ : FunExt ⦄ → Sequent CategoryDSV lzero
 context tSequent = emptyContext CategoryDSV lzero
 extensionOrCollapse tSequent = extend
@@ -168,54 +90,39 @@ extensionOrCollapse tSequent = extend
         { component = λ j ()
         ; natural = λ f → refl } }
 
+
+
+-- ===================== Equality of homomorphisms into terminal object =================
 -- x : Ob, f g : Hom x t ⊢ f = g
-data tEq-onObjects : Judgment → Type lzero where
-  x : tEq-onObjects Ob
-  t : tEq-onObjects Ob
-  f : tEq-onObjects Hom
-  g : tEq-onObjects Hom
 
-tEq-onObjects-isSet : (j : Judgment) → isSet (tEq-onObjects j)
-tEq-onObjects-isSet Ob = retract-level toBool fromBool retract Bool-isSet
+data tEq-onObjects-Type : Judgment → Type lzero where
+  x : tEq-onObjects-Type Ob
+  t : tEq-onObjects-Type Ob
+  f : tEq-onObjects-Type Hom
+  g : tEq-onObjects-Type Hom
+
+tEq-onObjects-isSet : (j : Judgment) → isSet (tEq-onObjects-Type j)
+tEq-onObjects-isSet j = ofLevel (λ y z → fromAllEqual (allEq y z))
   where
-    toBool : tEq-onObjects Ob → Bool {lzero}
-    toBool x = true
-    toBool t = false
+    allEq : (y z : tEq-onObjects-Type j) (p q : y ＝ z) → p ＝ q
+    allEq x x refl refl = refl
+    allEq t t refl refl = refl
+    allEq f f refl refl = refl
+    allEq g g refl refl = refl
 
-    fromBool : Bool {lzero} → tEq-onObjects Ob
-    fromBool true  = x
-    fromBool false = t
-
-    retract : fromBool ∘ toBool ~ id
-    retract x = refl
-    retract t = refl
-tEq-onObjects-isSet Hom = retract-level toBool fromBool retract Bool-isSet
-  where
-    toBool : tEq-onObjects Hom → Bool {lzero}
-    toBool f = true
-    toBool g = false
-
-    fromBool : Bool {lzero} → tEq-onObjects Hom
-    fromBool true  = f
-    fromBool false = g
-
-    retract : fromBool ∘ toBool ~ id
-    retract f = refl
-    retract g = refl
-
-tEq-entries : Judgment → hSet lzero
-tEq-entries j = tEq-onObjects j has-level tEq-onObjects-isSet j
+tEq-onObjects : Judgment → hSet lzero
+tEq-onObjects j = tEq-onObjects-Type j has-level tEq-onObjects-isSet j
 
 tEqSequent : ⦃ _ : FunExt ⦄ → Sequent CategoryDSV lzero
 context tEqSequent =
   record
     { semifunctor = record
-      { onObjects = tEq-entries
+      { onObjects = tEq-onObjects
       ; semifunctorial = record
           { mappable = record { map = onMorphisms }
           ; preservesComposition = record { preserves-composition = preservesComposition } } } }
   where
-    onMorphisms : ∀ {j j'} → JudgmentDependency j j' → tEq-onObjects j → tEq-onObjects j'
+    onMorphisms : ∀ {j j'} → JudgmentDependency j j' → ⌞ tEq-onObjects j ⌟ → ⌞ tEq-onObjects j' ⌟
     onMorphisms Hom-sc f = x
     onMorphisms Hom-tg f = t
     onMorphisms Hom-sc g = x
@@ -238,7 +145,7 @@ extensionOrCollapse tEqSequent = collapse
   where
     component : (j : Judgment)
               → JudgmentDependency Hom j + ((j ＝ Hom) + (j ＝ Hom))
-              → tEq-onObjects j
+              → ⌞ tEq-onObjects j ⌟
     component Ob (inl Hom-sc) = x
     component Ob (inl Hom-tg) = t
     component Ob (inr (inl ()))
@@ -265,7 +172,7 @@ tSequent⇒tEqSequent =
       where
         component : (j : Judgment)
                   → ⌞ (context tSequent ⋊ extensionOrCollapse tSequent) ⟨ j ⟩ ⌟
-                  → tEq-onObjects j
+                  → ⌞ tEq-onObjects j ⌟
         component Ob (inr refl) = t
 
         natural : {j₀ j₁ : Judgment} → (d : JudgmentDependency j₀ j₁)
@@ -276,7 +183,8 @@ tSequent⇒tEqSequent =
         natural Hom-tg (inl ())
         natural Hom-tg (inr ())
 
--- Sequent structure
+
+-- =================== The full sequent structure ==================
 
 data Operation : Type lzero where
   Id-intro : Operation
@@ -322,4 +230,5 @@ OperationSemifunctor =
     preservesComposition : {o₀ o₁ o₂ : Operation} (d₀ : OperationDependency o₁ o₀) (d₁ : OperationDependency o₂ o₁)
                          → onMorphisms (d₀ ∙ d₁) ＝ onMorphisms d₁ ∙ onMorphisms d₀
     preservesComposition THom-eq-tg ()
+
 

@@ -5,6 +5,7 @@ open import Axioms
 open import Homotopy.SetQuotient
 open import Structure.Associativity
 open import Structure.Composable
+open import Structure.Identity
 open import Structure.Reasoning
 open import Homotopy.StructuredType
 open import Algebra.Wild.Semi
@@ -18,7 +19,7 @@ open import Context
 record Sequent
   ⦃ _ : FunExt ⦄
   {o a : Level}
-  (𝒥 : DependentSortVocabulary {o} {a})
+  (𝒥 : DependentSortVocabulary o a)
   (i : Level)
   : Type (o ⊔ a ⊔ lsuc i) where
   constructor mkSequent
@@ -27,10 +28,13 @@ record Sequent
     extensionOrCollapse : ExtensionOrCollapse context
 
 module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
-  {o a i : Level} {𝒥 : DependentSortVocabulary {o} {a}} where
+  {o a i : Level} {𝒥 : DependentSortVocabulary o a} where
 
   extendedContext : Sequent 𝒥 i → Context 𝒥 (o ⊔ i)
   extendedContext s = Sequent.context s ⋊ Sequent.extensionOrCollapse s
+
+  ⋊ₑₛ : Sequent 𝒥 i → Context 𝒥 (o ⊔ i)
+  ⋊ₑₛ = extendedContext
 
   →⋊ : (s : Sequent 𝒥 i) → Sequent.context s ⇒ extendedContext s
   →⋊ (mkSequent context (extend x)) = ι
@@ -43,7 +47,7 @@ record SequentMorphism
   ⦃ _ : FunExt ⦄
   ⦃ _ : AllSetQuotients ⦄
   {o a i₁ i₂ : Level}
-  {𝒥 : DependentSortVocabulary {o} {a}}
+  {𝒥 : DependentSortVocabulary o a}
   (s₁ : Sequent 𝒥 i₁)
   (s₂ : Sequent 𝒥 i₂)
   : Type (o ⊔ a ⊔ lsuc i₁ ⊔ lsuc i₂) where
@@ -52,7 +56,7 @@ record SequentMorphism
     sequentMorphism : ContextMorphism (extendedContext s₁) (extendedContext s₂)
 open SequentMorphism
 
-module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : DependentSortVocabulary {o} {a}} where
+module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a} where
 
   instance
     appliableSequentMorphism : ∀ {i₁ i₂} {s₁ : Sequent 𝒥 i₁} {s₂ : Sequent 𝒥 i₂}
@@ -79,7 +83,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
 
 SequentSemicategory : ⦃ _ : FunExt ⦄
                     → ⦃ _ : AllSetQuotients ⦄
-                    → {o a : Level} (𝒥 : DependentSortVocabulary {o} {a}) (i : Level)
+                    → {o a : Level} (𝒥 : DependentSortVocabulary o a) (i : Level)
                     → Semicategory (o ⊔ a ⊔ lsuc i) (o ⊔ a ⊔ lsuc i)
 SequentSemicategory 𝒥 i = asSemicategory (Sequent 𝒥) SequentMorphism i
 
@@ -90,7 +94,7 @@ record SequentEquivalence
   ⦃ _ : FunExt ⦄
   ⦃ _ : AllSetQuotients ⦄
   {o a i₁ i₂ : Level}
-  {𝒥 : DependentSortVocabulary {o} {a}}
+  {𝒥 : DependentSortVocabulary o a}
   (s₁ : Sequent 𝒥 i₁)
   (s₂ : Sequent 𝒥 i₂)
   : Type (o ⊔ a ⊔ lsuc i₁ ⊔ lsuc i₂) where
@@ -100,7 +104,7 @@ record SequentEquivalence
 open SequentEquivalence
 
 
-module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : DependentSortVocabulary {o} {a}} where
+module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a} where
 
   toSequentMorphism : ∀ {i₁ i₂} {s₁ : Sequent 𝒥 i₁} {s₂ : Sequent 𝒥 i₂}
                     → SequentEquivalence s₁ s₂ → SequentMorphism s₁ s₂
@@ -125,3 +129,6 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
           (⨾-associative { f = sequentEquivalence f }
                          { g = sequentEquivalence g }
                          { h = sequentEquivalence h }) }
+
+    identitySequentEquivalence : Identity _ (Sequent 𝒥) SequentEquivalence
+    identitySequentEquivalence = record { identity = record { sequentEquivalence = identity } }

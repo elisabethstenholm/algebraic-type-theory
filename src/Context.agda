@@ -21,7 +21,7 @@ open import Structure.Whiskerable
 open import Algebra.Wild.Semi
 open import Algebra.Wild.TruncatedTypeSemicategory
 open import Homotopy.SetQuotient
-open import Syntax.Arrowable public using ( Arrowable ; _⇒_ )
+open import Syntax.Arrowable
 
 open import DependentSortVocabulary
 
@@ -30,14 +30,14 @@ open import DependentSortVocabulary
 
 record Context
   {o a : Level}
-  (𝒥 : DependentSortVocabulary {o} {a})
+  (𝒥 : DependentSortVocabulary o a)
   (i : Level)
   : Type (o ⊔ a ⊔ lsuc i) where
   constructor mkContext
   field
     semifunctor : Semifunctor (semicategory 𝒥) (hSet-Semicategory i)
 
-module _ {o a i : Level} {𝒥 : DependentSortVocabulary {o} {a}} where
+module _ {o a i : Level} {𝒥 : DependentSortVocabulary o a} where
 
   instance
     appliableOnObjectsContext : Appliable (Context 𝒥 i) (type (Judgment 𝒥)) (λ _ _ → hSet i)
@@ -46,7 +46,7 @@ module _ {o a i : Level} {𝒥 : DependentSortVocabulary {o} {a}} where
     appliableOnMorphismsContext : {j₀ j₁ : type (Judgment 𝒥)} → Appliable (Context 𝒥 i) (type (JudgmentDependency 𝒥 j₀ j₁)) (λ Γ _ → ⌞ Γ ⟨ j₀ ⟩ ⌟ → ⌞ Γ ⟨ j₁ ⟩ ⌟)
     appliableOnMorphismsContext = record { function = λ Γ f → Context.semifunctor Γ ⟨ f ⟩ }
 
-emptyContext : {o a : Level} (𝒥 : DependentSortVocabulary {o} {a}) (i : Level) → Context 𝒥 i
+emptyContext : {o a : Level} (𝒥 : DependentSortVocabulary o a) (i : Level) → Context 𝒥 i
 emptyContext 𝒥 i =
   record
     { semifunctor = record
@@ -55,7 +55,7 @@ emptyContext 𝒥 i =
           { mappable = record { map = λ f () }
           ; preservesComposition = record { preserves-composition = λ f g → refl } } } }
 
-module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary {o} {a}} where
+module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a} where
 
   sumContext : {i j : Level} → Context 𝒥 i → Context 𝒥 j → Context 𝒥 (i ⊔ j)
   sumContext {i} {j} Γ Δ =
@@ -100,7 +100,7 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary {o} {a
 
 record ContextMorphism
   {o a i j : Level}
-  {𝒥 : DependentSortVocabulary {o} {a}}
+  {𝒥 : DependentSortVocabulary o a}
   (Γ : Context 𝒥 i)
   (Δ : Context 𝒥 j)
   : Type (o ⊔ a ⊔ i ⊔ j) where
@@ -111,7 +111,7 @@ record ContextMorphism
             → Δ ⟨ f ⟩ ∘ component j₀ ＝ component j₁ ∘ Γ ⟨ f ⟩
 
 ContextMorphism≃Σ :
-    ∀ {o a i j} {𝒥 : DependentSortVocabulary {o} {a}} {Γ : Context 𝒥 i} {Δ : Context 𝒥 j}
+    ∀ {o a i j} {𝒥 : DependentSortVocabulary o a} {Γ : Context 𝒥 i} {Δ : Context 𝒥 j}
   → ContextMorphism Γ Δ
     ≃ ∑[ ϵ ∶ ((j : type (Judgment 𝒥)) → ⌞ Γ ⟨ j ⟩ ⌟ → ⌞ Δ ⟨ j ⟩ ⌟) ]
         ({j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁)) → Δ ⟨ f ⟩ ∘ ϵ j₀ ＝ ϵ j₁ ∘ Γ ⟨ f ⟩)
@@ -126,7 +126,7 @@ ContextMorphism≃Σ .retraction .isRetraction _ = refl
 
 instance
   ContextMorphism-isStructuredMap :
-    ∀ {o a i j} {𝒥 : DependentSortVocabulary {o} {a}} {Γ : Context 𝒥 i} {Δ : Context 𝒥 j}
+    ∀ {o a i j} {𝒥 : DependentSortVocabulary o a} {Γ : Context 𝒥 i} {Δ : Context 𝒥 j}
     → StructuredMap (ContextMorphism Γ Δ)
   ContextMorphism-isStructuredMap {o = o}
     .StructuredMap.iₗ = o
@@ -144,13 +144,13 @@ instance
     .StructuredMap.structured = ContextMorphism≃Σ
 
 instance
-  arrowableContext : ∀ {o a} {𝒥 : DependentSortVocabulary {o} {a}}
+  arrowableContext : ∀ {o a} {𝒥 : DependentSortVocabulary o a}
                    → Arrowable Level Level (Context 𝒥) (λ i → Type i) (λ i j → o ⊔ a ⊔ i ⊔ j)
   arrowableContext {𝒥 = 𝒥} = record { arrow = ContextMorphism {𝒥 = 𝒥} }
 
 record ContextMorphismEquality
   {o a i j :  Level}
-  {𝒥 : DependentSortVocabulary {o} {a}}
+  {𝒥 : DependentSortVocabulary o a}
   {Γ : Context 𝒥 i} {Δ : Context 𝒥 j}
   (α β : Γ ⇒ Δ)
   : Type (o ⊔ a ⊔ i ⊔ j) where
@@ -161,7 +161,7 @@ open ContextMorphismEquality
 
 -- Characterisation of the identity type on context morphisms
 
-module _ {o a i j} {𝒥 : DependentSortVocabulary {o} {a}} {Γ : Context 𝒥 i} {Δ : Context 𝒥 j} where
+module _ {o a i j} {𝒥 : DependentSortVocabulary o a} {Γ : Context 𝒥 i} {Δ : Context 𝒥 j} where
 
   private
     Component : Type (o ⊔ i ⊔ j)
@@ -228,7 +228,7 @@ module _ {o a i j} {𝒥 : DependentSortVocabulary {o} {a}} {Γ : Context 𝒥 i
       equalityContextMorphism : Equality 𝟙₀ (λ _ → Γ ⇒ Δ)
       equalityContextMorphism = record { characterisation = characterisation~ }
 
-module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary {o} {a}} where
+module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a} where
 
   instance
     appliableContextMorphism : ∀ {i j} {Γ : Context 𝒥 i} {Δ : Context 𝒥 j}
@@ -292,7 +292,7 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary {o} {a
 
 record ContextEquivalence
   {o a i j : Level}
-  {𝒥 : DependentSortVocabulary {o} {a}}
+  {𝒥 : DependentSortVocabulary o a}
   (Γ : Context 𝒥 i)
   (Δ : Context 𝒥 j)
   : Type (o ⊔ a ⊔ i ⊔ j) where
@@ -302,10 +302,10 @@ record ContextEquivalence
     component-isEquivalence : (j : type (Judgment 𝒥)) → isEquivalence (ContextMorphism.component morphism j)
 
 instance
-  sameyContext : ∀ {o a} {𝒥 : DependentSortVocabulary {o} {a}} → Samey Level (Context 𝒥)
+  sameyContext : ∀ {o a} {𝒥 : DependentSortVocabulary o a} → Samey Level (Context 𝒥)
   sameyContext = record { samey = ContextEquivalence }
 
-module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary {o} {a}} where
+module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a} where
 
   eqContextEquivalence : {i j : Level} {Γ : Context 𝒥 i} {Δ : Context 𝒥 j}
                          (e₀ e₁ : ContextEquivalence Γ Δ)
@@ -332,10 +332,17 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary {o} {a
     associativeCompositionContextEquivalence =
       record { ⨾-associative = eqContextEquivalence _ _ (eq (record { component≈ = identity })) }
 
+    identityContextEquivalence : Identity _ (Context 𝒥) ContextEquivalence
+    identityContextEquivalence =
+      record
+        { identity = record
+            { morphism = identity
+            ; component-isEquivalence = λ j → id→isEquivalence } }
+
 
 -- ============== Yoneda contexts ==============
 
-𝒴 : ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary {o} {a}}
+𝒴 : ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a}
   → (j : type (Judgment 𝒥)) → Context 𝒥 a
 𝒴 {𝒥 = 𝒥} j =
   record { semifunctor = record
@@ -347,7 +354,7 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary {o} {a
   where
   open Semicategory.Reasoning (semicategory 𝒥)
 
-𝒴⁺⁺ : ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary {o} {a}}
+𝒴⁺⁺ : ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a}
     → (j : type (Judgment 𝒥)) → Context 𝒥 (o ⊔ a)
 𝒴⁺⁺ {o} {a} {𝒥} j =
   record { semifunctor = record
@@ -385,7 +392,7 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary {o} {a
 record Extension
   ⦃ _ : FunExt ⦄
   {o a i : Level}
-  {𝒥 : DependentSortVocabulary {o} {a}}
+  {𝒥 : DependentSortVocabulary o a}
  
   (Γ : Context 𝒥 i)
   : Type (o ⊔ a ⊔ i) where
@@ -397,7 +404,7 @@ record Extension
 record Collapse
   ⦃ _ : FunExt ⦄
   {o a i : Level}
-  {𝒥 : DependentSortVocabulary {o} {a}}
+  {𝒥 : DependentSortVocabulary o a}
  
   (Γ : Context 𝒥 i)
   : Type (o ⊔ a ⊔ i) where
@@ -409,7 +416,7 @@ record Collapse
 data ExtensionOrCollapse
   ⦃ _ : FunExt ⦄
   {o a i : Level}
-  {𝒥 : DependentSortVocabulary {o} {a}}
+  {𝒥 : DependentSortVocabulary o a}
  
   (Γ : Context 𝒥 i)
   : Type (o ⊔ a ⊔ i) where
@@ -418,7 +425,7 @@ data ExtensionOrCollapse
 
 module _ ⦃ _ : FunExt ⦄
   {o a i j : Level}
-  {𝒥 : DependentSortVocabulary {o} {a}}
+  {𝒥 : DependentSortVocabulary o a}
   {Γ : Context 𝒥 i} {Δ : Context 𝒥 j}
   (α : Γ ⇒ Δ) where
 
@@ -436,7 +443,7 @@ module _ ⦃ _ : FunExt ⦄
 
 infix 20 _⋊ₑ_
 _⋊ₑ_ : ⦃ _ : FunExt ⦄
-    → {o a i : Level} {𝒥 : DependentSortVocabulary {o} {a}}
+    → {o a i : Level} {𝒥 : DependentSortVocabulary o a}
     → (Γ : Context 𝒥 i) → Extension Γ → Context 𝒥 (o ⊔ i)
 _⋊ₑ_ {o} {a} {i} {𝒥} Γ ext =
   record { semifunctor = record
@@ -467,14 +474,14 @@ _⋊ₑ_ {o} {a} {i} {𝒥} Γ ext =
     preservesComposition~ f g (inr refl) = ap (λ h → inl (h f)) (sym (ContextMorphism.natural (Extension.arguments ext) g))
 
 ι : ⦃ _ : FunExt ⦄
-  → {o a i : Level} {𝒥 : DependentSortVocabulary {o} {a}}
+  → {o a i : Level} {𝒥 : DependentSortVocabulary o a}
   → {Γ : Context 𝒥 i} {ϵ : Extension Γ}
   → Γ ⇒ Γ ⋊ₑ ϵ
 ι = record
       { component = λ j → inl
       ; natural = identity }
 
-module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary {o} {a}} where
+module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a} where
 
   YonedaExtension : (j : type (Judgment 𝒥)) → Extension (𝒴 {𝒥 = 𝒥} j)
   YonedaExtension j =
@@ -504,7 +511,7 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary {o} {a
 data CollapseRelation
   ⦃ _ : FunExt ⦄
   {o a i : Level}
-  {𝒥 : DependentSortVocabulary {o} {a}}
+  {𝒥 : DependentSortVocabulary o a}
   {Γ : Context 𝒥 i}
   (c : Collapse Γ)
   : (j' : type (Judgment 𝒥)) → ⌞ Γ ⟨ j' ⟩ ⌟ → ⌞ Γ ⟨ j' ⟩ ⌟ → Type (o ⊔ i) where
@@ -516,7 +523,7 @@ data CollapseRelation
 infix 20 _⋊ₖ_
 _⋊ₖ_ : ⦃ _ : FunExt ⦄
      → ⦃ _ : AllSetQuotients ⦄
-     → {o a i : Level} {𝒥 : DependentSortVocabulary {o} {a}}
+     → {o a i : Level} {𝒥 : DependentSortVocabulary o a}
      → (Γ : Context 𝒥 i) → Collapse Γ → Context 𝒥 (o ⊔ i)
 _⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
   record { semifunctor = record
@@ -587,7 +594,7 @@ _⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
 
 σ : ⦃ _ : FunExt ⦄
   → ⦃ _ : AllSetQuotients ⦄
-  → {o a i : Level} {𝒥 : DependentSortVocabulary {o} {a}}
+  → {o a i : Level} {𝒥 : DependentSortVocabulary o a}
   → {Γ : Context 𝒥 i} {c : Collapse Γ}
   → Γ ⇒ Γ ⋊ₖ c
 σ {𝒥 = 𝒥} {Γ = Γ} {c = c} = record
@@ -608,7 +615,7 @@ _⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
 infix 20 _⋊_
 _⋊_ : ⦃ _ : FunExt ⦄
     → ⦃ _ : AllSetQuotients ⦄
-    → {o a i : Level} {𝒥 : DependentSortVocabulary {o} {a}}
+    → {o a i : Level} {𝒥 : DependentSortVocabulary o a}
     → (Γ : Context 𝒥 i) → ExtensionOrCollapse Γ → Context 𝒥 (o ⊔ i)
 Γ ⋊ extend ext = Γ ⋊ₑ ext
 Γ ⋊ collapse col = Γ ⋊ₖ col

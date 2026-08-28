@@ -23,22 +23,27 @@ open SequentDependencyStructure
 -- =============== Contexts with terms =================
 
 ContextWithTerms : ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
-                 → {o a : Level} (𝒥 : DependentSortVocabulary {o} {a})
+                 → {o a : Level} (𝒥 : DependentSortVocabulary o a)
                  → (so sa i : Level)
                  → Type (o ⊔ a ⊔ lsuc so ⊔ lsuc sa ⊔ lsuc i)
 ContextWithTerms 𝒥 so sa i = SequentDependencyStructure 𝒥 so sa i (Context 𝒥 i) id
 
 
-module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : DependentSortVocabulary {o} {a}} where
+toContextWithTerms : ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a i : Level} {𝒥 : DependentSortVocabulary o a}
+                   → (so sa : Level) → Context 𝒥 i → ContextWithTerms 𝒥 so sa i
+toContextWithTerms {i = i} {𝒥 = 𝒥} so sa Γ =
+  record
+    { head = Γ
+    ; sequentStructure = emptySequentStructure 𝒥 so sa i
+    ; dependency = emptySemifunctor (TypeSemicategory sa) so sa
+    ; realiseDependency = λ ()
+    ; coherenceRealisation = λ { {()} } }
 
-  toContextWithTerms : {so sa i : Level} → Context 𝒥 i → ContextWithTerms 𝒥 so sa i
-  toContextWithTerms {so} {sa} {i} Γ =
-    record
-      { head = Γ
-      ; sequentStructure = emptySequentStructure 𝒥 so sa i
-      ; dependency = emptySemifunctor (TypeSemicategory sa) so sa
-      ; realiseDependency = λ ()
-      ; coherenceRealisation = λ { {()} } }
+emptyContextWithTerms : ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} (𝒥 : DependentSortVocabulary o a)
+                      → (so sa i : Level) → ContextWithTerms 𝒥 so sa i
+emptyContextWithTerms 𝒥 so sa i = toContextWithTerms so sa (emptyContext 𝒥 i)
+
+module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a} where
 
   addContextToSequent : {k l : Level} → Context 𝒥 k → Sequent 𝒥 l → Sequent 𝒥 (k ⊔ l)
   addContextToSequent c s =
@@ -50,6 +55,28 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
                                → ContextWithTerms 𝒥 to ta i → Sequent 𝒥 j
                                → Sequent 𝒥 (i ⊔ j)
   addContextWithTermsToSequent c s = addContextToSequent (head c) s
+
+  addEmptyContextEquivalence : {k l : Level} (Γ : Context 𝒥 l)
+                  → ContextEquivalence (emptyContext 𝒥 k + Γ) Γ
+  addEmptyContextEquivalence {k} Γ =
+    record
+      { morphism = record
+          { component = component
+          ; natural = funExt ∘ natural~ }
+      ; component-isEquivalence = λ j →
+          record
+            { section = record { sectionBack = inr ; isSection = λ x → refl }
+            ; retraction = record { retractionBack = inr ; isRetraction = isRetraction~ j } } }
+    where
+      component : (j : type (Judgment 𝒥)) → ⌞ (emptyContext 𝒥 k + Γ) ⟨ j ⟩ ⌟ → ⌞ Γ ⟨ j ⟩ ⌟
+      component j (inr x) = x
+
+      natural~ : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
+               → Γ ⟨ f ⟩ ∘ component j₀ ~ component j₁ ∘ (emptyContext 𝒥 k + Γ) ⟨ f ⟩
+      natural~ f (inr x) = refl
+
+      isRetraction~ : (j : type (Judgment 𝒥)) → inr ∘ component j ~ id
+      isRetraction~ j (inr x) = refl
 
 
   module _ {k : Level} (H : Context 𝒥 k) where
@@ -245,6 +272,66 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
              ap (distributeExtended (mkSequent Γ (collapse col)) ⟨ j ⟩) (⁄-rec-β _ _ x)
           ⨾  ⁄-rec-β ⦃ bset = level-proof (target ⟨ j ⟩) ⦄ _ _ (inr x)
 
+    gather-distribute : {l : Level} (s : Sequent 𝒥 l) (j : type (Judgment 𝒥)) (w : ⌞ extendedContext (addContextToSequent H s) ⟨ j ⟩ ⌟)
+                      → (gatherExtended s ⟨ j ⟩) ((distributeExtended s ⟨ j ⟩) w) ＝ w
+    gather-distribute (mkSequent Γ (extend ext)) j (inl (inl h)) = refl
+    gather-distribute (mkSequent Γ (extend ext)) j (inl (inr x)) = refl
+    gather-distribute (mkSequent Γ (extend ext)) j (inr p) = refl
+    gather-distribute {l} (mkSequent Γ (collapse col)) j w =
+      ⁄-elim-proposition
+        (λ w' → (gatherExtended (mkSequent Γ (collapse col)) ⟨ j ⟩)
+                  ((distributeExtended (mkSequent Γ (collapse col)) ⟨ j ⟩) w')
+                ＝ w')
+        (λ _ → ＝-isLevel ⦃ level-proof (source ⟨ j ⟩) ⦄)
+        pointwise
+        w
+      where
+        addedCollapse : Collapse (H + Γ)
+        addedCollapse = mapCollapse inrContext col
+
+        source : Context 𝒥 (o ⊔ (k ⊔ l))
+        source = (H + Γ) ⋊ₖ addedCollapse
+
+        target : Context 𝒥 (k ⊔ (o ⊔ l))
+        target = H + (Γ ⋊ₖ col)
+
+        open FromAllSetQuotients (⌞ Γ ⟨ j ⟩ ⌟) (CollapseRelation col j)
+        open FromAllSetQuotients (⌞ (H + Γ) ⟨ j ⟩ ⌟) (CollapseRelation addedCollapse j)
+
+        instance
+          entriesH-isSet : isSet ⌞ H ⟨ j ⟩ ⌟
+          entriesH-isSet = level-proof (H ⟨ j ⟩)
+
+        pointwise : (x : ⌞ (H + Γ) ⟨ j ⟩ ⌟)
+                  → (gatherExtended (mkSequent Γ (collapse col)) ⟨ j ⟩)
+                      ((distributeExtended (mkSequent Γ (collapse col)) ⟨ j ⟩) [ x ])
+                    ＝ [ x ]
+        pointwise (inl h) =
+          ap (gatherExtended (mkSequent Γ (collapse col)) ⟨ j ⟩)
+             (⁄-rec-β ⦃ bset = level-proof (target ⟨ j ⟩) ⦄ _ _ (inl h))
+        pointwise (inr x) =
+          begin
+            (gatherExtended (mkSequent Γ (collapse col)) ⟨ j ⟩)
+              ((distributeExtended (mkSequent Γ (collapse col)) ⟨ j ⟩) [ inr x ])  ⟪ ap (gatherExtended (mkSequent Γ (collapse col)) ⟨ j ⟩)
+                                                                                        (⁄-rec-β ⦃ bset = level-proof (target ⟨ j ⟩) ⦄ _ _ (inr x)) ⟫
+            (gatherExtended (mkSequent Γ (collapse col)) ⟨ j ⟩) (inr [ x ])        ⟪ ⁄-rec-β _ _ x ⟫
+            [ inr x ]                                                             ∎
+
+    distributeExtendedEquivalence : {l : Level} (s : Sequent 𝒥 l)
+                                  → ContextEquivalence (extendedContext (addContextToSequent H s))
+                                                       (H + extendedContext s)
+    distributeExtendedEquivalence s =
+      record
+        { morphism = distributeExtended s
+        ; component-isEquivalence = λ j →
+            record
+              { section = record
+                  { sectionBack = gatherExtended s ⟨ j ⟩
+                  ; isSection = distribute-gather s j }
+              ; retraction = record
+                  { retractionBack = gatherExtended s ⟨ j ⟩
+                  ; isRetraction = gather-distribute s j } } }
+
     addContextToSequentMorphism : {l₀ l₁ : Level} {s₀ : Sequent 𝒥 l₀} {s₁ : Sequent 𝒥 l₁}
                                 → SequentMorphism s₀ s₁
                                 → SequentMorphism (addContextToSequent H s₀) (addContextToSequent H s₁)
@@ -318,6 +405,46 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
              ap (gatherExtended s₂ ⟨ j ⟩) (onSum j ((distributeExtended s₀ ⟨ j ⟩) w))
           ⨾  ap (λ v → (gatherExtended s₂ ⟨ j ⟩) ((sumContextMorphism identityH β' ⟨ j ⟩) v))
                 (sym (distribute-gather s₁ j ((sumContextMorphism identityH α' ⟨ j ⟩) ((distributeExtended s₀ ⟨ j ⟩) w))))
+
+  addEmptyContextToSequentEquivalence : {k l : Level} (s : Sequent 𝒥 l)
+                                      → SequentEquivalence (addContextToSequent (emptyContext 𝒥 k) s) s
+  addEmptyContextToSequentEquivalence {k} s =
+    record
+      { sequentEquivalence =
+             distributeExtendedEquivalence (emptyContext 𝒥 k) s
+          ⨾  addEmptyContextEquivalence (extendedContext s) }
+
+  addEmptyContextToSequentEquivalence-natural :
+      {k l₀ l₁ : Level} {s₀ : Sequent 𝒥 l₀} {s₁ : Sequent 𝒥 l₁} (α : SequentMorphism s₀ s₁)
+    → toSequentMorphism (addEmptyContextToSequentEquivalence {k} s₁)
+      ∙ addContextToSequentMorphism (emptyContext 𝒥 k) α
+      ＝ α ∙ toSequentMorphism (addEmptyContextToSequentEquivalence {k} s₀)
+  addEmptyContextToSequentEquivalence-natural {k} {s₀ = s₀} {s₁ = s₁} α =
+    ap mkSequentMorphism (eq (record { component≈ = λ j → funExt (pointwise j) }))
+    where
+      α' = SequentMorphism.sequentMorphism α
+
+      onSum : (j : type (Judgment 𝒥)) (v : ⌞ (emptyContext 𝒥 k + extendedContext s₀) ⟨ j ⟩ ⌟)
+            → (addEmptyContextEquivalence {k} (extendedContext s₁) ⟨ j ⟩)
+                ((sumContextMorphism (identityH (emptyContext 𝒥 k)) α' ⟨ j ⟩) v)
+              ＝ (α' ⟨ j ⟩) ((addEmptyContextEquivalence {k} (extendedContext s₀) ⟨ j ⟩) v)
+      onSum j (inr y) = refl
+
+      pointwise : (j : type (Judgment 𝒥)) (w : ⌞ extendedContext (addContextToSequent (emptyContext 𝒥 k) s₀) ⟨ j ⟩ ⌟)
+                → ((toSequentMorphism (addEmptyContextToSequentEquivalence {k} s₁)
+                    ∙ addContextToSequentMorphism (emptyContext 𝒥 k) α) ⟨ j ⟩) w
+                  ＝ ((α ∙ toSequentMorphism (addEmptyContextToSequentEquivalence {k} s₀)) ⟨ j ⟩) w
+      pointwise j w =
+        begin
+          ((toSequentMorphism (addEmptyContextToSequentEquivalence {k} s₁)
+            ∙ addContextToSequentMorphism (emptyContext 𝒥 k) α) ⟨ j ⟩) w      ⟪ ap (addEmptyContextEquivalence {k} (extendedContext s₁) ⟨ j ⟩)
+                                                                                   (distribute-gather (emptyContext 𝒥 k) s₁ j
+                                                                                      ((sumContextMorphism (identityH (emptyContext 𝒥 k)) α' ⟨ j ⟩)
+                                                                                         ((distributeExtended (emptyContext 𝒥 k) s₀ ⟨ j ⟩) w))) ⟫
+          (addEmptyContextEquivalence {k} (extendedContext s₁) ⟨ j ⟩)
+            ((sumContextMorphism (identityH (emptyContext 𝒥 k)) α' ⟨ j ⟩)
+               ((distributeExtended (emptyContext 𝒥 k) s₀ ⟨ j ⟩) w))          ⟪ onSum j ((distributeExtended (emptyContext 𝒥 k) s₀ ⟨ j ⟩) w) ⟫
+          ((α ∙ toSequentMorphism (addEmptyContextToSequentEquivalence {k} s₀)) ⟨ j ⟩) w  ∎
 
   addContextWithTermsToSequentStructure : {so sa i : Level}
                                         → ContextWithTerms 𝒥 so sa i → SequentStructure 𝒥 so sa i
@@ -427,3 +554,10 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
         where
           open Semifunctor.Reasoning 𝒢 renaming (preservesCompositionₛ to pres)
           open Semicategory.Reasoning (SequentSemicategory 𝒥 i)
+
+  infixr 15 _⧺_
+  _⧺_ : {so sa i : Level}
+      → ContextWithTerms 𝒥 so sa i → SequentStructure 𝒥 so sa i
+      → SequentStructure 𝒥 so sa i
+  _⧺_ = addContextWithTermsToSequentStructure
+

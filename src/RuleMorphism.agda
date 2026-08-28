@@ -4,6 +4,7 @@ open import Prelude
 open import Axioms
 open import Homotopy.SetQuotient
 open import Algebra.Wild.Semi
+open import Syntax.Arrowable
 
 open import ContextWithTerms
 open import DependentSortVocabulary
@@ -18,7 +19,7 @@ record RuleMorphism
   ⦃ _ : FunExt ⦄
   ⦃ _ : AllSetQuotients ⦄
   {o a so₀ sa₀ i₀ so₁ sa₁ i₁ : Level}
-  {𝒥 : DependentSortVocabulary {o} {a}}
+  {𝒥 : DependentSortVocabulary o a}
   (r₀ : Rule 𝒥 so₀ sa₀ i₀)
   (r₁ : Rule 𝒥 so₁ sa₁ i₁)
   : Type (o ⊔ a ⊔ lsuc so₀ ⊔ lsuc sa₀ ⊔ lsuc i₀ ⊔ so₁ ⊔ sa₁ ⊔ lsuc i₁) where
@@ -26,7 +27,16 @@ record RuleMorphism
   field
     baseContext : ContextWithTerms 𝒥 so₀ sa₀ i₀
     ruleMorphism : SequentStructureMorphism
-                     (addContextWithTermsToSequentStructure baseContext (⋊ₛ r₀))
+                     (baseContext ⧺ ⋊ₛ r₀)
                      (SequentDependencyStructure.sequentStructure (Rule.rule r₁))
 open RuleMorphism
 
+instance
+  rulesAreArrowable : ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
+                    → {o a : Level} {𝒥 : DependentSortVocabulary o a}
+                    → Arrowable (Level × Level × Level) Level
+                        (λ (so , sa , i) → Rule 𝒥 so sa i)
+                        (λ k → Type k)
+                        (λ (so₀ , sa₀ , i₀) (so₁ , sa₁ , i₁)
+                           → o ⊔ a ⊔ lsuc so₀ ⊔ lsuc sa₀ ⊔ lsuc i₀ ⊔ so₁ ⊔ sa₁ ⊔ lsuc i₁)
+  rulesAreArrowable .Arrowable.arrow = RuleMorphism
