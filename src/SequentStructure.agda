@@ -110,6 +110,9 @@ unitSequentStructure s so sa =
 
 -- ================ Sequent dependency structure ================
 
+-- A sequent structure plus an added head with dependencies
+-- in the structure. Generalises both ContextWithTerms and SequentStructureWithExtension
+
 record SequentDependencyStructure
   ⦃ _ : FunExt ⦄
   ⦃ _ : AllSetQuotients ⦄

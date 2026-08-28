@@ -121,25 +121,26 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ where
   unitTypeFormer⇒unitIntro-core :  ⋊ₛ unitTypeFormer ⇒ unitIntro-premises
   unitTypeFormer⇒unitIntro-core =
     record
-      { onDependencies = record
-          { onObjects = λ _ → ★
-          ; semifunctorial = record
-              { mappable = record { map = λ { {ExtendedSequentStructure.newOb} {ExtendedSequentStructure.newOb} (ExtendedSequentStructure.include ()) } }
-              ; preservesComposition = record
-                  { preserves-composition =
-                      λ { {ExtendedSequentStructure.newOb} {ExtendedSequentStructure.newOb}
-                          (ExtendedSequentStructure.include ()) } } } }
-      ; dependenciesEquivalence =
-          λ { ExtendedSequentStructure.newOb →
-                record
-                  { section = record
-                      { sectionBack = λ { (_ , ()) }
-                      ; isSection = λ { (_ , ()) } }
-                  ; retraction = record
-                      { retractionBack = λ { (_ , ()) }
-                      ; isRetraction =
-                          λ { (ExtendedSequentStructure.newOb , ExtendedSequentStructure.include ()) } } } }
-      ; component = λ { ExtendedSequentStructure.newOb → identity }
+      { dependencyMorphism = record
+          { onDependencies = record
+              { onObjects = λ _ → ★
+              ; semifunctorial = record
+                  { mappable = record { map = λ { {ExtendedSequentStructure.newOb} {ExtendedSequentStructure.newOb} (ExtendedSequentStructure.include ()) } }
+                  ; preservesComposition = record
+                      { preserves-composition =
+                          λ { {ExtendedSequentStructure.newOb} {ExtendedSequentStructure.newOb}
+                              (ExtendedSequentStructure.include ()) } } } }
+          ; dependenciesEquivalence =
+              λ { ExtendedSequentStructure.newOb →
+                    record
+                      { section = record
+                          { sectionBack = λ { (_ , ()) }
+                          ; isSection = λ { (_ , ()) } }
+                      ; retraction = record
+                          { retractionBack = λ { (_ , ()) }
+                          ; isRetraction =
+                              λ { (ExtendedSequentStructure.newOb , ExtendedSequentStructure.include ()) } } } } }
+      ; sequentEquivalence = λ { ExtendedSequentStructure.newOb → identity }
       ; natural = λ { {ExtendedSequentStructure.newOb} {ExtendedSequentStructure.newOb}
                       (ExtendedSequentStructure.include ()) } }
 

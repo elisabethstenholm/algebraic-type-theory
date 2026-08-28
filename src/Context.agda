@@ -393,7 +393,6 @@ record Extension
   ⦃ _ : FunExt ⦄
   {o a i : Level}
   {𝒥 : DependentSortVocabulary o a}
- 
   (Γ : Context 𝒥 i)
   : Type (o ⊔ a ⊔ i) where
   constructor mkExtension
@@ -401,11 +400,27 @@ record Extension
     judgmentForm : type (Judgment 𝒥)
     arguments : 𝒴 judgmentForm ⇒ Γ
 
+record ExtensionEquality
+  ⦃ _ : FunExt ⦄
+  {o a i : Level}
+  {𝒥 : DependentSortVocabulary o a}
+  {Γ : Context 𝒥 i}
+  (e₀ e₁ : Extension Γ)
+  : Type (o ⊔ a ⊔ i) where
+  constructor mkExtensionEquality
+  field
+    judgmentFormEq : Extension.judgmentForm e₀ ＝ Extension.judgmentForm e₁
+    argumentsEq : tr (λ j → 𝒴 j ⇒ Γ) judgmentFormEq (Extension.arguments e₀) ≈ Extension.arguments e₁
+
+instance
+    ExtensionEquality-isSamey : ⦃ _ : FunExt ⦄ {o a i : Level} {𝒥 : DependentSortVocabulary o a} {Γ : Context 𝒥 i}
+                              → Samey 𝟙₀ (λ _ → Extension Γ)
+    ExtensionEquality-isSamey = record { samey = ExtensionEquality }
+
 record Collapse
   ⦃ _ : FunExt ⦄
   {o a i : Level}
   {𝒥 : DependentSortVocabulary o a}
- 
   (Γ : Context 𝒥 i)
   : Type (o ⊔ a ⊔ i) where
   constructor mkCollapse
@@ -413,15 +428,48 @@ record Collapse
     judgmentForm : type (Judgment 𝒥)
     arguments : 𝒴⁺⁺ judgmentForm ⇒ Γ
 
+record CollapseEquality
+  ⦃ _ : FunExt ⦄
+  {o a i : Level}
+  {𝒥 : DependentSortVocabulary o a}
+  {Γ : Context 𝒥 i}
+  (c₀ c₁ : Collapse Γ)
+  : Type (o ⊔ a ⊔ i) where
+  constructor mkCollapseEquality
+  field
+    judgmentFormEq : Collapse.judgmentForm c₀ ＝ Collapse.judgmentForm c₁
+    argumentsEq : tr (λ j → 𝒴⁺⁺ j ⇒ Γ) judgmentFormEq (Collapse.arguments c₀) ≈ Collapse.arguments c₁
+
+instance
+    CollapseEquality-isSamey : ⦃ _ : FunExt ⦄ {o a i : Level} {𝒥 : DependentSortVocabulary o a} {Γ : Context 𝒥 i}
+                              → Samey 𝟙₀ (λ _ → Collapse Γ)
+    CollapseEquality-isSamey = record { samey = CollapseEquality }
+
 data ExtensionOrCollapse
   ⦃ _ : FunExt ⦄
   {o a i : Level}
   {𝒥 : DependentSortVocabulary o a}
- 
   (Γ : Context 𝒥 i)
   : Type (o ⊔ a ⊔ i) where
   extend : Extension Γ → ExtensionOrCollapse Γ
   collapse : Collapse Γ → ExtensionOrCollapse Γ
+open ExtensionOrCollapse
+
+data ExtensionOrCollapseEquality
+  ⦃ _ : FunExt ⦄
+  {o a i : Level}
+  {𝒥 : DependentSortVocabulary o a}
+  {Γ : Context 𝒥 i}
+  : ExtensionOrCollapse Γ → ExtensionOrCollapse Γ → Type (o ⊔ a ⊔ i) where
+  extendEq : {e₀ e₁ : Extension Γ} → e₀ ≈ e₁ → ExtensionOrCollapseEquality (extend e₀) (extend e₁)
+  collapseEq : {c₀ c₁ : Collapse Γ} → c₀ ≈ c₁ → ExtensionOrCollapseEquality (collapse c₀) (collapse c₁)
+open ExtensionOrCollapseEquality
+
+instance
+    ExtensionOrCollapseEquality-isSamey : ⦃ _ : FunExt ⦄ {o a i : Level} {𝒥 : DependentSortVocabulary o a} {Γ : Context 𝒥 i}
+                              → Samey 𝟙₀ (λ _ → ExtensionOrCollapse Γ)
+    ExtensionOrCollapseEquality-isSamey = record { samey = ExtensionOrCollapseEquality }
+
 
 module _ ⦃ _ : FunExt ⦄
   {o a i j : Level}
@@ -619,3 +667,202 @@ _⋊_ : ⦃ _ : FunExt ⦄
     → (Γ : Context 𝒥 i) → ExtensionOrCollapse Γ → Context 𝒥 (o ⊔ i)
 Γ ⋊ extend ext = Γ ⋊ₑ ext
 Γ ⋊ collapse col = Γ ⋊ₖ col
+
+
+-- ============== Extending a context morphism ==============
+
+-- The mapped extension or collapse is an explicit argument
+-- to make type checking faster
+
+module _ ⦃ _ : FunExt ⦄
+  {o a i j : Level} {𝒥 : DependentSortVocabulary o a}
+  {Γ : Context 𝒥 i} {Δ : Context 𝒥 j}
+  (α : Γ ⇒ Δ) where
+
+  map⋊ₑ : (e₀ : Extension Γ) (e₁ : Extension Δ)
+        → mapExtension α e₀ ≈ e₁ → Γ ⋊ₑ e₀ ⇒ Δ ⋊ₑ e₁
+  map⋊ₑ e₀@(mkExtension j₀ a₀) e₁@(mkExtension .j₀ a₁) (mkExtensionEquality refl a≈) =
+    record
+      { component = component
+      ; natural = funExt ∘ natural~ }
+    where
+      component : (j' : type (Judgment 𝒥)) → ⌞ (Γ ⋊ₑ e₀) ⟨ j' ⟩ ⌟ → ⌞ (Δ ⋊ₑ e₁) ⟨ j' ⟩ ⌟
+      component j' (inl x) = inl ((α ⟨ j' ⟩) x)
+      component j' (inr p) = inr p
+
+      natural~ : {j₀' j₁' : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀' j₁'))
+               → (Δ ⋊ₑ e₁) ⟨ f ⟩ ∘ component j₀' ~ component j₁' ∘ (Γ ⋊ₑ e₀) ⟨ f ⟩
+      natural~ f (inl x) = ap (λ h → inl (h x)) (ContextMorphism.natural α f)
+      natural~ {j₁' = j₁'} f (inr refl) = ap (λ h → inl (h f)) (sym (component≈ a≈ j₁'))
+
+module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
+  {o a i j : Level} {𝒥 : DependentSortVocabulary o a}
+  {Γ : Context 𝒥 i} {Δ : Context 𝒥 j}
+  (α : Γ ⇒ Δ) where
+
+  map⋊ₖ : (c₀ : Collapse Γ) (c₁ : Collapse Δ)
+        → mapCollapse α c₀ ≈ c₁ → Γ ⋊ₖ c₀ ⇒ Δ ⋊ₖ c₁
+  map⋊ₖ c₀@(mkCollapse j₀ a₀) c₁@(mkCollapse .j₀ a₁) (mkCollapseEquality refl a≈) =
+    record
+      { component = component
+      ; natural = funExt ∘ natural~ }
+    where
+      module QΓ (j' : type (Judgment 𝒥)) = FromAllSetQuotients (⌞ Γ ⟨ j' ⟩ ⌟) (CollapseRelation c₀ j')
+      module QΔ (j' : type (Judgment 𝒥)) = FromAllSetQuotients (⌞ Δ ⟨ j' ⟩ ⌟) (CollapseRelation c₁ j')
+
+      classΓ : (j' : type (Judgment 𝒥)) → ⌞ Γ ⟨ j' ⟩ ⌟ → ⌞ (Γ ⋊ₖ c₀) ⟨ j' ⟩ ⌟
+      classΓ j' = [_] ⦃ QΓ.setQuotient j' ⦄
+
+      classΔ : (j' : type (Judgment 𝒥)) → ⌞ Δ ⟨ j' ⟩ ⌟ → ⌞ (Δ ⋊ₖ c₁) ⟨ j' ⟩ ⌟
+      classΔ j' = [_] ⦃ QΔ.setQuotient j' ⦄
+
+      resp : (j' : type (Judgment 𝒥)) {x y : ⌞ Γ ⟨ j' ⟩ ⌟}
+           → CollapseRelation c₀ j' x y
+           → classΔ j' ((α ⟨ j' ⟩) x) ＝ classΔ j' ((α ⟨ j' ⟩) y)
+      resp j' collapseRelation =
+        begin
+          classΔ j₀ ((α ⟨ j₀ ⟩) ((a₀ ⟨ j₀ ⟩) (inr (inl refl))))  ⟪ ap (λ h → classΔ j₀ (h (inr (inl refl)))) (component≈ a≈ j₀) ⟫
+          classΔ j₀ ((a₁ ⟨ j₀ ⟩) (inr (inl refl)))               ⟪ respects ⦃ QΔ.setQuotient j₀ ⦄ collapseRelation ⟫
+          classΔ j₀ ((a₁ ⟨ j₀ ⟩) (inr (inr refl)))               ⟪ sym (ap (λ h → classΔ j₀ (h (inr (inr refl)))) (component≈ a≈ j₀)) ⟫
+          classΔ j₀ ((α ⟨ j₀ ⟩) ((a₀ ⟨ j₀ ⟩) (inr (inr refl))))  ∎
+
+      component : (j' : type (Judgment 𝒥)) → ⌞ (Γ ⋊ₖ c₀) ⟨ j' ⟩ ⌟ → ⌞ (Δ ⋊ₖ c₁) ⟨ j' ⟩ ⌟
+      component j' = ⁄-rec ⦃ QΓ.setQuotient j' ⦄ ⦃ bset = level-proof ((Δ ⋊ₖ c₁) ⟨ j' ⟩) ⦄
+                           (classΔ j' ∘ (α ⟨ j' ⟩)) (resp j')
+
+      natural~ : {j₀' j₁' : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀' j₁'))
+               → (Δ ⋊ₖ c₁) ⟨ f ⟩ ∘ component j₀' ~ component j₁' ∘ (Γ ⋊ₖ c₀) ⟨ f ⟩
+      natural~ {j₀'} {j₁'} f =
+        ⁄-elim-proposition ⦃ QΓ.setQuotient j₀' ⦄
+          (λ q → ((Δ ⋊ₖ c₁) ⟨ f ⟩) (component j₀' q) ＝ component j₁' (((Γ ⋊ₖ c₀) ⟨ f ⟩) q))
+          (λ _ → ＝-isLevel ⦃ level-proof ((Δ ⋊ₖ c₁) ⟨ j₁' ⟩) ⦄)
+          pointwise
+        where
+          pointwise : (x : ⌞ Γ ⟨ j₀' ⟩ ⌟)
+                    → ((Δ ⋊ₖ c₁) ⟨ f ⟩) (component j₀' (classΓ j₀' x))
+                      ＝ component j₁' (((Γ ⋊ₖ c₀) ⟨ f ⟩) (classΓ j₀' x))
+          pointwise x =
+            begin
+              ((Δ ⋊ₖ c₁) ⟨ f ⟩) (component j₀' (classΓ j₀' x))  ⟪ ap ((Δ ⋊ₖ c₁) ⟨ f ⟩)
+                                                                     (⁄-rec-β ⦃ QΓ.setQuotient j₀' ⦄ ⦃ bset = level-proof ((Δ ⋊ₖ c₁) ⟨ j₀' ⟩) ⦄
+                                                                              (classΔ j₀' ∘ (α ⟨ j₀' ⟩)) (resp j₀') x) ⟫
+              ((Δ ⋊ₖ c₁) ⟨ f ⟩) (classΔ j₀' ((α ⟨ j₀' ⟩) x))    ⟪ ⁄-rec-β ⦃ QΔ.setQuotient j₀' ⦄ ⦃ bset = level-proof ((Δ ⋊ₖ c₁) ⟨ j₁' ⟩) ⦄
+                                                                          (classΔ j₁' ∘ (Δ ⟨ f ⟩)) _ ((α ⟨ j₀' ⟩) x) ⟫
+              classΔ j₁' ((Δ ⟨ f ⟩) ((α ⟨ j₀' ⟩) x))            ⟪ ap (classΔ j₁') (ap (λ h → h x) (ContextMorphism.natural α f)) ⟫
+              classΔ j₁' ((α ⟨ j₁' ⟩) ((Γ ⟨ f ⟩) x))            ⟪ sym (⁄-rec-β ⦃ QΓ.setQuotient j₁' ⦄ ⦃ bset = level-proof ((Δ ⋊ₖ c₁) ⟨ j₁' ⟩) ⦄
+                                                                               (classΔ j₁' ∘ (α ⟨ j₁' ⟩)) (resp j₁') ((Γ ⟨ f ⟩) x)) ⟫
+              component j₁' (classΓ j₁' ((Γ ⟨ f ⟩) x))          ⟪ ap (component j₁')
+                                                                     (sym (⁄-rec-β ⦃ QΓ.setQuotient j₀' ⦄ ⦃ bset = level-proof ((Γ ⋊ₖ c₀) ⟨ j₁' ⟩) ⦄
+                                                                                   (classΓ j₁' ∘ (Γ ⟨ f ⟩)) _ x)) ⟫
+              component j₁' (((Γ ⋊ₖ c₀) ⟨ f ⟩) (classΓ j₀' x))  ∎
+
+  map⋊ : (e₀ : ExtensionOrCollapse Γ) (e₁ : ExtensionOrCollapse Δ)
+       → mapExtensionOrCollapse α e₀ ≈ e₁ → Γ ⋊ e₀ ⇒ Δ ⋊ e₁
+  map⋊ (extend e₀) (extend e₁) (extendEq q) = map⋊ₑ α e₀ e₁ q
+  map⋊ (collapse c₀) (collapse c₁) (collapseEq q) = map⋊ₖ c₀ c₁ q
+
+  map⋊ₖ-class : (c₀ : Collapse Γ) (c₁ : Collapse Δ)
+                (p : mapCollapse α c₀ ≈ c₁) (j' : type (Judgment 𝒥)) (x : ⌞ Γ ⟨ j' ⟩ ⌟)
+              → (map⋊ₖ c₀ c₁ p ⟨ j' ⟩) ((σ {Γ = Γ} {c = c₀} ⟨ j' ⟩) x)
+                ＝ (σ {Γ = Δ} {c = c₁} ⟨ j' ⟩) ((α ⟨ j' ⟩) x)
+  map⋊ₖ-class c₀@(mkCollapse j₀ a₀) c₁@(mkCollapse .j₀ a₁) (mkCollapseEquality refl a≈) j' x =
+    ⁄-rec-β ⦃ bset = level-proof ((Δ ⋊ₖ c₁) ⟨ j' ⟩) ⦄ _ _ x
+    where
+      open FromAllSetQuotients (⌞ Γ ⟨ j' ⟩ ⌟) (CollapseRelation c₀ j')
+
+
+-- ============== Composing extended context morphisms ==============
+
+module _ ⦃ _ : FunExt ⦄
+  {o a i j k : Level} {𝒥 : DependentSortVocabulary o a}
+  {Γ : Context 𝒥 i} {Δ : Context 𝒥 j} {Θ : Context 𝒥 k}
+  (α : Γ ⇒ Δ) (β : Δ ⇒ Θ) where
+
+  mapExtension-⨾ : (e₀ : Extension Γ) (e₁ : Extension Δ) (e₂ : Extension Θ)
+                 → mapExtension α e₀ ≈ e₁ → mapExtension β e₁ ≈ e₂
+                 → mapExtension (α ⨾ β) e₀ ≈ e₂
+  mapExtension-⨾ (mkExtension j₀ a₀) (mkExtension .j₀ a₁) (mkExtension .j₀ a₂)
+                 (mkExtensionEquality refl p) (mkExtensionEquality refl q) =
+    mkExtensionEquality refl (record { component≈ = component≈~ })
+    where
+      component≈~ : (j' : type (Judgment 𝒥)) → ((α ⨾ β) ∙ a₀) ⟨ j' ⟩ ＝ a₂ ⟨ j' ⟩
+      component≈~ j' =
+        begin
+          ((α ⨾ β) ∙ a₀) ⟨ j' ⟩     ⟪ ap ((β ⟨ j' ⟩) ∘_) (component≈ p j') ⟫
+          (β ⟨ j' ⟩) ∘ (a₁ ⟨ j' ⟩)  ⟪ component≈ q j' ⟫
+          a₂ ⟨ j' ⟩                 ∎
+
+  mapCollapse-⨾ : (c₀ : Collapse Γ) (c₁ : Collapse Δ) (c₂ : Collapse Θ)
+                → mapCollapse α c₀ ≈ c₁ → mapCollapse β c₁ ≈ c₂
+                → mapCollapse (α ⨾ β) c₀ ≈ c₂
+  mapCollapse-⨾ (mkCollapse j₀ a₀) (mkCollapse .j₀ a₁) (mkCollapse .j₀ a₂)
+                (mkCollapseEquality refl p) (mkCollapseEquality refl q) =
+    mkCollapseEquality refl (record { component≈ = component≈~ })
+    where
+      component≈~ : (j' : type (Judgment 𝒥)) → ((α ⨾ β) ∙ a₀) ⟨ j' ⟩ ＝ a₂ ⟨ j' ⟩
+      component≈~ j' =
+        begin
+          ((α ⨾ β) ∙ a₀) ⟨ j' ⟩     ⟪ ap ((β ⟨ j' ⟩) ∘_) (component≈ p j') ⟫
+          (β ⟨ j' ⟩) ∘ (a₁ ⟨ j' ⟩)  ⟪ component≈ q j' ⟫
+          a₂ ⟨ j' ⟩                 ∎
+
+  mapExtensionOrCollapse-⨾ : (e₀ : ExtensionOrCollapse Γ) (e₁ : ExtensionOrCollapse Δ) (e₂ : ExtensionOrCollapse Θ)
+                           → mapExtensionOrCollapse α e₀ ≈ e₁ → mapExtensionOrCollapse β e₁ ≈ e₂
+                           → mapExtensionOrCollapse (α ⨾ β) e₀ ≈ e₂
+  mapExtensionOrCollapse-⨾ (extend e₀) (extend e₁) (extend e₂) (extendEq p) (extendEq q) =
+    extendEq (mapExtension-⨾ e₀ e₁ e₂ p q)
+  mapExtensionOrCollapse-⨾ (collapse c₀) (collapse c₁) (collapse c₂) (collapseEq p) (collapseEq q) =
+    collapseEq (mapCollapse-⨾ c₀ c₁ c₂ p q)
+
+module _ ⦃ _ : FunExt ⦄
+  {o a i : Level} {𝒥 : DependentSortVocabulary o a} {Γ : Context 𝒥 i} where
+
+  mapExtension-identity : (e : Extension Γ) → mapExtension identity e ≈ e
+  mapExtension-identity (mkExtension j₀ a₀) =
+    mkExtensionEquality refl (record { component≈ = λ j' → refl })
+
+  mapCollapse-identity : (c : Collapse Γ) → mapCollapse identity c ≈ c
+  mapCollapse-identity (mkCollapse j₀ a₀) =
+    mkCollapseEquality refl (record { component≈ = λ j' → refl })
+
+  mapExtensionOrCollapse-identity : (e : ExtensionOrCollapse Γ) → mapExtensionOrCollapse identity e ≈ e
+  mapExtensionOrCollapse-identity (extend e) = extendEq (mapExtension-identity e)
+  mapExtensionOrCollapse-identity (collapse c) = collapseEq (mapCollapse-identity c)
+
+module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
+  {o a i j k : Level} {𝒥 : DependentSortVocabulary o a}
+  {Γ : Context 𝒥 i} {Δ : Context 𝒥 j} {Θ : Context 𝒥 k}
+  (α : Γ ⇒ Δ) (β : Δ ⇒ Θ) where
+
+  map⋊-⨾ : (e₀ : ExtensionOrCollapse Γ) (e₁ : ExtensionOrCollapse Δ) (e₂ : ExtensionOrCollapse Θ)
+           (p : mapExtensionOrCollapse α e₀ ≈ e₁) (q : mapExtensionOrCollapse β e₁ ≈ e₂)
+         → map⋊ (α ⨾ β) e₀ e₂ (mapExtensionOrCollapse-⨾ α β e₀ e₁ e₂ p q)
+           ＝ map⋊ α e₀ e₁ p ⨾ map⋊ β e₁ e₂ q
+  map⋊-⨾ (extend (mkExtension j₀ a₀)) (extend (mkExtension .j₀ a₁)) (extend (mkExtension .j₀ a₂))
+         (extendEq (mkExtensionEquality refl p)) (extendEq (mkExtensionEquality refl q)) =
+    eq (record { component≈ = λ j' → funExt (λ { (inl x) → refl ; (inr r) → refl }) })
+  map⋊-⨾ (collapse c₀@(mkCollapse j₀ a₀)) (collapse c₁@(mkCollapse .j₀ a₁)) (collapse c₂@(mkCollapse .j₀ a₂))
+         P@(collapseEq p'@(mkCollapseEquality refl p)) Q@(collapseEq q'@(mkCollapseEquality refl q)) =
+    eq (record { component≈ = λ j' → funExt (pointwise j') })
+    where
+      mapα  = map⋊ α (collapse c₀) (collapse c₁) P
+      mapβ  = map⋊ β (collapse c₁) (collapse c₂) Q
+      mapαβ = map⋊ (α ⨾ β) (collapse c₀) (collapse c₂)
+                   (mapExtensionOrCollapse-⨾ α β (collapse c₀) (collapse c₁) (collapse c₂) P Q)
+
+      pointwise : (j' : type (Judgment 𝒥)) (z : ⌞ (Γ ⋊ₖ c₀) ⟨ j' ⟩ ⌟)
+                → (mapαβ ⟨ j' ⟩) z ＝ ((mapα ⨾ mapβ) ⟨ j' ⟩) z
+      pointwise j' =
+        ⁄-elim-proposition _ (λ _ → ＝-isLevel ⦃ level-proof ((Θ ⋊ₖ c₂) ⟨ j' ⟩) ⦄) onClass
+        where
+          open FromAllSetQuotients (⌞ Γ ⟨ j' ⟩ ⌟) (CollapseRelation c₀ j')
+
+          onClass : (x : ⌞ Γ ⟨ j' ⟩ ⌟)
+                  → (mapαβ ⟨ j' ⟩) ((σ {c = c₀} ⟨ j' ⟩) x)
+                    ＝ ((mapα ⨾ mapβ) ⟨ j' ⟩) ((σ {c = c₀} ⟨ j' ⟩) x)
+          onClass x =
+            begin
+              (mapαβ ⟨ j' ⟩) ((σ {c = c₀} ⟨ j' ⟩) x)                 ⟪ map⋊ₖ-class (α ⨾ β) c₀ c₂ (mapCollapse-⨾ α β c₀ c₁ c₂ p' q') j' x ⟫
+              (σ {c = c₂} ⟨ j' ⟩) ((β ⟨ j' ⟩) ((α ⟨ j' ⟩) x))        ⟪ sym (map⋊ₖ-class β c₁ c₂ q' j' ((α ⟨ j' ⟩) x)) ⟫
+              (mapβ ⟨ j' ⟩) ((σ {c = c₁} ⟨ j' ⟩) ((α ⟨ j' ⟩) x))     ⟪ ap (mapβ ⟨ j' ⟩) (sym (map⋊ₖ-class α c₀ c₁ p' j' x)) ⟫
+              (mapβ ⟨ j' ⟩) ((mapα ⟨ j' ⟩) ((σ {c = c₀} ⟨ j' ⟩) x))  ∎

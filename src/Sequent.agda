@@ -8,7 +8,9 @@ open import Structure.Composable
 open import Structure.Identity
 open import Structure.Reasoning
 open import Homotopy.StructuredType
+open import Syntax.Arrowable
 open import Algebra.Wild.Semi
+open Semicategory.Semicategory
 
 open import DependentSortVocabulary
 open import Context
@@ -26,6 +28,7 @@ record Sequent
   field
     context : Context 𝒥 i
     extensionOrCollapse : ExtensionOrCollapse context
+open Sequent
 
 module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
   {o a i : Level} {𝒥 : DependentSortVocabulary o a} where
@@ -56,9 +59,14 @@ record SequentMorphism
     sequentMorphism : ContextMorphism (extendedContext s₁) (extendedContext s₂)
 open SequentMorphism
 
+
 module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a} where
 
   instance
+    sequentsAreArrowable : Arrowable Level Level (Sequent 𝒥) (λ i → Type i)
+                             (λ i₁ i₂ → o ⊔ a ⊔ lsuc i₁ ⊔ lsuc i₂)
+    sequentsAreArrowable = record { arrow = SequentMorphism }
+
     appliableSequentMorphism : ∀ {i₁ i₂} {s₁ : Sequent 𝒥 i₁} {s₂ : Sequent 𝒥 i₂}
                              → Appliable (SequentMorphism s₁ s₂) (type (Judgment 𝒥))
                                  (λ _ j → ⌞ (extendedContext s₁) ⟨ j ⟩ ⌟ → ⌞ (extendedContext s₂) ⟨ j ⟩ ⌟)
@@ -90,45 +98,72 @@ SequentSemicategory 𝒥 i = asSemicategory (Sequent 𝒥) SequentMorphism i
 
 -- =================== Sequent equivalences ===================
 
+-- A sequent equivalence is an equivalence of sequents up to renaming
 record SequentEquivalence
   ⦃ _ : FunExt ⦄
   ⦃ _ : AllSetQuotients ⦄
-  {o a i₁ i₂ : Level}
+  {o a i₀ i₁ : Level}
   {𝒥 : DependentSortVocabulary o a}
-  (s₁ : Sequent 𝒥 i₁)
-  (s₂ : Sequent 𝒥 i₂)
-  : Type (o ⊔ a ⊔ lsuc i₁ ⊔ lsuc i₂) where
-  constructor mkSequentEquivalence
+  (s₀ : Sequent 𝒥 i₀)
+  (s₁ : Sequent 𝒥  i₁)
+  : Type (o ⊔ a ⊔ lsuc i₀ ⊔ lsuc i₁ ) where
+  constructor mkStrictSequentEquivalence
   field
-    sequentEquivalence : ContextEquivalence (extendedContext s₁) (extendedContext s₂)
-open SequentEquivalence
-
+    contextEquivalence : Sequent.context s₀ ≈ Sequent.context s₁
+    extensionOrCollapseEquality : mapExtensionOrCollapse
+                                    (ContextEquivalence.morphism contextEquivalence)
+                                    (Sequent.extensionOrCollapse s₀)
+                                ≈ Sequent.extensionOrCollapse s₁
 
 module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a} where
 
-  toSequentMorphism : ∀ {i₁ i₂} {s₁ : Sequent 𝒥 i₁} {s₂ : Sequent 𝒥 i₂}
-                    → SequentEquivalence s₁ s₂ → SequentMorphism s₁ s₂
-  toSequentMorphism = mkSequentMorphism ∘ ContextEquivalence.morphism ∘ sequentEquivalence
+  equivalenceMorphism : {i₀ i₁ : Level} {s₀ : Sequent 𝒥 i₀} {s₁ : Sequent 𝒥 i₁}
+                      → SequentEquivalence s₀ s₁ → Sequent.context s₀ ⇒ Sequent.context s₁
+  equivalenceMorphism = ContextEquivalence.morphism ∘ SequentEquivalence.contextEquivalence
+
+  toSequentMorphism : {i₀ i₁ : Level} {s₀ : Sequent 𝒥 i₀} {s₁ : Sequent 𝒥 i₁}
+                    → SequentEquivalence s₀ s₁ → SequentMorphism s₀ s₁
+  toSequentMorphism {s₀ = s₀} {s₁ = s₁} e =
+    record
+      { sequentMorphism =
+          map⋊ (equivalenceMorphism e)
+               (Sequent.extensionOrCollapse s₀) (Sequent.extensionOrCollapse s₁)
+               (SequentEquivalence.extensionOrCollapseEquality e) }
+
+  sequentEquivalence-⨾ : {i₀ i₁ i₂ : Level} {s₀ : Sequent 𝒥 i₀} {s₁ : Sequent 𝒥 i₁} {s₂ : Sequent 𝒥 i₂}
+                       → SequentEquivalence s₀ s₁ → SequentEquivalence s₁ s₂ → SequentEquivalence s₀ s₂
+  sequentEquivalence-⨾ {s₀ = s₀} {s₁ = s₁} {s₂ = s₂} e₀ e₁ =
+    record
+      { contextEquivalence = SequentEquivalence.contextEquivalence e₀ ⨾ SequentEquivalence.contextEquivalence e₁
+      ; extensionOrCollapseEquality =
+          mapExtensionOrCollapse-⨾ (equivalenceMorphism e₀) (equivalenceMorphism e₁)
+                                   (Sequent.extensionOrCollapse s₀)
+                                   (Sequent.extensionOrCollapse s₁)
+                                   (Sequent.extensionOrCollapse s₂)
+                                   (SequentEquivalence.extensionOrCollapseEquality e₀)
+                                   (SequentEquivalence.extensionOrCollapseEquality e₁) }
+
+  sequentEquivalence-identity : {i : Level} {s : Sequent 𝒥 i} → SequentEquivalence s s
+  sequentEquivalence-identity {s = s} =
+    record
+      { contextEquivalence = identity
+      ; extensionOrCollapseEquality = mapExtensionOrCollapse-identity (Sequent.extensionOrCollapse s) }
 
   instance
-    appliableSequentEquivalence : ∀ {i₁ i₂} {s₁ : Sequent 𝒥 i₁} {s₂ : Sequent 𝒥 i₂}
-                                → Appliable (SequentEquivalence s₁ s₂) (type (Judgment 𝒥))
-                                    (λ _ j → ⌞ (extendedContext s₁) ⟨ j ⟩ ⌟ → ⌞ (extendedContext s₂) ⟨ j ⟩ ⌟)
-    appliableSequentEquivalence = record { function = ContextMorphism.component ∘ ContextEquivalence.morphism ∘ sequentEquivalence }
-
     composableSequentEquivalence : Composable _ (Sequent 𝒥) SequentEquivalence
-    composableSequentEquivalence =
-      record
-        { composition = λ e₁ e₂ → record
-          { sequentEquivalence = sequentEquivalence e₁ ⨾ sequentEquivalence e₂ } }
-
-    associativeCompositionSequentEquivalence : AssociativeComposition (SequentEquivalence { 𝒥 = 𝒥 }) (λ _ _ → _＝_)
-    associativeCompositionSequentEquivalence =
-      record
-        { ⨾-associative = λ {f = f} {g = g} {h = h} → ap mkSequentEquivalence
-          (⨾-associative { f = sequentEquivalence f }
-                         { g = sequentEquivalence g }
-                         { h = sequentEquivalence h }) }
+    composableSequentEquivalence = record { composition = sequentEquivalence-⨾ }
 
     identitySequentEquivalence : Identity _ (Sequent 𝒥) SequentEquivalence
-    identitySequentEquivalence = record { identity = record { sequentEquivalence = identity } }
+    identitySequentEquivalence = record { identity = sequentEquivalence-identity }
+
+  toSequentMorphism-⨾ : {i₀ i₁ i₂ : Level} {s₀ : Sequent 𝒥 i₀} {s₁ : Sequent 𝒥 i₁} {s₂ : Sequent 𝒥 i₂}
+                        (e₀ : SequentEquivalence s₀ s₁) (e₁ : SequentEquivalence s₁ s₂)
+                      → toSequentMorphism (e₀ ⨾ e₁) ＝ toSequentMorphism e₀ ⨾ toSequentMorphism e₁
+  toSequentMorphism-⨾ {s₀ = s₀} {s₁ = s₁} {s₂ = s₂} e₀ e₁ =
+    ap mkSequentMorphism
+       (map⋊-⨾ (equivalenceMorphism e₀) (equivalenceMorphism e₁)
+               (Sequent.extensionOrCollapse s₀)
+               (Sequent.extensionOrCollapse s₁)
+               (Sequent.extensionOrCollapse s₂)
+               (SequentEquivalence.extensionOrCollapseEquality e₀)
+               (SequentEquivalence.extensionOrCollapseEquality e₁))

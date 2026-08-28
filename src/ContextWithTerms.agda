@@ -410,9 +410,68 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
                                       → SequentEquivalence (addContextToSequent (emptyContext 𝒥 k) s) s
   addEmptyContextToSequentEquivalence {k} s =
     record
-      { sequentEquivalence =
-             distributeExtendedEquivalence (emptyContext 𝒥 k) s
-          ⨾  addEmptyContextEquivalence (extendedContext s) }
+      { contextEquivalence = addEmptyContextEquivalence {k} (Sequent.context s)
+      ; extensionOrCollapseEquality = onExtensionOrCollapse (Sequent.extensionOrCollapse s) }
+    where
+      ε : emptyContext 𝒥 k + Sequent.context s ⇒ Sequent.context s
+      ε = ContextEquivalence.morphism (addEmptyContextEquivalence {k} (Sequent.context s))
+
+      onExtensionOrCollapse : (e : ExtensionOrCollapse (Sequent.context s))
+                            → mapExtensionOrCollapse ε (mapExtensionOrCollapse inrContext e) ≈ e
+      onExtensionOrCollapse (extend e) =
+        extendEq (mkExtensionEquality refl (record { component≈ = λ j → refl }))
+      onExtensionOrCollapse (collapse c) =
+        collapseEq (mkCollapseEquality refl (record { component≈ = λ j → refl }))
+
+  fromEmptyContext : {k l : Level} (s : Sequent 𝒥 l) → SequentMorphism (addContextToSequent (emptyContext 𝒥 k) s) s
+  fromEmptyContext {k} s = toSequentMorphism (addEmptyContextToSequentEquivalence {k} s)
+
+  distributeExtended-empty : {k l : Level} (s : Sequent 𝒥 l) (j : type (Judgment 𝒥))
+                             (w : ⌞ extendedContext (addContextToSequent (emptyContext 𝒥 k) s) ⟨ j ⟩ ⌟)
+                           → (distributeExtended (emptyContext 𝒥 k) s ⟨ j ⟩) w
+                             ＝ inr ((fromEmptyContext {k} s ⟨ j ⟩) w)
+  distributeExtended-empty (mkSequent Γ (extend e)) j (inl (inr x)) = refl
+  distributeExtended-empty (mkSequent Γ (extend e)) j (inr p) = refl
+  distributeExtended-empty {k} s@(mkSequent Γ (collapse c)) j =
+    ⁄-elim-proposition _
+      (λ _ → ＝-isLevel ⦃ level-proof ((emptyContext 𝒥 k + extendedContext s) ⟨ j ⟩) ⦄)
+      onClass
+    where
+      ∅ = emptyContext 𝒥 k
+
+      ε : ∅ + Γ ⇒ Γ
+      ε = ContextEquivalence.morphism (addEmptyContextEquivalence {k} Γ)
+
+      collapseEquality : mapCollapse ε (mapCollapse inrContext c) ≈ c
+      collapseEquality = mkCollapseEquality refl (record { component≈ = λ _ → refl })
+
+      open FromAllSetQuotients (⌞ (∅ + Γ) ⟨ j ⟩ ⌟) (CollapseRelation (mapCollapse inrContext c) j)
+
+      onClass : (z : ⌞ (∅ + Γ) ⟨ j ⟩ ⌟)
+              → (distributeExtended ∅ s ⟨ j ⟩) ((σ ⟨ j ⟩) z)
+                ＝ inr ((fromEmptyContext {k} s ⟨ j ⟩) ((σ ⟨ j ⟩) z))
+      onClass (inr x) =
+        begin
+          (distributeExtended ∅ s ⟨ j ⟩) ((σ ⟨ j ⟩) (inr x))       ⟪ ⁄-rec-β ⦃ bset = level-proof ((∅ + extendedContext s) ⟨ j ⟩) ⦄ _ _ (inr x) ⟫
+          inr ((σ ⟨ j ⟩) x)                                        ⟪ ap inr (sym (map⋊ₖ-class ε (mapCollapse inrContext c) c collapseEquality j (inr x))) ⟫
+          inr ((fromEmptyContext {k} s ⟨ j ⟩) ((σ ⟨ j ⟩) (inr x))) ∎
+
+  gatherExtended-empty : {k l : Level} (s : Sequent 𝒥 l) (j : type (Judgment 𝒥))
+                         (v : ⌞ extendedContext s ⟨ j ⟩ ⌟)
+                       → (fromEmptyContext {k} s ⟨ j ⟩) ((gatherExtended (emptyContext 𝒥 k) s ⟨ j ⟩) (inr v))
+                         ＝ v
+  gatherExtended-empty {k} s j v =
+    begin
+      (fromEmptyContext {k} s ⟨ j ⟩) (gathered)              ⟪ sym (ap (ε ⟨ j ⟩) (distributeExtended-empty {k} s j gathered)) ⟫
+      (ε ⟨ j ⟩) ((distributeExtended ∅ s ⟨ j ⟩) gathered)    ⟪ ap (ε ⟨ j ⟩) (distribute-gather ∅ s j (inr v)) ⟫
+      v                                                      ∎
+    where
+      ∅ = emptyContext 𝒥 k
+
+      ε : ∅ + extendedContext s ⇒ extendedContext s
+      ε = ContextEquivalence.morphism (addEmptyContextEquivalence {k} (extendedContext s))
+
+      gathered = (gatherExtended ∅ s ⟨ j ⟩) (inr v)
 
   addEmptyContextToSequentEquivalence-natural :
       {k l₀ l₁ : Level} {s₀ : Sequent 𝒥 l₀} {s₁ : Sequent 𝒥 l₁} (α : SequentMorphism s₀ s₁)
@@ -422,29 +481,22 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
   addEmptyContextToSequentEquivalence-natural {k} {s₀ = s₀} {s₁ = s₁} α =
     ap mkSequentMorphism (eq (record { component≈ = λ j → funExt (pointwise j) }))
     where
+      ∅ = emptyContext 𝒥 k
       α' = SequentMorphism.sequentMorphism α
 
-      onSum : (j : type (Judgment 𝒥)) (v : ⌞ (emptyContext 𝒥 k + extendedContext s₀) ⟨ j ⟩ ⌟)
-            → (addEmptyContextEquivalence {k} (extendedContext s₁) ⟨ j ⟩)
-                ((sumContextMorphism (identityH (emptyContext 𝒥 k)) α' ⟨ j ⟩) v)
-              ＝ (α' ⟨ j ⟩) ((addEmptyContextEquivalence {k} (extendedContext s₀) ⟨ j ⟩) v)
-      onSum j (inr y) = refl
-
-      pointwise : (j : type (Judgment 𝒥)) (w : ⌞ extendedContext (addContextToSequent (emptyContext 𝒥 k) s₀) ⟨ j ⟩ ⌟)
-                → ((toSequentMorphism (addEmptyContextToSequentEquivalence {k} s₁)
-                    ∙ addContextToSequentMorphism (emptyContext 𝒥 k) α) ⟨ j ⟩) w
-                  ＝ ((α ∙ toSequentMorphism (addEmptyContextToSequentEquivalence {k} s₀)) ⟨ j ⟩) w
+      pointwise : (j : type (Judgment 𝒥)) (w : ⌞ extendedContext (addContextToSequent ∅ s₀) ⟨ j ⟩ ⌟)
+                → ((fromEmptyContext {k} s₁ ∙ addContextToSequentMorphism ∅ α) ⟨ j ⟩) w
+                  ＝ ((α ∙ fromEmptyContext {k} s₀) ⟨ j ⟩) w
       pointwise j w =
         begin
-          ((toSequentMorphism (addEmptyContextToSequentEquivalence {k} s₁)
-            ∙ addContextToSequentMorphism (emptyContext 𝒥 k) α) ⟨ j ⟩) w      ⟪ ap (addEmptyContextEquivalence {k} (extendedContext s₁) ⟨ j ⟩)
-                                                                                   (distribute-gather (emptyContext 𝒥 k) s₁ j
-                                                                                      ((sumContextMorphism (identityH (emptyContext 𝒥 k)) α' ⟨ j ⟩)
-                                                                                         ((distributeExtended (emptyContext 𝒥 k) s₀ ⟨ j ⟩) w))) ⟫
-          (addEmptyContextEquivalence {k} (extendedContext s₁) ⟨ j ⟩)
-            ((sumContextMorphism (identityH (emptyContext 𝒥 k)) α' ⟨ j ⟩)
-               ((distributeExtended (emptyContext 𝒥 k) s₀ ⟨ j ⟩) w))          ⟪ onSum j ((distributeExtended (emptyContext 𝒥 k) s₀ ⟨ j ⟩) w) ⟫
-          ((α ∙ toSequentMorphism (addEmptyContextToSequentEquivalence {k} s₀)) ⟨ j ⟩) w  ∎
+          ((fromEmptyContext {k} s₁ ∙ addContextToSequentMorphism ∅ α) ⟨ j ⟩) w  ⟪ ap (λ v → (fromEmptyContext {k} s₁ ⟨ j ⟩)
+                                                                                              ((gatherExtended ∅ s₁ ⟨ j ⟩)
+                                                                                                ((sumContextMorphism (identityH ∅) α' ⟨ j ⟩) v)))
+                                                                                       (distributeExtended-empty {k} s₀ j w) ⟫
+          (fromEmptyContext {k} s₁ ⟨ j ⟩)
+            ((gatherExtended ∅ s₁ ⟨ j ⟩) (inr ((α' ⟨ j ⟩) ((fromEmptyContext {k} s₀ ⟨ j ⟩) w))))
+                                                                                 ⟪ gatherExtended-empty {k} s₁ j ((α' ⟨ j ⟩) ((fromEmptyContext {k} s₀ ⟨ j ⟩) w)) ⟫
+          ((α ∙ fromEmptyContext {k} s₀) ⟨ j ⟩) w                                ∎
 
   addContextWithTermsToSequentStructure : {so sa i : Level}
                                         → ContextWithTerms 𝒥 so sa i → SequentStructure 𝒥 so sa i
