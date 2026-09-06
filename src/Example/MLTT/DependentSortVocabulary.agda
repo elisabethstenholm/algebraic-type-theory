@@ -12,6 +12,8 @@ import Structure.Accessible as Accessible
 open Accessible using (Accessible)
 
 open import Context
+open import Context.Morphism
+open import Context.Extension
 open import DependentSortVocabulary hiding (Judgment)
 
 -- The dependent sort vocabulary for Martin-Löf type theory is the semicategory given by

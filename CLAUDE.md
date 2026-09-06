@@ -32,8 +32,7 @@ identity (requires `FunExt`).
 
 **Yoneda contexts** — `𝒴 j` is the generic context of arguments to a judgment
 of form `j`: it contains one element for each dependency of the judgment form.
-`𝒴⁺⁺ j` adds *two* distinguished copies of `j` (`Hom 𝒥 j j₁ + ((j₁ ＝ j) + (j₁
-＝ j))`); `𝒴⁺ j` adds one.
+`𝒴⁺⁺ j` adds *two* distinguished copies of `j` (`Hom 𝒥 j j₁ + ((j₁ ＝ j) + (j₁ ＝ j))`).
 
 **Extension and collapse** — The idea is that when one has a context, one may do
 two things: extend the context with an element, or realise that two elements
@@ -86,11 +85,11 @@ semicategory `dependency` (objects are operations/sequent names) together with a
 realisation of each dependency into a sequent morphism. Each operation gets a
 sequent; each dependency between operations gets a sequent morphism.
 
-**SequentStructureWithExtension and ContextWithTerms** — there are two very
+**SequentDependencyStructure** — there are two very
 similar constructions on sequent structures that have been abstracted out into a
 common construction: `SequentDependencyStructure`. This is the data needed to
 extend a sequent structure with a new sequent, in the case of
-`SequentStructureWithExtension`, or to define a context where some of the
+`Rule`, or to define a context where some of the
 elements might be terms (applications of other sequents), in the case of
 `ContextWithTerms`. The data needed is:
 - a head (either a sequent or a context)
@@ -134,6 +133,9 @@ agda src/Sequent.agda         # typecheck one module and its dependencies
 Silent output with exit 0 means success. Interface files land in
 `_build/2.8.0/agda/`.
 
+**Important:** always cap agda's memory usage to 5 GB. It tends to eat up the
+entire RAM if uncapped.
+
 Agda 2.8.0 and the `UniLib` dependency are provided by the nix flake; a shell is
 usually already inside `nix develop`. `nix build` reproduces the same typecheck
 under nix, but `UniLib` is fetched over SSH from `git.app.uib.no` and needs
@@ -149,8 +151,8 @@ Library-wide flags (from `AlgebraicTypeTheory.agda-lib`): `--no-import-sorts
 The `src/Example/` directory contains examples of type theories defined in the
 framework defined in `src/`.
 
-- `src/Example/Category.agda` : category theory.
-- `src/Example/MLTT.agda` : Martin-Löf type theory.
+- `src/Example/Category/` : category theory.
+- `src/Example/MLTT/` : Martin-Löf type theory.
 
 ## Working with UniLib
 
@@ -172,5 +174,5 @@ about the workings of `UniLib`.
   there are instances where this slows down type checking as opposed to just
   composing the paths. In such cases, use path composition. But try with the
   equational reasoning first and only swap if there is a reason.
-- Keep comments to a minimum, adding them only if *absolutely necessary*, and keep
-  them diegetic.
+- Don't write any comments, apart from when explicitly asked for.
+- `record` or `data` definitions should be in the top module.

@@ -4,19 +4,31 @@ open import Prelude
 open import Axioms
 open import Algebra.Wild.Semi
 open Semicategory.Semicategory
-open import Algebra.Wild.TypeSemicategory
+open import Algebra.Wild.TruncatedTypeSemicategory
 open import Homotopy.SetQuotient
 open import Homotopy.StructuredType
 open import Structure.Composable
 open import Structure.Identity
 
 open import Context
+open import Context.Morphism
+open import Context.Extension
+open import Context.ExtensionMorphism
 open ExtensionOrCollapse
 open import ContextWithTerms
+open import Weakening.Sequent
+open import Weakening.SequentStructure
 open import Rule
 open import RuleMorphism
+open import RuleMorphism.Composition
+open import RuleMorphism.Equality
+open import RuleSemicategory
 open import Sequent
+open import Sequent.Morphism
 open import SequentStructure
+open import SequentStructure.Equality
+open import SequentDependencyStructure
+open import SequentDependencyStructure.Equality
 open import SequentStructureMorphism
 
 open import Example.MLTT.Common
@@ -91,10 +103,10 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ where
   unitIntro-premises : SequentStructure MLTTDSV lzero lzero lzero
   unitIntro-premises = unitSequentStructure emptyTySequent lzero lzero
 
-  unitIntro-dependency : Semifunctor (unitSemicategory lzero lzero) (TypeSemicategory lzero)
+  unitIntro-dependency : Semifunctor (unitSemicategory lzero lzero) (hSet-Semicategory lzero)
   unitIntro-dependency =
     record
-      { onObjects = λ _ → Unit
+      { onObjects = λ _ → Unit has-level 𝟙-isLevel
       ; semifunctorial = record
           { mappable = record { map = absurd }
           ; preservesComposition = record { preserves-composition = λ () } } }
@@ -149,7 +161,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ where
   unitTypeFormer⇒unitIntro =
     record
       { baseContext = emptyContextWithTerms MLTTDSV lzero lzero lzero
-      ; ruleMorphism = addEmptyBaseContext unitTypeFormer⇒unitIntro-core }
+      ; ruleMorphism = weakenWithEmptyContext unitTypeFormer⇒unitIntro-core }
 
 
 -- ============== Elimination rule =================

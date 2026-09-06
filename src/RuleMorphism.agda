@@ -3,12 +3,11 @@ module RuleMorphism where
 open import Prelude
 open import Axioms
 open import Homotopy.SetQuotient
-open import Algebra.Wild.Semi
 open import Syntax.Arrowable
 
-open import ContextWithTerms
 open import DependentSortVocabulary
-open import SequentStructure
+open import ContextWithTerms
+open import Weakening.SequentStructure
 open import SequentStructureMorphism
 open import Rule
 
@@ -26,9 +25,7 @@ record RuleMorphism
   constructor mkRuleMorphism
   field
     baseContext : ContextWithTerms 𝒥 so₀ sa₀ i₀
-    ruleMorphism : SequentStructureMorphism
-                     (baseContext ⧺ ⋊ₛ r₀)
-                     (SequentDependencyStructure.sequentStructure (Rule.rule r₁))
+    ruleMorphism : SequentStructureMorphism (baseContext ⧺ ⋊ₛ r₀) (premises r₁)
 open RuleMorphism
 
 instance

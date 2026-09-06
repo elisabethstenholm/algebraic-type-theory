@@ -15,7 +15,7 @@ record DependentSortVocabulary
     judgmentForms-isSet : isSet (SemicategoryProjections.Ob semicategory)
     judgmentDependencies-isSet : {j₀ j₁ : SemicategoryProjections.Ob semicategory}
                                → isSet (SemicategoryProjections.Hom semicategory j₀ j₁)
-open DependentSortVocabulary public
+open DependentSortVocabulary
 
 Judgment : {o a : Level} → DependentSortVocabulary o a → hSet o
 Judgment 𝒥 = Ob (semicategory 𝒥) has-level judgmentForms-isSet 𝒥

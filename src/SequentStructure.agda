@@ -4,14 +4,24 @@ open import Prelude
 open import Axioms
 open import Algebra.Wild.Semi
 open Semicategory.Semicategory
-open import Algebra.Wild.TypeSemicategory
+open import Algebra.Wild.TruncatedTypeSemicategory
+open import Homotopy.Equality
+open import Homotopy.Fibre
+open import Homotopy.Levels
+open import Homotopy.StructuredType
 open import Homotopy.SetQuotient
 open import Structure.Composable
+open import Structure.PreservesComposition
+open import Structure.Symmetric
 open import Foundation.Empty
 
 open import DependentSortVocabulary
 open import Context
+open import Context.Morphism
+open import Context.Extension
+open import Context.ExtensionMorphism
 open import Sequent
+open import Sequent.Morphism
 
 -- ============= Sequent structures ============
 
@@ -25,6 +35,8 @@ record SequentStructure
   constructor mkSequentStructure
   field
     dependency : Semicategory so sa
+    dependency-Ob-isSet : isSet (Ob dependency)
+    dependency-Hom-isSet : (x y : Ob dependency) → isSet (Hom dependency x y)
     sequent : Semifunctor (dependency ᵒᵖ) (SequentSemicategory 𝒥 i)
 
 
@@ -65,6 +77,8 @@ emptySequentStructure : ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Le
 emptySequentStructure 𝒥 so sa i =
   record
     { dependency = emptySemicategory so sa
+    ; dependency-Ob-isSet = 𝟘-isLevel
+    ; dependency-Hom-isSet = λ ()
     ; sequent = emptySemifunctorᵒᵖ (SequentSemicategory 𝒥 i) so sa }
 
 
@@ -106,36 +120,7 @@ unitSequentStructure : ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
 unitSequentStructure s so sa =
   record
     { dependency = unitSemicategory so sa
+    ; dependency-Ob-isSet = 𝟙-isLevel
+    ; dependency-Hom-isSet = λ _ _ → 𝟘-isLevel
     ; sequent = unitSemifunctorᵒᵖ s so sa }
-
--- ================ Sequent dependency structure ================
-
--- A sequent structure plus an added head with dependencies
--- in the structure. Generalises both ContextWithTerms and SequentStructureWithExtension
-
-record SequentDependencyStructure
-  ⦃ _ : FunExt ⦄
-  ⦃ _ : AllSetQuotients ⦄
-  {o a t : Level}
-  (𝒥 : DependentSortVocabulary o a)
-  (so sa i : Level)
-  (A : Type t)
-  (f : A → Context 𝒥 i)
-  : Type (o ⊔ a ⊔ lsuc so ⊔ lsuc sa ⊔ lsuc i ⊔ t) where
-  constructor mkSequentDependencyStructure
-  field
-    head : A
-    sequentStructure : SequentStructure 𝒥 so sa i
-    dependency : Semifunctor (SequentStructure.dependency sequentStructure) (TypeSemicategory sa)
-    realiseDependency : (d : Ob (SequentStructure.dependency sequentStructure))
-                      → dependency ⟨ d ⟩
-                      → ContextMorphism
-                          (extendedContext (SequentStructure.sequent sequentStructure ⟨ d ⟩))
-                          (f head)
-    coherenceRealisation : {d₀ d₁ : Ob (SequentStructure.dependency sequentStructure)}
-                         → (f : dependency ⟨ d₀ ⟩) 
-                         → (g : Hom (SequentStructure.dependency sequentStructure) d₀ d₁)
-                         → realiseDependency d₁ ((dependency ⟨ g ⟩) f)
-                         ＝ realiseDependency d₀ f ∙ SequentMorphism.sequentMorphism (SequentStructure.sequent sequentStructure ⟨ g ⟩)
-open SequentDependencyStructure
 

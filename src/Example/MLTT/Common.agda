@@ -6,7 +6,11 @@ open import Homotopy.SetQuotient
 open import Homotopy.StructuredType
 
 open import Context
+open import Context.Morphism
+open import Context.Extension
+open import Context.ExtensionMorphism
 open import Sequent
+open import Sequent.Morphism
 
 open import Example.MLTT.DependentSortVocabulary as MLTT
 open MLTT

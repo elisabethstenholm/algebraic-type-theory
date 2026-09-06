@@ -13,4 +13,4 @@ record WellfoundedSemicategory
     semicategory : Semicategory o a
     wellfounded : Wellfounded.Bounded (flip (Hom semicategory))
 
-open WellfoundedSemicategory public
+open WellfoundedSemicategory

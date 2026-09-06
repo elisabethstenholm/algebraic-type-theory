@@ -15,9 +15,14 @@ open import Homotopy.StructuredType
 
 open import DependentSortVocabulary hiding (Judgment; JudgmentDependency)
 open import Context
+open import Context.Morphism
+open import Context.Extension
+open import Context.ExtensionMorphism
 open import Sequent
+open import Sequent.Morphism
 open Sequent.Sequent
 open import SequentStructure
+open import SequentDependencyStructure
 
 open import Example.Category.DependentSortVocabulary
 

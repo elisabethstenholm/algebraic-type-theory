@@ -14,13 +14,27 @@ open import Structure.Symmetric
 open import Homotopy.StructuredType
 open import Algebra.Wild.Semi
 open Semicategory.Semicategory
-open import Algebra.Wild.TypeSemicategory
+open import Homotopy.Equality
+open import Homotopy.Fibre
+open import Homotopy.Levels
+open import Foundation.DependentPair.Equivalence
+open import Foundation.Sum.Equivalence
 
 open import DependentSortVocabulary
 open import Context
-open import ContextWithTerms
+open import Context.Morphism
+open import Context.Extension
+open import Context.ExtensionMorphism
 open import Sequent
+open import Sequent.Morphism
 open import SequentStructure
+open import SequentStructure.Equality
+open import SequentDependencyStructure
+open import ContextWithTerms
+open import Weakening.Sequent
+open import Weakening.SequentStructure
+open SequentDependencyStructure.SequentDependencyStructure
+open ContextWithTerms.ContextWithTerms
 
 
 -- =============== Morphisms of sequent structures ===============
@@ -94,14 +108,14 @@ instance
 
 -- =============== Adding the empty context ===============
 
-addEmptyBaseContext : ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
+weakenWithEmptyContext : ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
                     → {o a so₀ sa₀ i₀ so₁ sa₁ i₁ : Level}
                       {𝒥 : DependentSortVocabulary o a}
                       {sd : SequentStructure 𝒥 so₀ sa₀ i₀}
                       {sc : SequentStructure 𝒥 so₁ sa₁ i₁}
                     → sd ⇒ sc
                     → emptyContextWithTerms 𝒥 so₀ sa₀ i₀ ⧺ sd ⇒ sc
-addEmptyBaseContext {so₀ = so₀} {sa₀ = sa₀} {i₀ = i₀} {𝒥 = 𝒥} {sd = sd} {sc = sc} φ =
+weakenWithEmptyContext {so₀ = so₀} {sa₀ = sa₀} {i₀ = i₀} {𝒥 = 𝒥} {sd = sd} {sc = sc} φ =
   record
     { dependencyMorphism =
         record
@@ -167,18 +181,18 @@ addEmptyBaseContext {so₀ = so₀} {sa₀ = sa₀} {i₀ = i₀} {𝒥 = 𝒥} 
                        → SequentEquivalence (SequentStructure.sequent source ⟨ x ⟩)
                                             (ℋ ⟨ onDependencies ⟨ x ⟩ ⟩)
     sequentEquivalence (inr x) =
-      addEmptyContextToSequentEquivalence (𝒢 ⟨ x ⟩) ⨾ SequentStructureMorphism.sequentEquivalence φ x
+      weakenWithEmptySequentEquivalence (𝒢 ⟨ x ⟩) ⨾ SequentStructureMorphism.sequentEquivalence φ x
 
     natural : {x y : Ob 𝒟} (f : Hom 𝒟 x y)
             → toSequentMorphism (sequentEquivalence (inr x))
-              ∙ addContextToSequentMorphism (emptyContext 𝒥 i₀) (𝒢 ⟨ f ⟩)
+              ∙ weakenSequentMorphism (emptyContext 𝒥 i₀) (𝒢 ⟨ f ⟩)
             ＝ ℋ ⟨ Φ ⟨ f ⟩ ⟩
               ∙ toSequentMorphism (sequentEquivalence (inr y))
     natural {x} {y} f =
       begin
         toSequentMorphism (sequentEquivalence (inr x)) ∙ C  ⟪ ap (_∙ C) (toSequentMorphism-⨾ (Ex-equivalence) (Φ-equivalence x)) ⟫
         (Φx ∙ Ex) ∙ C                                       ⟪ sym (∙-associative {f = C} {g = Ex} {h = Φx}) ⟫
-        Φx ∙ (Ex ∙ C)                                       ⟪ ap (Φx ∙_) (addEmptyContextToSequentEquivalence-natural {k = i₀} (𝒢 ⟨ f ⟩)) ⟫
+        Φx ∙ (Ex ∙ C)                                       ⟪ ap (Φx ∙_) (weakenWithEmptySequentEquivalence-natural {k = i₀} (𝒢 ⟨ f ⟩)) ⟫
         Φx ∙ (G ∙ Ey)                                       ⟪ ∙-associative {f = Ey} {g = G} {h = Φx} ⟫
         (Φx ∙ G) ∙ Ey                                       ⟪ ap (_∙ Ey) (SequentStructureMorphism.natural φ f) ⟫
         (S ∙ Φy) ∙ Ey                                       ⟪ sym (∙-associative {f = Ey} {g = Φy} {h = S}) ⟫
@@ -186,14 +200,135 @@ addEmptyBaseContext {so₀ = so₀} {sa₀ = sa₀} {i₀ = i₀} {𝒥 = 𝒥} 
         S ∙ toSequentMorphism (sequentEquivalence (inr y))  ∎
       where
         Φ-equivalence = SequentStructureMorphism.sequentEquivalence φ
-        Ex-equivalence = addEmptyContextToSequentEquivalence {k = i₀} (𝒢 ⟨ x ⟩)
-        Ey-equivalence = addEmptyContextToSequentEquivalence {k = i₀} (𝒢 ⟨ y ⟩)
+        Ex-equivalence = weakenWithEmptySequentEquivalence {k = i₀} (𝒢 ⟨ x ⟩)
+        Ey-equivalence = weakenWithEmptySequentEquivalence {k = i₀} (𝒢 ⟨ y ⟩)
 
         Φx = toSequentMorphism (Φ-equivalence x)
         Φy = toSequentMorphism (Φ-equivalence y)
         Ex = fromEmptyContext {k = i₀} (𝒢 ⟨ x ⟩)
         Ey = fromEmptyContext {k = i₀} (𝒢 ⟨ y ⟩)
         G  = 𝒢 ⟨ f ⟩
-        C  = addContextToSequentMorphism (emptyContext 𝒥 i₀) (𝒢 ⟨ f ⟩)
+        C  = weakenSequentMorphism (emptyContext 𝒥 i₀) (𝒢 ⟨ f ⟩)
         S  = ℋ ⟨ Φ ⟨ f ⟩ ⟩
+
+
+
+-- =============== Composition of sequent structure morphisms ===============
+
+module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
+  {o a : Level} {𝒥 : DependentSortVocabulary o a} where
+
+  sequentDependencyMorphism-⨾ :
+      {so₀ sa₀ so₁ sa₁ so₂ sa₂ : Level}
+      {d₀ : Semicategory so₀ sa₀} {d₁ : Semicategory so₁ sa₁} {d₂ : Semicategory so₂ sa₂}
+    → SequentDependencyMorphism d₀ d₁ → SequentDependencyMorphism d₁ d₂
+    → SequentDependencyMorphism d₀ d₂
+  sequentDependencyMorphism-⨾ Φ Ψ =
+    record
+      { onDependencies = compose (SequentDependencyMorphism.onDependencies Φ)
+                                 (SequentDependencyMorphism.onDependencies Ψ)
+      ; dependenciesEquivalence = λ x →
+          ≃→isEquivalence
+            (  isEquivalence→≃ (SequentDependencyMorphism.dependenciesEquivalence Φ x)
+            ⨾  isEquivalence→≃
+                 (SequentDependencyMorphism.dependenciesEquivalence Ψ (Φ ⟨ x ⟩))) }
+
+  sequentStructureMorphism-⨾ :
+      {so₀ sa₀ i₀ so₁ sa₁ i₁ so₂ sa₂ i₂ : Level}
+      {s₀ : SequentStructure 𝒥 so₀ sa₀ i₀}
+      {s₁ : SequentStructure 𝒥 so₁ sa₁ i₁}
+      {s₂ : SequentStructure 𝒥 so₂ sa₂ i₂}
+    → SequentStructureMorphism s₀ s₁ → SequentStructureMorphism s₁ s₂
+    → SequentStructureMorphism s₀ s₂
+  sequentStructureMorphism-⨾ {s₀ = s₀} {s₁ = s₁} {s₂ = s₂} φ ψ =
+    record
+      { dependencyMorphism = dependencyMorphism
+      ; sequentEquivalence = sequentEquivalence
+      ; natural = λ {x} {y} f → natural {x} {y} f }
+    where
+      𝒟 = SequentStructure.dependency s₀
+      𝒢 = SequentStructure.sequent s₀
+      ℋ = SequentStructure.sequent s₁
+      ℐ = SequentStructure.sequent s₂
+
+      Φ = SequentStructureMorphism.dependencyMorphism φ
+      Ψ = SequentStructureMorphism.dependencyMorphism ψ
+
+      seφ = SequentStructureMorphism.sequentEquivalence φ
+      seψ = SequentStructureMorphism.sequentEquivalence ψ
+
+      dependencyMorphism : SequentDependencyMorphism 𝒟 (SequentStructure.dependency s₂)
+      dependencyMorphism = sequentDependencyMorphism-⨾ Φ Ψ
+
+      sequentEquivalence : (x : Ob 𝒟)
+                         → SequentEquivalence (𝒢 ⟨ x ⟩) (ℐ ⟨ dependencyMorphism ⟨ x ⟩ ⟩)
+      sequentEquivalence x = seφ x ⨾ seψ (Φ ⟨ x ⟩)
+
+      natural : {x y : Ob 𝒟} (f : Hom 𝒟 x y)
+              → toSequentMorphism (sequentEquivalence x) ∙ 𝒢 ⟨ f ⟩
+              ＝ ℐ ⟨ dependencyMorphism ⟨ f ⟩ ⟩ ∙ toSequentMorphism (sequentEquivalence y)
+      natural {x} {y} f =
+        begin
+          toSequentMorphism (sequentEquivalence x) ∙ Gf
+                                      ⟪ ap (_∙ Gf) (toSequentMorphism-⨾ (seφ x) (seψ (Φ ⟨ x ⟩))) ⟫
+          (Bx ∙ Ax) ∙ Gf              ⟪ sym (∙-associative {f = Gf} {g = Ax} {h = Bx}) ⟫
+          Bx ∙ (Ax ∙ Gf)              ⟪ ap (Bx ∙_) (SequentStructureMorphism.natural φ f) ⟫
+          Bx ∙ (Hf ∙ Ay)              ⟪ ∙-associative {f = Ay} {g = Hf} {h = Bx} ⟫
+          (Bx ∙ Hf) ∙ Ay              ⟪ ap (_∙ Ay) (SequentStructureMorphism.natural ψ (Φ ⟨ f ⟩)) ⟫
+          (If ∙ By) ∙ Ay              ⟪ sym (∙-associative {f = Ay} {g = By} {h = If}) ⟫
+          If ∙ (By ∙ Ay)              ⟪ ap (If ∙_) (sym (toSequentMorphism-⨾ (seφ y) (seψ (Φ ⟨ y ⟩)))) ⟫
+          If ∙ toSequentMorphism (sequentEquivalence y)  ∎
+        where
+          Ax = toSequentMorphism (seφ x)
+          Ay = toSequentMorphism (seφ y)
+          Bx = toSequentMorphism (seψ (Φ ⟨ x ⟩))
+          By = toSequentMorphism (seψ (Φ ⟨ y ⟩))
+          Gf = 𝒢 ⟨ f ⟩
+          Hf = ℋ ⟨ Φ ⟨ f ⟩ ⟩
+          If = ℐ ⟨ Ψ ⟨ Φ ⟨ f ⟩ ⟩ ⟩
+
+
+
+-- =============== Sequent structure morphisms from equalities ===============
+
+module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
+  {o a so sa i : Level} {𝒥 : DependentSortVocabulary o a}
+  {s₀ s₁ : SequentStructure 𝒥 so sa i} where
+
+  equivToSSM : SequentStructureEquality s₀ s₁ → SequentStructureMorphism s₀ s₁
+  equivToSSM w =
+    record
+      { dependencyMorphism = record
+          { onDependencies = onDependencies
+          ; dependenciesEquivalence = dependenciesEquivalence }
+      ; sequentEquivalence = SequentStructureEquality.sequent≈ w
+      ; natural = λ {x} {y} f →
+          eq ⦃ equalitySequentMorphism ⦄ (SequentStructureEquality.natural≈ w f) }
+    where
+      𝒟₀ = SequentStructure.dependency s₀
+      𝒟₁ = SequentStructure.dependency s₁
+
+      d≈ = SequentStructureEquality.dependency≈ w
+
+      onDependencies : Semifunctor 𝒟₀ 𝒟₁
+      onDependencies =
+        record
+          { onObjects = there (Semicategory.objects≈ d≈)
+          ; semifunctorial = record
+              { mappable = record { map = λ {x} {y} → there (Semicategory.hom≈ d≈ x y) }
+              ; preservesComposition = record
+                  { preserves-composition = λ {x} {y} {z} f g →
+                      Semicategory.composition≈ d≈ x y z f g } } }
+
+      dependenciesEquivalence : (x : Ob 𝒟₀)
+                              → isEquivalence (mapDependencies onDependencies x)
+      dependenciesEquivalence x =
+        ~transfer-isEquivalence
+          (equiv-∑ (Semicategory.objects≈ d≈) (λ y → Semicategory.hom≈ d≈ x y))
+          pointwise
+        where
+          pointwise : there (equiv-∑ (Semicategory.objects≈ d≈) (λ y → Semicategory.hom≈ d≈ x y))
+                      ~ mapDependencies onDependencies x
+          pointwise (y , f) = refl
+
 
