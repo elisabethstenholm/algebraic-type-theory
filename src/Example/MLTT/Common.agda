@@ -2,7 +2,7 @@ module Example.MLTT.Common where
 
 open import Prelude
 open import Axioms
-open import Homotopy.SetQuotient
+open import Homotopy.SetQuotient.Nominal
 open import Homotopy.StructuredType
 
 open import Context

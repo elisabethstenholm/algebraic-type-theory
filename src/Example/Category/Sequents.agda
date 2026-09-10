@@ -2,15 +2,18 @@ module Example.Category.Sequents where
 
 open import Prelude
 open import Axioms
-open import Homotopy.SetQuotient
-open import Structure.Associativity
+open import Homotopy.SetQuotient.Nominal
+open import Structure.Associativity hiding (module Operation)
 open import Structure.Composable
 import Structure.Wellfounded as Wellfounded
 open Wellfounded using (Wellfounded)
 import Structure.Accessible as Accessible
 open Accessible using (Accessible)
-open import Algebra.Wild.Semi
-open Semicategory
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
+open import Structure.Semicategorical using (Semicategorical)
+open import Syntax.Opposable using (_ᵒᵖ)
+open Semicategory hiding (Ob ; Hom)
 open import Homotopy.StructuredType
 
 open import DependentSortVocabulary hiding (Judgment; JudgmentDependency)

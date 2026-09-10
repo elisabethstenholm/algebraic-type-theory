@@ -2,14 +2,15 @@ module SequentDependencyStructure.Equality where
 
 open import Prelude
 open import Axioms
-open import Algebra.Wild.Semi
-open Semicategory.Semicategory
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
+open Semicategory
 open import Algebra.Wild.TruncatedTypeSemicategory
 open import Homotopy.Equality
 open import Homotopy.Fibre
 open import Homotopy.Levels
 open import Homotopy.StructuredType
-open import Homotopy.SetQuotient
+open import Homotopy.SetQuotient.Nominal
 open import Structure.Composable
 open import Structure.PreservesComposition
 open import Structure.Symmetric
@@ -46,13 +47,13 @@ record SequentDependencyStructureEquality
     terms≈ : (x : Ob (SequentStructure.dependency (sequentStructure c₀)))
             → ⌞ (dependency c₀ ⟨ x ⟩) ⌟
               ≃ ⌞ (dependency c₁
-                    ⟨ there (Semicategory.objects≈
+                    ⟨ there (Semicategory-Equality.objects≈
                                 (SequentStructureEquality.dependency≈ sequentStructure≈)) x ⟩) ⌟
     termsNatural :
         {x y : Ob (SequentStructure.dependency (sequentStructure c₀))}
         (g : Hom (SequentStructure.dependency (sequentStructure c₀)) x y)
       → (dependency c₁
-            ⟨ there (Semicategory.hom≈
+            ⟨ there (Semicategory-Equality.hom≈
                         (SequentStructureEquality.dependency≈ sequentStructure≈) x y) g ⟩)
           ∘ there (terms≈ x)
         ＝ there (terms≈ y) ∘ (dependency c₀ ⟨ g ⟩)
@@ -90,10 +91,9 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
       ; realise≈ = λ x u →
           record { component≈ = λ j → funExt (λ z →
                headContext≈-refl (head c) j ((realiseDependency c x u ⟨ j ⟩) z)
-            ⨾  sym (ap (λ h → (realiseDependency c x u ⟨ j ⟩) (h z))
-                       (ContextMorphismEquality.component≈
-                          (toSequentMorphism-identity
-                             {s = SequentStructure.sequent (sequentStructure c) ⟨ x ⟩}) j))) } }
+            ⨾  sym (ap (realiseDependency c x u ⟨ j ⟩)
+                       (toSequentMorphism-identity-at
+                          {s = SequentStructure.sequent (sequentStructure c) ⟨ x ⟩} j z))) } }
 
   private
     realiseAt-Contractible :
@@ -295,11 +295,10 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
           (dep₀ , (λ x → ≃-id) , (λ g → refl))
           , transportedRealise ss dep₀ h₀ h₁ hh real₀
           , (λ x u → record { component≈ = λ j → funExt (λ z →
-               sym (ap (λ h → (ContextEquivalence.morphism (headContext≈ hh) ⟨ j ⟩)
-                                ((real₀ x u ⟨ j ⟩) (h z)))
-                       (ContextMorphismEquality.component≈
-                          (toSequentMorphism-identity
-                             {s = SequentStructure.sequent ss ⟨ x ⟩}) j))) })
+               sym (ap (λ v → (ContextEquivalence.morphism (headContext≈ hh) ⟨ j ⟩)
+                                ((real₀ x u ⟨ j ⟩) v))
+                       (toSequentMorphism-identity-at
+                          {s = SequentStructure.sequent ss ⟨ x ⟩} j z))) })
 
         dataContractible : Contractible (∑[ D ∶ DepData ss dep₀ ] RealData ss dep₀ h₀ h₁ hh real₀ D)
         dataContractible =
@@ -324,11 +323,11 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
       ∑[ dep₁ ∶ Semifunctor (SequentStructure.dependency ss₁) (hSet-Semicategory sa) ]
         ∑[ te ∶ ((x : Ob (SequentStructure.dependency ss₀))
                   → ⌞ (dep₀ ⟨ x ⟩) ⌟
-                    ≃ ⌞ (dep₁ ⟨ there (Semicategory.objects≈
+                    ≃ ⌞ (dep₁ ⟨ there (Semicategory-Equality.objects≈
                                          (SequentStructureEquality.dependency≈ ssw)) x ⟩) ⌟) ]
           ({x y : Ob (SequentStructure.dependency ss₀)}
              (g : Hom (SequentStructure.dependency ss₀) x y)
-           → (dep₁ ⟨ there (Semicategory.hom≈
+           → (dep₁ ⟨ there (Semicategory-Equality.hom≈
                               (SequentStructureEquality.dependency≈ ssw) x y) g ⟩)
                ∘ there (te x)
              ＝ there (te y) ∘ (dep₀ ⟨ g ⟩))

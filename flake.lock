@@ -119,11 +119,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1787679681,
-        "narHash": "sha256-eBQbCXhwa/QJ0zVMOfQ8b6vzo0n9kHRZA+jwEtDln7k=",
+        "lastModified": 1788298923,
+        "narHash": "sha256-LsM60ePsb4WEbKvzJNbJPUF6LPPTuvqjPRUeOo6XYpw=",
         "ref": "elli",
-        "rev": "696a20fe9fcff48c34861f9938f11e12f4c81223",
-        "revCount": 292,
+        "rev": "a777ce9a95e696932fbcbd568c459e8132813675",
+        "revCount": 307,
         "type": "git",
         "url": "ssh://git@git.app.uib.no/Hakon.Gylterud/unilib.git"
       },

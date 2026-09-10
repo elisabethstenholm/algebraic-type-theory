@@ -2,7 +2,7 @@ module Weakening.SequentStructureMorphism where
 
 open import Prelude
 open import Axioms
-open import Homotopy.SetQuotient
+open import Homotopy.SetQuotient.Nominal
 open import Syntax.Addable
 open import Syntax.Arrowable
 open import Structure.Associativity
@@ -12,8 +12,10 @@ open import Structure.PreservesComposition
 open import Structure.Reasoning
 open import Structure.Symmetric
 open import Homotopy.StructuredType
-open import Algebra.Wild.Semi
-open Semicategory.Semicategory
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
+import Structure.Semifunctorial as Semifunctorial
+open Semicategory
 open import Homotopy.Equality
 open import Homotopy.Fibre
 open import Homotopy.Levels
@@ -48,19 +50,6 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
   {o a so sa i : Level} {𝒥 : DependentSortVocabulary o a} where
 
   private
-    idSeqMor＝ : {l : Level} {s : Sequent 𝒥 l}
-              → SequentMorphism.sequentMorphism (toSequentMorphism (sequentEquivalence-identity {s = s}))
-                ＝ identity
-    idSeqMor＝ {s = s} = eq (toSequentMorphism-identity {s = s})
-
-    unitL : {l₀ l₁ : Level} {Γ : Context 𝒥 l₀} {Δ : Context 𝒥 l₁} (β : Γ ⇒ Δ)
-          → identity ∙ β ＝ β
-    unitL β = eq (record { component≈ = λ j → refl })
-
-    unitR : {l₀ l₁ : Level} {Γ : Context 𝒥 l₀} {Δ : Context 𝒥 l₁} (β : Γ ⇒ Δ)
-          → β ∙ identity ＝ β
-    unitR β = eq (record { component≈ = λ j → refl })
-
     idCM＝ : {l : Level} {Γ : Context 𝒥 l}
           → _＝_ {A = Γ ⇒ Γ} (identity ∙ identity) identity
     idCM＝ = eq (record { component≈ = λ j → refl })
@@ -70,10 +59,10 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
              → toSequentMorphism (sequentEquivalence-identity {s = s₁}) ∙ α
                ＝ α ∙ toSequentMorphism (sequentEquivalence-identity {s = s₀})
     idSquare {s₀ = s₀} {s₁ = s₁} α =
-         ap (λ m → mkSequentMorphism (m ∙ SequentMorphism.sequentMorphism α)) (idSeqMor＝ {s = s₁})
-      ⨾  ap mkSequentMorphism (unitL (SequentMorphism.sequentMorphism α))
-      ⨾  sym (ap mkSequentMorphism (unitR (SequentMorphism.sequentMorphism α)))
-      ⨾  sym (ap (λ m → mkSequentMorphism (SequentMorphism.sequentMorphism α ∙ m)) (idSeqMor＝ {s = s₀}))
+      ap mkSequentMorphism (eq (record { component≈ = λ j → funExt (λ z →
+           toSequentMorphism-identity-at {s = s₁} j ((SequentMorphism.sequentMorphism α ⟨ j ⟩) z)
+        ⨾  sym (ap (SequentMorphism.sequentMorphism α ⟨ j ⟩)
+                   (toSequentMorphism-identity-at {s = s₀} j z))) }))
 
   infixr 15 _⧺ˢ_
   _⧺ˢ_ : (B : ContextWithTerms 𝒥 so sa i)
@@ -128,7 +117,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
                       ; {inr x} {inr x'} {inr x''} f g →
                           Structure.PreservesComposition.Bounded.preserves-composition
                             (Semifunctorial.Bounded.preservesComposition
-                               (SemifunctorProjections.semifunctorial Φ)) f g
+                               (Semifunctor.semifunctorial Φ)) f g
                       ; {inr x} {inr x'} {inl w} f g → refl
                       ; {inr x} {inl w} {inl w'} f g → refl
                       ; {inl w} {inr x} {z} () g
@@ -215,24 +204,13 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
                  → toSequentMorphism (seqEq (inr x)) ∙ weakenSequentMorphism H (𝒢X ⟨ f ⟩)
                    ＝ weakenSequentMorphism H (𝒢Y ⟨ Φ ⟨ f ⟩ ⟩) ∙ toSequentMorphism (seqEq (inr x'))
       natural-rr {x} {x'} f =
-        begin
-          toSequentMorphism (seqEq (inr x)) ∙ weakenSequentMorphism H (𝒢X ⟨ f ⟩)
-            ⟪ ap (_∙ weakenSequentMorphism H (𝒢X ⟨ f ⟩)) (sumStep x) ⟫
-          weakenedSequentMorphism identity (toSequentMorphism (σse x))
-            ∙ weakenedSequentMorphism identity (𝒢X ⟨ f ⟩)
-            ⟪ sym (weakenedSequentMorphism-composition identity identity (𝒢X ⟨ f ⟩) (toSequentMorphism (σse x))) ⟫
-          weakenedSequentMorphism (identity ∙ identity) (toSequentMorphism (σse x) ∙ 𝒢X ⟨ f ⟩)
-            ⟪ ap (λ m → weakenedSequentMorphism m (toSequentMorphism (σse x) ∙ 𝒢X ⟨ f ⟩)) idCM＝ ⟫
-          weakenedSequentMorphism identity (toSequentMorphism (σse x) ∙ 𝒢X ⟨ f ⟩)
-            ⟪ ap (weakenedSequentMorphism identity) (SequentStructureMorphism.natural σ f) ⟫
-          weakenedSequentMorphism identity (𝒢Y ⟨ Φ ⟨ f ⟩ ⟩ ∙ toSequentMorphism (σse x'))
-            ⟪ sym (ap (λ m → weakenedSequentMorphism m (𝒢Y ⟨ Φ ⟨ f ⟩ ⟩ ∙ toSequentMorphism (σse x'))) idCM＝) ⟫
-          weakenedSequentMorphism (identity ∙ identity) (𝒢Y ⟨ Φ ⟨ f ⟩ ⟩ ∙ toSequentMorphism (σse x'))
-            ⟪ weakenedSequentMorphism-composition identity identity (toSequentMorphism (σse x')) (𝒢Y ⟨ Φ ⟨ f ⟩ ⟩) ⟫
-          weakenedSequentMorphism identity (𝒢Y ⟨ Φ ⟨ f ⟩ ⟩)
-            ∙ weakenedSequentMorphism identity (toSequentMorphism (σse x'))
-            ⟪ sym (ap (weakenSequentMorphism H (𝒢Y ⟨ Φ ⟨ f ⟩ ⟩) ∙_) (sumStep x')) ⟫
-          weakenSequentMorphism H (𝒢Y ⟨ Φ ⟨ f ⟩ ⟩) ∙ toSequentMorphism (seqEq (inr x'))  ∎
+           ap (_∙ weakenSequentMorphism H (𝒢X ⟨ f ⟩)) (sumStep x)
+        ⨾  sym (weakenedSequentMorphism-composition identity identity (𝒢X ⟨ f ⟩) (toSequentMorphism (σse x)))
+        ⨾  ap (λ m → weakenedSequentMorphism m (toSequentMorphism (σse x) ∙ 𝒢X ⟨ f ⟩)) idCM＝
+        ⨾  ap (weakenedSequentMorphism identity) (SequentStructureMorphism.natural σ f)
+        ⨾  sym (ap (λ m → weakenedSequentMorphism m (𝒢Y ⟨ Φ ⟨ f ⟩ ⟩ ∙ toSequentMorphism (σse x'))) idCM＝)
+        ⨾  weakenedSequentMorphism-composition identity identity (toSequentMorphism (σse x')) (𝒢Y ⟨ Φ ⟨ f ⟩ ⟩)
+        ⨾  sym (ap (weakenSequentMorphism H (𝒢Y ⟨ Φ ⟨ f ⟩ ⟩) ∙_) (sumStep x'))
 
       natural-rl : {x : Ob 𝒟X}
                    {w : Ob (SequentStructure.dependency (SequentDependencyStructure.sequentStructure Bd))}
@@ -243,22 +221,23 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
                      ∙ toSequentMorphism (sequentEquivalence-identity {s = ℱB ⟨ w ⟩})
       natural-rl {x} {w} g =
         ap mkSequentMorphism (eq (record { component≈ = λ j → funExt (pw j) }))
-        ⨾  sym (   ap (λ m → mkSequentMorphism (rhsM ∙ m)) (idSeqMor＝ {s = ℱB ⟨ w ⟩})
-                ⨾  ap mkSequentMorphism (unitR rhsM))
         where
           tsm = SequentMorphism.sequentMorphism (toSequentMorphism (seqEq (inr x)))
+          idM = SequentMorphism.sequentMorphism
+                  (toSequentMorphism (sequentEquivalence-identity {s = ℱB ⟨ w ⟩}))
           rhsM = →⋊ (weakenSequent H (𝒢Y ⟨ Φ ⟨ x ⟩ ⟩)) ∙ (inlContext ∙ rB w g)
           lhsM = tsm ∙ (→⋊ (weakenSequent H (𝒢X ⟨ x ⟩)) ∙ (inlContext ∙ rB w g))
 
           pw : (j : type (Judgment 𝒥)) (z : ⌞ extendedContext (ℱB ⟨ w ⟩) ⟨ j ⟩ ⌟)
-             → (lhsM ⟨ j ⟩) z ＝ (rhsM ⟨ j ⟩) z
+             → (lhsM ⟨ j ⟩) z ＝ ((rhsM ∙ idM) ⟨ j ⟩) z
           pw j z =
-            map⋊-sum-onAdded (ContextEquivalence.morphism idH-equiv)
-                             (ContextEquivalence.morphism (SequentEquivalence.contextEquivalence (σse x)))
-                             (Sequent.extensionOrCollapse (𝒢X ⟨ x ⟩))
-                             (Sequent.extensionOrCollapse (𝒢Y ⟨ Φ ⟨ x ⟩ ⟩))
-                             (SequentEquivalence.extensionOrCollapseEquality (σse x))
-                             j ((rB w g ⟨ j ⟩) z)
+               map⋊-sum-onAdded (ContextEquivalence.morphism idH-equiv)
+                                (ContextEquivalence.morphism (SequentEquivalence.contextEquivalence (σse x)))
+                                (Sequent.extensionOrCollapse (𝒢X ⟨ x ⟩))
+                                (Sequent.extensionOrCollapse (𝒢Y ⟨ Φ ⟨ x ⟩ ⟩))
+                                (SequentEquivalence.extensionOrCollapseEquality (σse x))
+                                j ((rB w g ⟨ j ⟩) z)
+            ⨾  sym (ap (rhsM ⟨ j ⟩) (toSequentMorphism-identity-at {s = ℱB ⟨ w ⟩} j z))
 
 
 
@@ -268,28 +247,15 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
   {o a so sa i : Level} {𝒥 : DependentSortVocabulary o a} where
 
   private
-    idSeqMorᵃ : {l : Level} {s : Sequent 𝒥 l}
-              → SequentMorphism.sequentMorphism (toSequentMorphism (sequentEquivalence-identity {s = s}))
-                ＝ identity
-    idSeqMorᵃ {s = s} = eq (toSequentMorphism-identity {s = s})
-
-    unitRᵃ : {l₀ l₁ : Level} {Γ : Context 𝒥 l₀} {Δ : Context 𝒥 l₁} (β : Γ ⇒ Δ)
-           → β ∙ identity ＝ β
-    unitRᵃ β = eq (record { component≈ = λ j → refl })
-
-    unitLᵃ : {l₀ l₁ : Level} {Γ : Context 𝒥 l₀} {Δ : Context 𝒥 l₁} (β : Γ ⇒ Δ)
-           → identity ∙ β ＝ β
-    unitLᵃ β = eq (record { component≈ = λ j → refl })
-
     idSquareᵃ : {l₀ l₁ : Level} {s₀ : Sequent 𝒥 l₀} {s₁ : Sequent 𝒥 l₁}
                 (α : SequentMorphism s₀ s₁)
               → toSequentMorphism (sequentEquivalence-identity {s = s₁}) ∙ α
                 ＝ α ∙ toSequentMorphism (sequentEquivalence-identity {s = s₀})
     idSquareᵃ {s₀ = s₀} {s₁ = s₁} α =
-         ap (λ m → mkSequentMorphism (m ∙ SequentMorphism.sequentMorphism α)) (idSeqMorᵃ {s = s₁})
-      ⨾  ap mkSequentMorphism (unitLᵃ (SequentMorphism.sequentMorphism α))
-      ⨾  sym (ap mkSequentMorphism (unitRᵃ (SequentMorphism.sequentMorphism α)))
-      ⨾  sym (ap (λ m → mkSequentMorphism (SequentMorphism.sequentMorphism α ∙ m)) (idSeqMorᵃ {s = s₀}))
+      ap mkSequentMorphism (eq (record { component≈ = λ j → funExt (λ z →
+           toSequentMorphism-identity-at {s = s₁} j ((SequentMorphism.sequentMorphism α ⟨ j ⟩) z)
+        ⨾  sym (ap (SequentMorphism.sequentMorphism α ⟨ j ⟩)
+                   (toSequentMorphism-identity-at {s = s₀} j z))) }))
 
     idSquareSME : {l₀ l₁ : Level} {s₀ : Sequent 𝒥 l₀} {s₁ : Sequent 𝒥 l₁}
                   (α : SequentMorphism s₀ s₁)
@@ -302,8 +268,9 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
               (α : SequentMorphism s₀ s₁)
             → α ∙ toSequentMorphism (sequentEquivalence-identity {s = s₀}) ＝ α
     killIdᵣ {s₀ = s₀} α =
-         ap (λ m → mkSequentMorphism (SequentMorphism.sequentMorphism α ∙ m)) (idSeqMorᵃ {s = s₀})
-      ⨾  ap mkSequentMorphism (unitRᵃ (SequentMorphism.sequentMorphism α))
+      ap mkSequentMorphism (eq (record { component≈ = λ j → funExt (λ z →
+        ap (SequentMorphism.sequentMorphism α ⟨ j ⟩)
+           (toSequentMorphism-identity-at {s = s₀} j z)) }))
 
   ⧺-assocEquality :
       (b₁ b₀ : ContextWithTerms 𝒥 so sa i) (X : SequentStructure 𝒥 so sa i)
@@ -506,62 +473,50 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
       r₁ = SequentDependencyStructure.realiseDependency bd₁
       r₀ = SequentDependencyStructure.realiseDependency bd₀
 
-      r-b₂ : (w : Ob (SequentStructure.dependency (SequentDependencyStructure.sequentStructure bd₂)))
-             (u : ⌞ (SequentDependencyStructure.dependency bd₂ ⟨ w ⟩) ⌟)
-           → ContextMorphismEquality
-               (ContextEquivalence.morphism (assocSumContextEquivalence {Γ = h₂} {Δ = h₁} {Ψ = h₀})
-                 ∙ (inlContext {Γ = h₂ + h₁} {Δ = h₀} ∙ (inlContext {Γ = h₂} {Δ = h₁} ∙ r₂ w u)))
-               ((inlContext {Γ = h₂} {Δ = h₁ + h₀} ∙ r₂ w u)
-                 ∙ SequentMorphism.sequentMorphism
-                     (toSequentMorphism (sequentEquivalence-identity {s = ℱ₂ ⟨ w ⟩})))
+      assocM = ContextEquivalence.morphism (assocSumContextEquivalence {Γ = h₂} {Δ = h₁} {Ψ = h₀})
+      idSM₂ = λ w → SequentMorphism.sequentMorphism
+                      (toSequentMorphism (sequentEquivalence-identity {s = ℱ₂ ⟨ w ⟩}))
+      idSM₁ = λ x → SequentMorphism.sequentMorphism
+                      (toSequentMorphism (sequentEquivalence-identity {s = weakenSequent h₂ (ℱ₁ ⟨ x ⟩)}))
+      assocSM₀ = λ y → SequentMorphism.sequentMorphism
+                         (toSequentMorphism (assocWeakenSequentEquivalence h₂ h₁ (ℱ₀ ⟨ y ⟩)))
+
+      lhs₂ = λ w u → assocM ∙ (inlContext {Γ = h₂ + h₁} {Δ = h₀} ∙ (inlContext {Γ = h₂} {Δ = h₁} ∙ r₂ w u))
+      rhs₂ = λ w u → (inlContext {Γ = h₂} {Δ = h₁ + h₀} ∙ r₂ w u) ∙ idSM₂ w
+      lhs₁ = λ x u → assocM ∙ (inlContext {Γ = h₂ + h₁} {Δ = h₀}
+                     ∙ (sumContextMorphism (identityH h₂) (r₁ x u) ∙ distributeExtended h₂ (ℱ₁ ⟨ x ⟩)))
+      rhs₁ = λ x u → (sumContextMorphism (identityH h₂) (inlContext {Γ = h₁} {Δ = h₀} ∙ r₁ x u)
+                       ∙ distributeExtended h₂ (ℱ₁ ⟨ x ⟩)) ∙ idSM₁ x
+      lhs₀ = λ y u → assocM ∙ (sumContextMorphism (identityH (h₂ + h₁)) (r₀ y u)
+                       ∙ distributeExtended (h₂ + h₁) (ℱ₀ ⟨ y ⟩))
+      rhs₀ = λ y u → (sumContextMorphism (identityH h₂)
+                        (sumContextMorphism (identityH h₁) (r₀ y u) ∙ distributeExtended h₁ (ℱ₀ ⟨ y ⟩))
+                       ∙ distributeExtended h₂ (weakenSequent h₁ (ℱ₀ ⟨ y ⟩))) ∙ assocSM₀ y
+
+      r-b₂ : ∀ w u → ContextMorphismEquality (lhs₂ w u) (rhs₂ w u)
       r-b₂ w u =
         record { component≈ = λ j → funExt (λ z →
-            sym (ap (λ h → inl ((r₂ w u ⟨ j ⟩) (h z)))
-                    (ContextMorphismEquality.component≈
-                       (toSequentMorphism-identity {s = ℱ₂ ⟨ w ⟩}) j))) }
+            sym (ap (λ v → inl ((r₂ w u ⟨ j ⟩) v))
+                    (toSequentMorphism-identity-at {s = ℱ₂ ⟨ w ⟩} j z))) }
 
-      r-b₁ : (x : Ob (SequentStructure.dependency (SequentDependencyStructure.sequentStructure bd₁)))
-             (u : ⌞ (SequentDependencyStructure.dependency bd₁ ⟨ x ⟩) ⌟)
-           → ContextMorphismEquality
-               (ContextEquivalence.morphism (assocSumContextEquivalence {Γ = h₂} {Δ = h₁} {Ψ = h₀})
-                 ∙ (inlContext {Γ = h₂ + h₁} {Δ = h₀}
-                 ∙ (sumContextMorphism (identityH h₂) (r₁ x u)
-                 ∙ distributeExtended h₂ (ℱ₁ ⟨ x ⟩))))
-               ((sumContextMorphism (identityH h₂)
-                   (inlContext {Γ = h₁} {Δ = h₀} ∙ r₁ x u)
-                 ∙ distributeExtended h₂ (ℱ₁ ⟨ x ⟩))
-                 ∙ SequentMorphism.sequentMorphism
-                     (toSequentMorphism
-                        (sequentEquivalence-identity {s = weakenSequent h₂ (ℱ₁ ⟨ x ⟩)})))
+      r-b₁ : ∀ x u → ContextMorphismEquality (lhs₁ x u) (rhs₁ x u)
       r-b₁ x u =
         record { component≈ = λ j → funExt (λ z →
              helper j ((distributeExtended h₂ (ℱ₁ ⟨ x ⟩) ⟨ j ⟩) z)
-          ⨾  sym (ap (λ h → ((sumContextMorphism (identityH h₂)
-                                (inlContext {Γ = h₁} {Δ = h₀} ∙ r₁ x u)
-                              ∙ distributeExtended h₂ (ℱ₁ ⟨ x ⟩)) ⟨ j ⟩) (h z))
-                     (ContextMorphismEquality.component≈
-                        (toSequentMorphism-identity {s = weakenSequent h₂ (ℱ₁ ⟨ x ⟩)}) j))) }
+          ⨾  sym (ap ((sumContextMorphism (identityH h₂)
+                        (inlContext {Γ = h₁} {Δ = h₀} ∙ r₁ x u)
+                      ∙ distributeExtended h₂ (ℱ₁ ⟨ x ⟩)) ⟨ j ⟩)
+                     (toSequentMorphism-identity-at {s = weakenSequent h₂ (ℱ₁ ⟨ x ⟩)} j z))) }
         where
           helper : (j : type (Judgment 𝒥)) (v : ⌞ (h₂ + extendedContext (ℱ₁ ⟨ x ⟩)) ⟨ j ⟩ ⌟)
-                 → (ContextEquivalence.morphism (assocSumContextEquivalence {Γ = h₂} {Δ = h₁} {Ψ = h₀}) ⟨ j ⟩)
+                 → (assocM ⟨ j ⟩)
                      (inl ((sumContextMorphism (identityH h₂) (r₁ x u) ⟨ j ⟩) v))
                    ＝ (sumContextMorphism (identityH h₂)
                         (inlContext {Γ = h₁} {Δ = h₀} ∙ r₁ x u) ⟨ j ⟩) v
           helper j (inl h) = refl
           helper j (inr e) = refl
 
-      r-b₀ : (y : Ob (SequentStructure.dependency (SequentDependencyStructure.sequentStructure bd₀)))
-             (u : ⌞ (SequentDependencyStructure.dependency bd₀ ⟨ y ⟩) ⌟)
-           → ContextMorphismEquality
-               (ContextEquivalence.morphism (assocSumContextEquivalence {Γ = h₂} {Δ = h₁} {Ψ = h₀})
-                 ∙ (sumContextMorphism (identityH (h₂ + h₁)) (r₀ y u)
-                 ∙ distributeExtended (h₂ + h₁) (ℱ₀ ⟨ y ⟩)))
-               ((sumContextMorphism (identityH h₂)
-                   (sumContextMorphism (identityH h₁) (r₀ y u)
-                     ∙ distributeExtended h₁ (ℱ₀ ⟨ y ⟩))
-                 ∙ distributeExtended h₂ (weakenSequent h₁ (ℱ₀ ⟨ y ⟩)))
-                 ∙ SequentMorphism.sequentMorphism
-                     (toSequentMorphism (assocWeakenSequentEquivalence h₂ h₁ (ℱ₀ ⟨ y ⟩))))
+      r-b₀ : ∀ y u → ContextMorphismEquality (lhs₀ y u) (rhs₀ y u)
       r-b₀ y u =
         observe ⦃ equalityContextMorphism ⦄
           (map⋊-assoc-realise h₂ h₁ (Sequent.extensionOrCollapse (ℱ₀ ⟨ y ⟩)) (r₀ y u))

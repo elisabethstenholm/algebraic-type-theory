@@ -2,14 +2,16 @@ module SequentStructure.Equality where
 
 open import Prelude
 open import Axioms
-open import Algebra.Wild.Semi
-open Semicategory.Semicategory
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
+open import Syntax.Opposable using (_ᵒᵖ)
+open Semicategory
 open import Algebra.Wild.TruncatedTypeSemicategory
 open import Homotopy.Equality
 open import Homotopy.Fibre
 open import Homotopy.Levels
 open import Homotopy.StructuredType
-open import Homotopy.SetQuotient
+open import Homotopy.SetQuotient.Nominal
 open import Structure.Composable
 open import Structure.PreservesComposition
 open import Structure.Symmetric
@@ -38,12 +40,12 @@ record SequentStructureEquality
     sequent≈ : (x : Ob (SequentStructure.dependency s₀))
               → SequentEquivalence
                   (SequentStructure.sequent s₀ ⟨ x ⟩)
-                  (SequentStructure.sequent s₁ ⟨ there (Semicategory.objects≈ dependency≈) x ⟩)
+                  (SequentStructure.sequent s₁ ⟨ there (Semicategory-Equality.objects≈ dependency≈) x ⟩)
     natural≈ : {x y : Ob (SequentStructure.dependency s₀)}
                 (f : Hom (SequentStructure.dependency s₀) x y)
               → SequentMorphismEquality
                   (toSequentMorphism (sequent≈ x) ∙ (SequentStructure.sequent s₀ ⟨ f ⟩))
-                  ((SequentStructure.sequent s₁ ⟨ there (Semicategory.hom≈ dependency≈ x y) f ⟩)
+                  ((SequentStructure.sequent s₁ ⟨ there (Semicategory-Equality.hom≈ dependency≈ x y) f ⟩)
                     ∙ toSequentMorphism (sequent≈ y))
 open SequentStructureEquality
 
@@ -55,7 +57,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
       (s : SequentStructure 𝒥 so sa i) → SequentStructureEquality s s
   identitySequentStructureEquality s =
     record
-      { dependency≈ = refl≈ ⦃ Semicategory.Semicategory-hasEquality ⦄
+      { dependency≈ = refl≈ ⦃ Semicategory-hasEquality ⦄
       ; sequent≈ = λ x → sequentEquivalence-identity
       ; natural≈ = natural~ }
     where
@@ -71,12 +73,9 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
         where
           pointwise : (j : type (Judgment 𝒥)) (z : _) → _ ＝ _
           pointwise j z =
-               ap (λ h → h ((ℱ ⟨ f ⟩ ⟨ j ⟩) z))
-                  (ContextMorphismEquality.component≈
-                     (toSequentMorphism-identity {s = ℱ ⟨ x ⟩}) j)
-            ⨾  sym (ap (λ h → (ℱ ⟨ f ⟩ ⟨ j ⟩) (h z))
-                       (ContextMorphismEquality.component≈
-                          (toSequentMorphism-identity {s = ℱ ⟨ y ⟩}) j))
+               toSequentMorphism-identity-at {s = ℱ ⟨ x ⟩} j ((ℱ ⟨ f ⟩ ⟨ j ⟩) z)
+            ⨾  sym (ap (ℱ ⟨ f ⟩ ⟨ j ⟩)
+                       (toSequentMorphism-identity-at {s = ℱ ⟨ y ⟩} j z))
 
   private
     arrowFibre-Contractible :
@@ -321,7 +320,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
       toData : (ℱ : Semifunctor (𝒞 ᵒᵖ) (SequentSemicategory 𝒥 i))
              → SemifunctorTarget ℱ → SemifunctorData ℱ
       toData ℱ (𝒢 , se , nat) =
-        (SemifunctorProjections.onObjects 𝒢 , se)
+        (Semifunctor.onObjects 𝒢 , se)
         , ((λ x y f → 𝒢 ⟨ f ⟩) , (λ x y f → nat f))
         , (λ A B E g h → PreservesComposition.preserves-composition pres𝒢 g h)
         where
@@ -389,12 +388,12 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
           ∑[ 𝒢 ∶ Semifunctor (𝒟 ᵒᵖ) (SequentSemicategory 𝒥 i) ]
             ∑[ se ∶ ((x : Ob (SequentStructure.dependency s₀))
                       → SequentEquivalence (SequentStructure.sequent s₀ ⟨ x ⟩)
-                                           (𝒢 ⟨ there (Semicategory.objects≈ w) x ⟩)) ]
+                                           (𝒢 ⟨ there (Semicategory-Equality.objects≈ w) x ⟩)) ]
               ({x y : Ob (SequentStructure.dependency s₀)}
                  (f : Hom (SequentStructure.dependency s₀) x y)
                → SequentMorphismEquality
                    (toSequentMorphism (se x) ∙ (SequentStructure.sequent s₀ ⟨ f ⟩))
-                   ((𝒢 ⟨ there (Semicategory.hom≈ w x y) f ⟩) ∙ toSequentMorphism (se y)))
+                   ((𝒢 ⟨ there (Semicategory-Equality.hom≈ w x y) f ⟩) ∙ toSequentMorphism (se y)))
 
     totalSpace≃Fibres :
         (s₀ : SequentStructure 𝒥 so sa i)
@@ -415,7 +414,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
     baseFibre-Contractible :
         (s₀ : SequentStructure 𝒥 so sa i)
       → Contractible (DependencyFibre s₀ (SequentStructure.dependency s₀)
-                        (refl≈ ⦃ Semicategory.Semicategory-hasEquality ⦄))
+                        (refl≈ ⦃ Semicategory-hasEquality ⦄))
     baseFibre-Contractible s₀ =
       ∑-Contractible
         (inhabited-proposition→contractible

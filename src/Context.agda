@@ -18,9 +18,10 @@ open import Structure.PreservesComposition
 open import Structure.Symmetric
 open import Structure.Unit
 open import Structure.Whiskerable
-open import Algebra.Wild.Semi
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
 open import Algebra.Wild.TruncatedTypeSemicategory
-open import Homotopy.SetQuotient
+open import Homotopy.SetQuotient.Nominal
 open import Syntax.Arrowable
 
 open import DependentSortVocabulary

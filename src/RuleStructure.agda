@@ -2,10 +2,12 @@ module RuleStructure where
 
 open import Prelude
 open import Axioms
-open import Algebra.Wild.Semi
-open Semicategory.Semicategory
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
+open import Syntax.Opposable using (_ᵒᵖ)
+open Semicategory
 open import Homotopy.Levels
-open import Homotopy.SetQuotient
+open import Homotopy.SetQuotient.Nominal
 
 open import DependentSortVocabulary
 open import Rule

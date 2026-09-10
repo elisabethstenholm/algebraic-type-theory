@@ -2,15 +2,16 @@ module Weakening.Reassociation where
 
 open import Prelude
 open import Axioms
-open import Homotopy.SetQuotient
+open import Homotopy.SetQuotient.Nominal
 open import Structure.Associativity
 open import Structure.Composable
 open import Structure.Identity
 open import Structure.PreservesComposition
 open import Structure.Symmetric
 open import Homotopy.StructuredType
-open import Algebra.Wild.Semi
-open Semicategory.Semicategory
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
+open Semicategory
 open import Algebra.Wild.TruncatedTypeSemicategory
 open import Homotopy.Equality
 open import Homotopy.Levels
@@ -44,20 +45,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
     (extendEq (mkExtensionEquality refl q)) j v = refl
   map⋊-→⋊ {Γ₀ = Γ₀} {Γ₁ = Γ₁} α
     (collapse col₀@(mkCollapse jf a₀)) (collapse col₁@(mkCollapse jf₁ a₁))
-    (collapseEq w@(mkCollapseEquality refl q)) j v =
-    ⁄-rec-β ⦃ QΓ₀.setQuotient j ⦄ ⦃ bset = tgt-isSet j ⦄
-            (class₁ j ∘ (α ⟨ j ⟩)) _ v
-    where
-      module QΓ₀ (j' : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ Γ₀ ⟨ j' ⟩ ⌟) (CollapseRelation col₀ j')
-      module QΓ₁ (j' : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ Γ₁ ⟨ j' ⟩ ⌟) (CollapseRelation col₁ j')
-
-      tgt-isSet : (j' : type (Judgment 𝒥)) → isSet ⌞ (Γ₁ ⋊ₖ col₁) ⟨ j' ⟩ ⌟
-      tgt-isSet j' = level-proof ((Γ₁ ⋊ₖ col₁) ⟨ j' ⟩)
-
-      class₁ : (j' : type (Judgment 𝒥)) → ⌞ Γ₁ ⟨ j' ⟩ ⌟ → ⌞ (Γ₁ ⋊ₖ col₁) ⟨ j' ⟩ ⌟
-      class₁ j' = [_] ⦃ QΓ₁.setQuotient j' ⦄
+    (collapseEq w@(mkCollapseEquality refl q)) j v = refl
 
 
 module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
@@ -115,18 +103,6 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
       s₀ = mkSequent Γ₀ E₀'
       s₁ = mkSequent Γ₁ E₁'
 
-      module QΓ₁ (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ (Γ₁ ⟨ j ⟩) ⌟) (CollapseRelation col₁ j)
-      module Q1T (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ (((H₁ + H₀) + Γ₁) ⟨ j ⟩) ⌟)
-          (CollapseRelation (mapCollapse (inrContext {Γ = H₁ + H₀} {Δ = Γ₁}) col₁) j)
-      module Q0T (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ ((H₀ + Γ₁) ⟨ j ⟩) ⌟)
-          (CollapseRelation (mapCollapse (inrContext {Γ = H₀} {Δ = Γ₁}) col₁) j)
-      module QDT (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ ((H₁ + (H₀ + Γ₁)) ⟨ j ⟩) ⌟)
-          (CollapseRelation (mapCollapse (inrContext {Γ = H₁} {Δ = H₀ + Γ₁})
-                              (mapCollapse (inrContext {Γ = H₀} {Δ = Γ₁}) col₁)) j)
 
       ext1T-isSet : (j : type (Judgment 𝒥))
                   → isSet ⌞ extendedContext (weakenSequent (H₁ + H₀) s₁) ⟨ j ⟩ ⌟
@@ -142,22 +118,22 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
 
       classDT : (j : type (Judgment 𝒥)) → ⌞ ((H₁ + (H₀ + Γ₁)) ⟨ j ⟩) ⌟
               → ⌞ extendedContext (weakenSequent H₁ (weakenSequent H₀ s₁)) ⟨ j ⟩ ⌟
-      classDT j = [_] ⦃ QDT.setQuotient j ⦄
+      classDT j = [_]
 
       class1T : (j : type (Judgment 𝒥)) → ⌞ (((H₁ + H₀) + Γ₁) ⟨ j ⟩) ⌟
               → ⌞ extendedContext (weakenSequent (H₁ + H₀) s₁) ⟨ j ⟩ ⌟
-      class1T j = [_] ⦃ Q1T.setQuotient j ⦄
+      class1T j = [_]
 
       class0T : (j : type (Judgment 𝒥)) → ⌞ ((H₀ + Γ₁) ⟨ j ⟩) ⌟
               → ⌞ extendedContext (weakenSequent H₀ s₁) ⟨ j ⟩ ⌟
-      class0T j = [_] ⦃ Q0T.setQuotient j ⦄
+      class0T j = [_]
 
       tail : (j : type (Judgment 𝒥)) (y : ⌞ extendedContext s₁ ⟨ j ⟩ ⌟)
            → ((aTsm s₁) ⟨ j ⟩) ((gatherExtended (H₁ + H₀) s₁ ⟨ j ⟩) (inr y))
              ＝ (gatherExtended H₁ (weakenSequent H₀ s₁) ⟨ j ⟩)
                  (inr ((gatherExtended H₀ s₁ ⟨ j ⟩) (inr y)))
       tail j =
-        ⁄-elim-proposition ⦃ QΓ₁.setQuotient j ⦄
+        ⁄-elim-proposition
           (λ y → ((aTsm s₁) ⟨ j ⟩) ((gatherExtended (H₁ + H₀) s₁ ⟨ j ⟩) (inr y))
                  ＝ (gatherExtended H₁ (weakenSequent H₀ s₁) ⟨ j ⟩)
                      (inr ((gatherExtended H₀ s₁ ⟨ j ⟩) (inr y))))
@@ -166,21 +142,10 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
         where
           chase : (v₁ : ⌞ (Γ₁ ⟨ j ⟩) ⌟)
                 → ((aTsm s₁) ⟨ j ⟩) ((gatherExtended (H₁ + H₀) s₁ ⟨ j ⟩)
-                    (inr ([_] ⦃ QΓ₁.setQuotient j ⦄ v₁)))
+                    (inr ([_] v₁)))
                   ＝ (gatherExtended H₁ (weakenSequent H₀ s₁) ⟨ j ⟩)
-                      (inr ((gatherExtended H₀ s₁ ⟨ j ⟩) (inr ([_] ⦃ QΓ₁.setQuotient j ⦄ v₁))))
-          chase v₁ =
-               ap ((aTsm s₁) ⟨ j ⟩)
-                  (⁄-rec-β ⦃ QΓ₁.setQuotient j ⦄ ⦃ bset = ext1T-isSet j ⦄
-                           (class1T j ∘ inr) _ v₁)
-            ⨾  ⁄-rec-β ⦃ Q1T.setQuotient j ⦄ ⦃ bset = extDT-isSet j ⦄
-                       (classDT j ∘ (ContextEquivalence.morphism
-                          (assocSumContextEquivalence {Γ = H₁} {Δ = H₀} {Ψ = Γ₁}) ⟨ j ⟩)) _ (inr v₁)
-            ⨾  sym (   ap (λ q → (gatherExtended H₁ (weakenSequent H₀ s₁) ⟨ j ⟩) (inr q))
-                          (⁄-rec-β ⦃ QΓ₁.setQuotient j ⦄ ⦃ bset = ext0T-isSet j ⦄
-                                   (class0T j ∘ inr) _ v₁)
-                    ⨾  ⁄-rec-β ⦃ Q0T.setQuotient j ⦄ ⦃ bset = extDT-isSet j ⦄
-                               (classDT j ∘ inr) _ (inr v₁))
+                      (inr ((gatherExtended H₀ s₁ ⟨ j ⟩) (inr ([_] v₁))))
+          chase v₁ = refl
 
       pw : (j : type (Judgment 𝒥))
            (w : ⌞ extendedContext (weakenSequent (H₁ + H₀) s₀) ⟨ j ⟩ ⌟)
@@ -191,16 +156,8 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
                  (weakenedSequentMorphism {H₀ = H₁} {H₁ = H₁} identity
                    (weakenedSequentMorphism {H₀ = H₀} {H₁ = H₀} identity μ))
                ∙ aTsm s₀) ⟨ j ⟩) w
-      pw j (inl (inl (inl h₁))) =
-        ⁄-rec-β ⦃ Q1T.setQuotient j ⦄ ⦃ bset = extDT-isSet j ⦄
-                (classDT j ∘ (ContextEquivalence.morphism
-                   (assocSumContextEquivalence {Γ = H₁} {Δ = H₀} {Ψ = Γ₁}) ⟨ j ⟩)) _ (inl (inl h₁))
-      pw j (inl (inl (inr h₀))) =
-           ⁄-rec-β ⦃ Q1T.setQuotient j ⦄ ⦃ bset = extDT-isSet j ⦄
-                   (classDT j ∘ (ContextEquivalence.morphism
-                      (assocSumContextEquivalence {Γ = H₁} {Δ = H₀} {Ψ = Γ₁}) ⟨ j ⟩)) _ (inl (inr h₀))
-        ⨾  sym (⁄-rec-β ⦃ Q0T.setQuotient j ⦄ ⦃ bset = extDT-isSet j ⦄
-                        (classDT j ∘ inr) _ (inl h₀))
+      pw j (inl (inl (inl h₁))) = refl
+      pw j (inl (inl (inr h₀))) = refl
       pw j (inl (inr γ)) = tail j ((μ' ⟨ j ⟩) (inl γ))
       pw j (inr p) = tail j ((μ' ⟨ j ⟩) (inr p))
   map⋊-assoc-square E₀'@(collapse col₀@(mkCollapse jf₀ a₀)) E₁'@(extend (mkExtension jf₁ a₁)) μ =
@@ -212,18 +169,6 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
 
       aMor₀ = ContextEquivalence.morphism (assocSumContextEquivalence {Γ = H₁} {Δ = H₀} {Ψ = Γ₀})
 
-      module QΓ₀ (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ (Γ₀ ⟨ j ⟩) ⌟) (CollapseRelation col₀ j)
-      module Q1S (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ (((H₁ + H₀) + Γ₀) ⟨ j ⟩) ⌟)
-          (CollapseRelation (mapCollapse (inrContext {Γ = H₁ + H₀} {Δ = Γ₀}) col₀) j)
-      module Q0S (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ ((H₀ + Γ₀) ⟨ j ⟩) ⌟)
-          (CollapseRelation (mapCollapse (inrContext {Γ = H₀} {Δ = Γ₀}) col₀) j)
-      module QDS (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ ((H₁ + (H₀ + Γ₀)) ⟨ j ⟩) ⌟)
-          (CollapseRelation (mapCollapse (inrContext {Γ = H₁} {Δ = H₀ + Γ₀})
-                              (mapCollapse (inrContext {Γ = H₀} {Δ = Γ₀}) col₀)) j)
 
       extDS-isSet : (j : type (Judgment 𝒥))
                   → isSet ⌞ extendedContext (weakenSequent H₁ (weakenSequent H₀ s₀)) ⟨ j ⟩ ⌟
@@ -247,7 +192,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
 
       classDS : (j : type (Judgment 𝒥)) → ⌞ ((H₁ + (H₀ + Γ₀)) ⟨ j ⟩) ⌟
               → ⌞ extendedContext (weakenSequent H₁ (weakenSequent H₀ s₀)) ⟨ j ⟩ ⌟
-      classDS j = [_] ⦃ QDS.setQuotient j ⦄
+      classDS j = [_]
 
       SS : (j : type (Judgment 𝒥))
          → ⌞ ((H₁ + H₀) + extendedContext s₀) ⟨ j ⟩ ⌟
@@ -295,44 +240,17 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
       tail j (inr p₁) = refl
 
       chase : (j : type (Judgment 𝒥)) (u : ⌞ (((H₁ + H₀) + Γ₀) ⟨ j ⟩) ⌟)
-            → (lhsMor ⟨ j ⟩) ([_] ⦃ Q1S.setQuotient j ⦄ u)
-              ＝ (rhsMor ⟨ j ⟩) ([_] ⦃ Q1S.setQuotient j ⦄ u)
-      chase j (inl (inl h₁)) =
-           ap (λ v → ((aTsm s₁) ⟨ j ⟩) (G1 j (SS j v)))
-              (⁄-rec-β ⦃ Q1S.setQuotient j ⦄ ⦃ bset = mid1-isSet j ⦄ _ _ (inl (inl h₁)))
-        ⨾  sym (   ap (λ v → GD j (SD j v))
-                      (⁄-rec-β ⦃ QDS.setQuotient j ⦄ ⦃ bset = mid2-isSet j ⦄ _ _ (inl h₁))
-                ⨾  refl)
-        ⨾  sym (ap (λ v → GD j (SD j ((distributeExtended H₁ (weakenSequent H₀ s₀) ⟨ j ⟩) v)))
-                   (⁄-rec-β ⦃ Q1S.setQuotient j ⦄ ⦃ bset = extDS-isSet j ⦄
-                            (classDS j ∘ (aMor₀ ⟨ j ⟩)) _ (inl (inl h₁))))
-      chase j (inl (inr h₀)) =
-           ap (λ v → ((aTsm s₁) ⟨ j ⟩) (G1 j (SS j v)))
-              (⁄-rec-β ⦃ Q1S.setQuotient j ⦄ ⦃ bset = mid1-isSet j ⦄ _ _ (inl (inr h₀)))
-        ⨾  sym (   ap (λ v → GD j (SD j v))
-                      (⁄-rec-β ⦃ QDS.setQuotient j ⦄ ⦃ bset = mid2-isSet j ⦄ _ _ (inr (inl h₀)))
-                ⨾  ap (λ v → GD j (inr (G0 j (S0 j v))))
-                      (⁄-rec-β ⦃ Q0S.setQuotient j ⦄ ⦃ bset = mid3-isSet j ⦄ _ _ (inl h₀)))
-        ⨾  sym (ap (λ v → GD j (SD j ((distributeExtended H₁ (weakenSequent H₀ s₀) ⟨ j ⟩) v)))
-                   (⁄-rec-β ⦃ Q1S.setQuotient j ⦄ ⦃ bset = extDS-isSet j ⦄
-                            (classDS j ∘ (aMor₀ ⟨ j ⟩)) _ (inl (inr h₀))))
-      chase j (inr γ) =
-           ap (λ v → ((aTsm s₁) ⟨ j ⟩) (G1 j (SS j v)))
-              (⁄-rec-β ⦃ Q1S.setQuotient j ⦄ ⦃ bset = mid1-isSet j ⦄ _ _ (inr γ))
-        ⨾  tail j ((μ' ⟨ j ⟩) ([_] ⦃ QΓ₀.setQuotient j ⦄ γ))
-        ⨾  sym (   ap (λ v → GD j (SD j v))
-                      (⁄-rec-β ⦃ QDS.setQuotient j ⦄ ⦃ bset = mid2-isSet j ⦄ _ _ (inr (inr γ)))
-                ⨾  ap (λ v → GD j (inr (G0 j (S0 j v))))
-                      (⁄-rec-β ⦃ Q0S.setQuotient j ⦄ ⦃ bset = mid3-isSet j ⦄ _ _ (inr γ)))
-        ⨾  sym (ap (λ v → GD j (SD j ((distributeExtended H₁ (weakenSequent H₀ s₀) ⟨ j ⟩) v)))
-                   (⁄-rec-β ⦃ Q1S.setQuotient j ⦄ ⦃ bset = extDS-isSet j ⦄
-                            (classDS j ∘ (aMor₀ ⟨ j ⟩)) _ (inr γ)))
+            → (lhsMor ⟨ j ⟩) ([_] u)
+              ＝ (rhsMor ⟨ j ⟩) ([_] u)
+      chase j (inl (inl h₁)) = refl
+      chase j (inl (inr h₀)) = refl
+      chase j (inr γ) = tail j ((μ' ⟨ j ⟩) ([_] γ))
 
       pw : (j : type (Judgment 𝒥))
            (w : ⌞ extendedContext (weakenSequent (H₁ + H₀) s₀) ⟨ j ⟩ ⌟)
          → (lhsMor ⟨ j ⟩) w ＝ (rhsMor ⟨ j ⟩) w
       pw j =
-        ⁄-elim-proposition ⦃ Q1S.setQuotient j ⦄
+        ⁄-elim-proposition
           (λ w → (lhsMor ⟨ j ⟩) w ＝ (rhsMor ⟨ j ⟩) w)
           (λ _ → ＝-isLevel ⦃ extDT-isSet j ⦄)
           (chase j)
@@ -346,30 +264,6 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
       aMor₀ = ContextEquivalence.morphism (assocSumContextEquivalence {Γ = H₁} {Δ = H₀} {Ψ = Γ₀})
       aMor₁ = ContextEquivalence.morphism (assocSumContextEquivalence {Γ = H₁} {Δ = H₀} {Ψ = Γ₁})
 
-      module QΓ₀ (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ (Γ₀ ⟨ j ⟩) ⌟) (CollapseRelation col₀ j)
-      module Q1S (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ (((H₁ + H₀) + Γ₀) ⟨ j ⟩) ⌟)
-          (CollapseRelation (mapCollapse (inrContext {Γ = H₁ + H₀} {Δ = Γ₀}) col₀) j)
-      module Q0S (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ ((H₀ + Γ₀) ⟨ j ⟩) ⌟)
-          (CollapseRelation (mapCollapse (inrContext {Γ = H₀} {Δ = Γ₀}) col₀) j)
-      module QDS (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ ((H₁ + (H₀ + Γ₀)) ⟨ j ⟩) ⌟)
-          (CollapseRelation (mapCollapse (inrContext {Γ = H₁} {Δ = H₀ + Γ₀})
-                              (mapCollapse (inrContext {Γ = H₀} {Δ = Γ₀}) col₀)) j)
-      module QΓ₁ (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ (Γ₁ ⟨ j ⟩) ⌟) (CollapseRelation col₁ j)
-      module Q1T (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ (((H₁ + H₀) + Γ₁) ⟨ j ⟩) ⌟)
-          (CollapseRelation (mapCollapse (inrContext {Γ = H₁ + H₀} {Δ = Γ₁}) col₁) j)
-      module Q0T (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ ((H₀ + Γ₁) ⟨ j ⟩) ⌟)
-          (CollapseRelation (mapCollapse (inrContext {Γ = H₀} {Δ = Γ₁}) col₁) j)
-      module QDT (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ ((H₁ + (H₀ + Γ₁)) ⟨ j ⟩) ⌟)
-          (CollapseRelation (mapCollapse (inrContext {Γ = H₁} {Δ = H₀ + Γ₁})
-                              (mapCollapse (inrContext {Γ = H₀} {Δ = Γ₁}) col₁)) j)
 
       extDS-isSet : (j : type (Judgment 𝒥))
                   → isSet ⌞ extendedContext (weakenSequent H₁ (weakenSequent H₀ s₀)) ⟨ j ⟩ ⌟
@@ -401,19 +295,19 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
 
       classDS : (j : type (Judgment 𝒥)) → ⌞ ((H₁ + (H₀ + Γ₀)) ⟨ j ⟩) ⌟
               → ⌞ extendedContext (weakenSequent H₁ (weakenSequent H₀ s₀)) ⟨ j ⟩ ⌟
-      classDS j = [_] ⦃ QDS.setQuotient j ⦄
+      classDS j = [_]
 
       classDT : (j : type (Judgment 𝒥)) → ⌞ ((H₁ + (H₀ + Γ₁)) ⟨ j ⟩) ⌟
               → ⌞ extendedContext (weakenSequent H₁ (weakenSequent H₀ s₁)) ⟨ j ⟩ ⌟
-      classDT j = [_] ⦃ QDT.setQuotient j ⦄
+      classDT j = [_]
 
       class1T : (j : type (Judgment 𝒥)) → ⌞ (((H₁ + H₀) + Γ₁) ⟨ j ⟩) ⌟
               → ⌞ extendedContext (weakenSequent (H₁ + H₀) s₁) ⟨ j ⟩ ⌟
-      class1T j = [_] ⦃ Q1T.setQuotient j ⦄
+      class1T j = [_]
 
       class0T : (j : type (Judgment 𝒥)) → ⌞ ((H₀ + Γ₁) ⟨ j ⟩) ⌟
               → ⌞ extendedContext (weakenSequent H₀ s₁) ⟨ j ⟩ ⌟
-      class0T j = [_] ⦃ Q0T.setQuotient j ⦄
+      class0T j = [_]
 
       SS : (j : type (Judgment 𝒥))
          → ⌞ ((H₁ + H₀) + extendedContext s₀) ⟨ j ⟩ ⌟
@@ -465,70 +359,28 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
            → ((aTsm s₁) ⟨ j ⟩) (G1 j (inr y))
              ＝ GD j (inr (G0 j (inr y)))
       tail j =
-        ⁄-elim-proposition ⦃ QΓ₁.setQuotient j ⦄
+        ⁄-elim-proposition
           (λ y → ((aTsm s₁) ⟨ j ⟩) (G1 j (inr y)) ＝ GD j (inr (G0 j (inr y))))
           (λ _ → ＝-isLevel ⦃ extDT-isSet j ⦄)
           chaseT
         where
           chaseT : (v₁ : ⌞ (Γ₁ ⟨ j ⟩) ⌟)
-                 → ((aTsm s₁) ⟨ j ⟩) (G1 j (inr ([_] ⦃ QΓ₁.setQuotient j ⦄ v₁)))
-                   ＝ GD j (inr (G0 j (inr ([_] ⦃ QΓ₁.setQuotient j ⦄ v₁))))
-          chaseT v₁ =
-               ap ((aTsm s₁) ⟨ j ⟩)
-                  (⁄-rec-β ⦃ QΓ₁.setQuotient j ⦄ ⦃ bset = ext1T-isSet j ⦄
-                           (class1T j ∘ inr) _ v₁)
-            ⨾  ⁄-rec-β ⦃ Q1T.setQuotient j ⦄ ⦃ bset = extDT-isSet j ⦄
-                       (classDT j ∘ (aMor₁ ⟨ j ⟩)) _ (inr v₁)
-            ⨾  sym (   ap (λ q → GD j (inr q))
-                          (⁄-rec-β ⦃ QΓ₁.setQuotient j ⦄ ⦃ bset = ext0T-isSet j ⦄
-                                   (class0T j ∘ inr) _ v₁)
-                    ⨾  ⁄-rec-β ⦃ Q0T.setQuotient j ⦄ ⦃ bset = extDT-isSet j ⦄
-                               (classDT j ∘ inr) _ (inr v₁))
+                 → ((aTsm s₁) ⟨ j ⟩) (G1 j (inr ([_] v₁)))
+                   ＝ GD j (inr (G0 j (inr ([_] v₁))))
+          chaseT v₁ = refl
 
       chase : (j : type (Judgment 𝒥)) (u : ⌞ (((H₁ + H₀) + Γ₀) ⟨ j ⟩) ⌟)
-            → (lhsMor ⟨ j ⟩) ([_] ⦃ Q1S.setQuotient j ⦄ u)
-              ＝ (rhsMor ⟨ j ⟩) ([_] ⦃ Q1S.setQuotient j ⦄ u)
-      chase j (inl (inl h₁)) =
-           ap (λ v → ((aTsm s₁) ⟨ j ⟩) (G1 j (SS j v)))
-              (⁄-rec-β ⦃ Q1S.setQuotient j ⦄ ⦃ bset = mid1-isSet j ⦄ _ _ (inl (inl h₁)))
-        ⨾  ⁄-rec-β ⦃ Q1T.setQuotient j ⦄ ⦃ bset = extDT-isSet j ⦄
-                   (classDT j ∘ (aMor₁ ⟨ j ⟩)) _ (inl (inl h₁))
-        ⨾  sym (   ap (DBL j)
-                      (⁄-rec-β ⦃ Q1S.setQuotient j ⦄ ⦃ bset = extDS-isSet j ⦄
-                               (classDS j ∘ (aMor₀ ⟨ j ⟩)) _ (inl (inl h₁)))
-                ⨾  ap (λ v → GD j (SD j v))
-                      (⁄-rec-β ⦃ QDS.setQuotient j ⦄ ⦃ bset = mid2-isSet j ⦄ _ _ (inl h₁)))
-      chase j (inl (inr h₀)) =
-           ap (λ v → ((aTsm s₁) ⟨ j ⟩) (G1 j (SS j v)))
-              (⁄-rec-β ⦃ Q1S.setQuotient j ⦄ ⦃ bset = mid1-isSet j ⦄ _ _ (inl (inr h₀)))
-        ⨾  ⁄-rec-β ⦃ Q1T.setQuotient j ⦄ ⦃ bset = extDT-isSet j ⦄
-                   (classDT j ∘ (aMor₁ ⟨ j ⟩)) _ (inl (inr h₀))
-        ⨾  sym (   ap (DBL j)
-                      (⁄-rec-β ⦃ Q1S.setQuotient j ⦄ ⦃ bset = extDS-isSet j ⦄
-                               (classDS j ∘ (aMor₀ ⟨ j ⟩)) _ (inl (inr h₀)))
-                ⨾  ap (λ v → GD j (SD j v))
-                      (⁄-rec-β ⦃ QDS.setQuotient j ⦄ ⦃ bset = mid2-isSet j ⦄ _ _ (inr (inl h₀)))
-                ⨾  ap (λ v → GD j (inr (G0 j (S0 j v))))
-                      (⁄-rec-β ⦃ Q0S.setQuotient j ⦄ ⦃ bset = mid3-isSet j ⦄ _ _ (inl h₀))
-                ⨾  ⁄-rec-β ⦃ Q0T.setQuotient j ⦄ ⦃ bset = extDT-isSet j ⦄
-                           (classDT j ∘ inr) _ (inl h₀))
-      chase j (inr γ) =
-           ap (λ v → ((aTsm s₁) ⟨ j ⟩) (G1 j (SS j v)))
-              (⁄-rec-β ⦃ Q1S.setQuotient j ⦄ ⦃ bset = mid1-isSet j ⦄ _ _ (inr γ))
-        ⨾  tail j ((μ' ⟨ j ⟩) ([_] ⦃ QΓ₀.setQuotient j ⦄ γ))
-        ⨾  sym (   ap (DBL j)
-                      (⁄-rec-β ⦃ Q1S.setQuotient j ⦄ ⦃ bset = extDS-isSet j ⦄
-                               (classDS j ∘ (aMor₀ ⟨ j ⟩)) _ (inr γ))
-                ⨾  ap (λ v → GD j (SD j v))
-                      (⁄-rec-β ⦃ QDS.setQuotient j ⦄ ⦃ bset = mid2-isSet j ⦄ _ _ (inr (inr γ)))
-                ⨾  ap (λ v → GD j (inr (G0 j (S0 j v))))
-                      (⁄-rec-β ⦃ Q0S.setQuotient j ⦄ ⦃ bset = mid3-isSet j ⦄ _ _ (inr γ)))
+            → (lhsMor ⟨ j ⟩) ([_] u)
+              ＝ (rhsMor ⟨ j ⟩) ([_] u)
+      chase j (inl (inl h₁)) = refl
+      chase j (inl (inr h₀)) = refl
+      chase j (inr γ) = tail j ((μ' ⟨ j ⟩) ([_] γ))
 
       pw : (j : type (Judgment 𝒥))
            (w : ⌞ extendedContext (weakenSequent (H₁ + H₀) s₀) ⟨ j ⟩ ⌟)
          → (lhsMor ⟨ j ⟩) w ＝ (rhsMor ⟨ j ⟩) w
       pw j =
-        ⁄-elim-proposition ⦃ Q1S.setQuotient j ⦄
+        ⁄-elim-proposition
           (λ w → (lhsMor ⟨ j ⟩) w ＝ (rhsMor ⟨ j ⟩) w)
           (λ _ → ＝-isLevel ⦃ extDT-isSet j ⦄)
           (chase j)
@@ -615,11 +467,6 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
     where
       s' = mkSequent Δ F'
 
-      module QΔ (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ Δ ⟨ j ⟩ ⌟) (CollapseRelation colF j)
-      module QM (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ (H₁ + Δ) ⟨ j ⟩ ⌟)
-          (CollapseRelation (mapCollapse (inrContext {Γ = H₁} {Δ = Δ}) colF) j)
 
       extDT-isSet : (j : type (Judgment 𝒥))
                   → isSet ⌞ extendedContext (weakenSequent H₁ (weakenSequent H₀ t)) ⟨ j ⟩ ⌟
@@ -660,22 +507,17 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
                 ∙ (→⋊ (weakenSequent (H₁ + H₀) t)
                   ∙ (inlContext {Γ = H₁ + H₀} {Δ = Sequent.context t}
                   ∙ (sumContextMorphism (identityH H₁) ρ
-                  ∙ distributeExtended H₁ s')))) ⟨ j ⟩) ([_] ⦃ QM.setQuotient j ⦄ u)
+                  ∙ distributeExtended H₁ s')))) ⟨ j ⟩) ([_] u)
               ＝ ((SequentMorphism.sequentMorphism
                     (weakenSequentMorphism H₁
                       (mkSequentMorphism {s₁ = s'} {s₂ = weakenSequent H₀ t}
                       (→⋊ (weakenSequent H₀ t)
                         ∙ (inlContext {Γ = H₀} {Δ = Sequent.context t} ∙ ρ))))) ⟨ j ⟩)
-                  ([_] ⦃ QM.setQuotient j ⦄ u)
+                  ([_] u)
       chase j (inl h) =
-           ap (lhsF j) (⁄-rec-β ⦃ QM.setQuotient j ⦄ ⦃ bset = midF-isSet j ⦄ _ _ (inl h))
-        ⨾  bridge t j (inl (inl h))
+           bridge t j (inl (inl h))
         ⨾  sym (gatherExtended-onAdded H₁ (weakenSequent H₀ t) j h)
-        ⨾  sym (ap (rhsF j) (⁄-rec-β ⦃ QM.setQuotient j ⦄ ⦃ bset = midF-isSet j ⦄ _ _ (inl h)))
-      chase j (inr d) =
-           ap (lhsF j) (⁄-rec-β ⦃ QM.setQuotient j ⦄ ⦃ bset = midF-isSet j ⦄ _ _ (inr d))
-        ⨾  tailC j ([_] ⦃ QΔ.setQuotient j ⦄ d)
-        ⨾  sym (ap (rhsF j) (⁄-rec-β ⦃ QM.setQuotient j ⦄ ⦃ bset = midF-isSet j ⦄ _ _ (inr d)))
+      chase j (inr d) = tailC j ([_] d)
 
       pw : (j : type (Judgment 𝒥))
            (z : ⌞ extendedContext (weakenSequent H₁ s') ⟨ j ⟩ ⌟)
@@ -690,7 +532,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
                      (→⋊ (weakenSequent H₀ t)
                      ∙ (inlContext {Γ = H₀} {Δ = Sequent.context t} ∙ ρ))))) ⟨ j ⟩) z
       pw j =
-        ⁄-elim-proposition ⦃ QM.setQuotient j ⦄
+        ⁄-elim-proposition
           (λ z → ((aTsmC t
                    ∙ (→⋊ (weakenSequent (H₁ + H₀) t)
                      ∙ (inlContext {Γ = H₁ + H₀} {Δ = Sequent.context t}
@@ -755,18 +597,6 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
           → ⌞ ((H₁ + H₀) + K) ⟨ j ⟩ ⌟ → ⌞ (H₁ + (H₀ + K)) ⟨ j ⟩ ⌟
       aMK j = ContextEquivalence.morphism (assocSumContextEquivalence {Γ = H₁} {Δ = H₀} {Ψ = K}) ⟨ j ⟩
 
-      module QΔ (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ Δ ⟨ j ⟩ ⌟) (CollapseRelation colF j)
-      module QW (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ ((H₁ + H₀) + Δ) ⟨ j ⟩ ⌟)
-          (CollapseRelation (mapCollapse (inrContext {Γ = H₁ + H₀} {Δ = Δ}) colF) j)
-      module QI (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ (H₀ + Δ) ⟨ j ⟩ ⌟)
-          (CollapseRelation (mapCollapse (inrContext {Γ = H₀} {Δ = Δ}) colF) j)
-      module QD (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ (H₁ + (H₀ + Δ)) ⟨ j ⟩ ⌟)
-          (CollapseRelation (mapCollapse (inrContext {Γ = H₁} {Δ = H₀ + Δ})
-                              (mapCollapse (inrContext {Γ = H₀} {Δ = Δ}) colF)) j)
 
       tgtK-isSet : (j : type (Judgment 𝒥)) → isSet ⌞ (H₁ + (H₀ + K)) ⟨ j ⟩ ⌟
       tgtK-isSet j = level-proof ((H₁ + (H₀ + K)) ⟨ j ⟩)
@@ -789,7 +619,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
 
       classD : (j : type (Judgment 𝒥)) → ⌞ (H₁ + (H₀ + Δ)) ⟨ j ⟩ ⌟
              → ⌞ extendedContext (weakenSequent H₁ (weakenSequent H₀ s')) ⟨ j ⟩ ⌟
-      classD j = [_] ⦃ QD.setQuotient j ⦄
+      classD j = [_]
 
       SR : (j : type (Judgment 𝒥))
          → ⌞ ((H₁ + H₀) + extendedContext s') ⟨ j ⟩ ⌟ → ⌞ ((H₁ + H₀) + K) ⟨ j ⟩ ⌟
@@ -807,42 +637,17 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
       D2 j = distributeExtended H₁ (weakenSequent H₀ s') ⟨ j ⟩
 
       chase : (j : type (Judgment 𝒥)) (u : ⌞ ((H₁ + H₀) + Δ) ⟨ j ⟩ ⌟)
-            → (lhsMor ⟨ j ⟩) ([_] ⦃ QW.setQuotient j ⦄ u)
-              ＝ (rhsMor ⟨ j ⟩) ([_] ⦃ QW.setQuotient j ⦄ u)
-      chase j (inl (inl h₁)) =
-           ap (λ v → aMK j (SR j v))
-              (⁄-rec-β ⦃ QW.setQuotient j ⦄ ⦃ bset = mid1-isSet j ⦄ _ _ (inl (inl h₁)))
-        ⨾  sym (   ap (λ v → SD j (D2 j v))
-                      (⁄-rec-β ⦃ QW.setQuotient j ⦄ ⦃ bset = extD-isSet j ⦄
-                               (classD j ∘ (aMΔ ⟨ j ⟩)) _ (inl (inl h₁)))
-                ⨾  ap (SD j)
-                      (⁄-rec-β ⦃ QD.setQuotient j ⦄ ⦃ bset = mid2-isSet j ⦄ _ _ (inl h₁)))
-      chase j (inl (inr h₀)) =
-           ap (λ v → aMK j (SR j v))
-              (⁄-rec-β ⦃ QW.setQuotient j ⦄ ⦃ bset = mid1-isSet j ⦄ _ _ (inl (inr h₀)))
-        ⨾  sym (   ap (λ v → SD j (D2 j v))
-                      (⁄-rec-β ⦃ QW.setQuotient j ⦄ ⦃ bset = extD-isSet j ⦄
-                               (classD j ∘ (aMΔ ⟨ j ⟩)) _ (inl (inr h₀)))
-                ⨾  ap (SD j)
-                      (⁄-rec-β ⦃ QD.setQuotient j ⦄ ⦃ bset = mid2-isSet j ⦄ _ _ (inr (inl h₀)))
-                ⨾  ap (λ v → inr ((sumContextMorphism (identityH H₀) ρ ⟨ j ⟩) v))
-                      (⁄-rec-β ⦃ QI.setQuotient j ⦄ ⦃ bset = mid3-isSet j ⦄ _ _ (inl h₀)))
-      chase j (inr d) =
-           ap (λ v → aMK j (SR j v))
-              (⁄-rec-β ⦃ QW.setQuotient j ⦄ ⦃ bset = mid1-isSet j ⦄ _ _ (inr d))
-        ⨾  sym (   ap (λ v → SD j (D2 j v))
-                      (⁄-rec-β ⦃ QW.setQuotient j ⦄ ⦃ bset = extD-isSet j ⦄
-                               (classD j ∘ (aMΔ ⟨ j ⟩)) _ (inr d))
-                ⨾  ap (SD j)
-                      (⁄-rec-β ⦃ QD.setQuotient j ⦄ ⦃ bset = mid2-isSet j ⦄ _ _ (inr (inr d)))
-                ⨾  ap (λ v → inr ((sumContextMorphism (identityH H₀) ρ ⟨ j ⟩) v))
-                      (⁄-rec-β ⦃ QI.setQuotient j ⦄ ⦃ bset = mid3-isSet j ⦄ _ _ (inr d)))
+            → (lhsMor ⟨ j ⟩) ([_] u)
+              ＝ (rhsMor ⟨ j ⟩) ([_] u)
+      chase j (inl (inl h₁)) = refl
+      chase j (inl (inr h₀)) = refl
+      chase j (inr d) = refl
 
       pw : (j : type (Judgment 𝒥))
            (z : ⌞ extendedContext (weakenSequent (H₁ + H₀) s') ⟨ j ⟩ ⌟)
          → (lhsMor ⟨ j ⟩) z ＝ (rhsMor ⟨ j ⟩) z
       pw j =
-        ⁄-elim-proposition ⦃ QW.setQuotient j ⦄
+        ⁄-elim-proposition
           (λ z → (lhsMor ⟨ j ⟩) z ＝ (rhsMor ⟨ j ⟩) z)
           (λ _ → ＝-isLevel ⦃ tgtK-isSet j ⦄)
           (chase j)

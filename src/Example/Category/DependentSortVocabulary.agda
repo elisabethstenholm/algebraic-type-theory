@@ -7,8 +7,8 @@ import Structure.Wellfounded as Wellfounded
 open Wellfounded using (Wellfounded)
 import Structure.Accessible as Accessible
 open Accessible using (Accessible)
-open import Algebra.Wild.Semi
-open Semicategory
+open import Algebra.Wild.Semicategory
+open import Structure.Semicategorical using (Semicategorical)
 
 open import DependentSortVocabulary hiding (Judgment; JudgmentDependency)
 

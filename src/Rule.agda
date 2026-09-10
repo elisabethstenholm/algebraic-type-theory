@@ -2,15 +2,18 @@ module Rule where
 
 open import Prelude
 open import Axioms
-open import Homotopy.SetQuotient
+open import Homotopy.SetQuotient.Nominal
 open import Structure.Associativity
 open import Structure.Composable
 open import Structure.PreservesComposition
 open import Structure.Reasoning
 open import Structure.Symmetric
 open import Homotopy.StructuredType
-open import Algebra.Wild.Semi
-open Semicategory.Semicategory
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
+open import Structure.Semicategorical using (Semicategorical)
+open import Syntax.Opposable using (_ᵒᵖ)
+open Semicategory
 open import Algebra.Wild.TruncatedTypeSemicategory
 open import Homotopy.Equality
 open import Homotopy.Levels
@@ -163,10 +166,8 @@ module ExtendedSequentStructure ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
       open Semifunctor.Reasoning ℱ renaming (preservesCompositionₛ to pres)
       open Semicategory.Reasoning (SequentSemicategory 𝒥 i)
   preserves {newOb} {injOb y} {injOb z} (include f) (include g) = ap mkSequentMorphism
-    (begin
-      →⋊ (head (rule e)) ∙ realiseDependency (rule e) z ((dependency (rule e) ⟨ g ⟩) f)                   ⟪ ap (→⋊ (head (rule e)) ∙_) (coherenceRealisation (rule e) f g) ⟫
-      →⋊ (head (rule e)) ∙ (realiseDependency (rule e) y f ∙ SequentMorphism.sequentMorphism (ℱ ⟨ g ⟩))  ⟪ ∙-associative {g = realiseDependency (rule e) y f} ⟫
-      (→⋊ (head (rule e)) ∙ realiseDependency (rule e) y f) ∙ SequentMorphism.sequentMorphism (ℱ ⟨ g ⟩)  ∎)
+    (   ap (→⋊ (head (rule e)) ∙_) (coherenceRealisation (rule e) f g)
+     ⨾  ∙-associative {g = realiseDependency (rule e) y f})
   preserves {A} {injOb x} {newOb} f (include ())
   preserves {injOb x} {newOb} {C} (include ()) g
   preserves {newOb} {newOb} {C} (include ()) g

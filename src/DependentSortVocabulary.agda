@@ -3,8 +3,9 @@ module DependentSortVocabulary where
 open import Prelude
 open import Homotopy.Levels
 open import Homotopy.StructuredType
-open import Algebra.Wild.Semi
-open Semicategory.Semicategory
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
+open Semicategory
 
 record DependentSortVocabulary
   (o a : Level)
@@ -12,9 +13,9 @@ record DependentSortVocabulary
   constructor mkDependentSortVocabulary
   field
     semicategory : Semicategory o a
-    judgmentForms-isSet : isSet (SemicategoryProjections.Ob semicategory)
-    judgmentDependencies-isSet : {j₀ j₁ : SemicategoryProjections.Ob semicategory}
-                               → isSet (SemicategoryProjections.Hom semicategory j₀ j₁)
+    judgmentForms-isSet : isSet (Semicategory.Ob semicategory)
+    judgmentDependencies-isSet : {j₀ j₁ : Semicategory.Ob semicategory}
+                               → isSet (Semicategory.Hom semicategory j₀ j₁)
 open DependentSortVocabulary
 
 Judgment : {o a : Level} → DependentSortVocabulary o a → hSet o

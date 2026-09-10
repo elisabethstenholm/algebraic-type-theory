@@ -18,10 +18,10 @@ open import Structure.PreservesComposition
 open import Structure.Symmetric
 open import Structure.Unit
 open import Structure.Whiskerable
-open import Algebra.Wild.Semi
-open Semicategory using (tr-hom)
+open import Algebra.Wild.Semicategory hiding (objects≈ ; hom≈ ; composition≈ ; associative≈)
+open import Algebra.Wild.Semifunctor hiding (objects≈ ; map≈)
 open import Algebra.Wild.TruncatedTypeSemicategory
-open import Homotopy.SetQuotient
+open import Homotopy.SetQuotient.Nominal
 open import Syntax.Arrowable
 open import Foundation.Sum.Equivalence
 open import Structure.Bimappable
@@ -325,14 +325,10 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄
                                  (eq {x = X} {y = X'} d) (eq {x = Y} {y = Y'} c) u (there d x)
                           ＝ there c (u x)
       transportComputes X X' Y Y' d c u x =
-        begin
-          tr-hom (hSet-Semicategory i) p q u (there d x)
-                                            ⟪ ap (λ v → tr-hom (hSet-Semicategory i) p q u (there v x))
-                                                 (sym (observe-eq ⦃ []Type-hasEquality ⦄ d)) ⟫
-          tr-hom (hSet-Semicategory i) p q u (there (observe p) x)
-                                            ⟪ trHomOnPaths X X' Y Y' p q u x ⟫
-          there (observe q) (u x)           ⟪ ap (λ v → there v (u x)) (observe-eq ⦃ []Type-hasEquality ⦄ c) ⟫
-          there c (u x)                     ∎
+           ap (λ v → tr-hom (hSet-Semicategory i) p q u (there v x))
+              (sym (observe-eq ⦃ []Type-hasEquality ⦄ d))
+        ⨾  trHomOnPaths X X' Y Y' p q u x
+        ⨾  ap (λ v → there v (u x)) (observe-eq ⦃ []Type-hasEquality ⦄ c)
         where
           p = eq {x = X} {y = X'} d
           q = eq {x = Y} {y = Y'} c
@@ -351,16 +347,12 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄
                     → tr-hom (hSet-Semicategory i) (objects≈ j₀) (objects≈ j₁) (Γ ⟨ f ⟩) y
                       ＝ (Δ ⟨ f ⟩) y
           pointwise y =
-            begin
-              tr-hom (hSet-Semicategory i) (objects≈ j₀) (objects≈ j₁) (Γ ⟨ f ⟩) y
-                                                 ⟪ ap (tr-hom (hSet-Semicategory i) (objects≈ j₀) (objects≈ j₁) (Γ ⟨ f ⟩))
-                                                      (sym (onSection y)) ⟫
-              tr-hom (hSet-Semicategory i) (objects≈ j₀) (objects≈ j₁) (Γ ⟨ f ⟩) (there (e j₀) (back y))
-                                                 ⟪ transportComputes (Γ ⟨ j₀ ⟩) (Δ ⟨ j₀ ⟩) (Γ ⟨ j₁ ⟩) (Δ ⟨ j₁ ⟩)
-                                                                     (e j₀) (e j₁) (Γ ⟨ f ⟩) (back y) ⟫
-              there (e j₁) ((Γ ⟨ f ⟩) (back y))  ⟪ sym (ap (λ h → h (back y)) (ContextMorphism.natural α f)) ⟫
-              (Δ ⟨ f ⟩) (there (e j₀) (back y))  ⟪ ap (Δ ⟨ f ⟩) (onSection y) ⟫
-              (Δ ⟨ f ⟩) y                        ∎
+               ap (tr-hom (hSet-Semicategory i) (objects≈ j₀) (objects≈ j₁) (Γ ⟨ f ⟩))
+                  (sym (onSection y))
+            ⨾  transportComputes (Γ ⟨ j₀ ⟩) (Δ ⟨ j₀ ⟩) (Γ ⟨ j₁ ⟩) (Δ ⟨ j₁ ⟩)
+                                 (e j₀) (e j₁) (Γ ⟨ f ⟩) (back y)
+            ⨾  sym (ap (λ h → h (back y)) (ContextMorphism.natural α f))
+            ⨾  ap (Δ ⟨ f ⟩) (onSection y)
 
   ≈→contextEquivalence : {Γ Δ : Context 𝒥 i}
                        → Context.semifunctor Γ ≈ Context.semifunctor Δ
@@ -371,7 +363,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄
       ; component-isEquivalence = λ j → ≃→isEquivalence (obs j) }
     where
       obs : (j : type (Judgment 𝒥)) → ⌞ Γ ⟨ j ⟩ ⌟ ≃ ⌞ Δ ⟨ j ⟩ ⌟
-      obs j = observe ⦃ []Type-hasEquality ⦄ (Semifunctor.objects≈ W j)
+      obs j = observe ⦃ []Type-hasEquality ⦄ (Semifunctor-Equality.objects≈ W j)
 
       comp : (j : type (Judgment 𝒥)) → ⌞ Γ ⟨ j ⟩ ⌟ → ⌞ Δ ⟨ j ⟩ ⌟
       comp j = there (obs j)
@@ -379,9 +371,9 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄
       natural~ : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
                → Δ ⟨ f ⟩ ∘ comp j₀ ~ comp j₁ ∘ Γ ⟨ f ⟩
       natural~ {j₀} {j₁} f x =
-           ap (λ h → h (comp j₀ x)) (sym (Semifunctor.map≈ W j₀ j₁ f))
+           ap (λ h → h (comp j₀ x)) (sym (Semifunctor-Equality.map≈ W j₀ j₁ f))
         ⨾  trHomOnPaths (Γ ⟨ j₀ ⟩) (Δ ⟨ j₀ ⟩) (Γ ⟨ j₁ ⟩) (Δ ⟨ j₁ ⟩)
-                        (Semifunctor.objects≈ W j₀) (Semifunctor.objects≈ W j₁) (Γ ⟨ f ⟩) x
+                        (Semifunctor-Equality.objects≈ W j₀) (Semifunctor-Equality.objects≈ W j₁) (Γ ⟨ f ⟩) x
 
   ≈→contextEquivalence-isSection :
       {Γ Δ : Context 𝒥 i} (w : ContextEquivalence Γ Δ)

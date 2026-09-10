@@ -2,15 +2,18 @@ module Weakening.SequentStructure where
 
 open import Prelude
 open import Axioms
-open import Homotopy.SetQuotient
+open import Homotopy.SetQuotient.Nominal
 open import Structure.Associativity
 open import Structure.Composable
 open import Structure.Identity
 open import Structure.PreservesComposition
 open import Structure.Symmetric
 open import Homotopy.StructuredType
-open import Algebra.Wild.Semi
-open Semicategory.Semicategory
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
+open import Syntax.Opposable using (_ᵒᵖ)
+import Structure.Semifunctorial as Semifunctorial
+open Semicategory
 open import Algebra.Wild.TruncatedTypeSemicategory
 open import Homotopy.Equality
 open import Homotopy.Levels
@@ -229,11 +232,11 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
                       { {inl w} {inl w'} {inl w''} f g →
                           Structure.PreservesComposition.Bounded.preserves-composition
                             (Semifunctorial.Bounded.preservesComposition
-                               (SemifunctorProjections.semifunctorial dep₁)) f g
+                               (Semifunctor.semifunctorial dep₁)) f g
                       ; {inr x} {inr x'} {inr x''} f g →
                           Structure.PreservesComposition.Bounded.preserves-composition
                             (Semifunctorial.Bounded.preservesComposition
-                               (SemifunctorProjections.semifunctorial dep₀)) f g
+                               (Semifunctor.semifunctorial dep₀)) f g
                       ; {inr x} {inr x'} {inl w} f g → refl
                       ; {inr x} {inl w} {inl w'} f g → refl
                       ; {inl w} {inr x} {z} () g
@@ -354,13 +357,13 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
 
       objects≈' : Ob (SequentStructure.dependency (b₀ ⧺ X))
                 ≃ Ob (SequentStructure.dependency (b₁ ⧺ X))
-      objects≈' = bimap (Semicategory.objects≈ wd) ≃-id
+      objects≈' = bimap (Semicategory-Equality.objects≈ wd) ≃-id
 
       hom≈' : (A B : Ob (SequentStructure.dependency (b₀ ⧺ X)))
             → Hom (SequentStructure.dependency (b₀ ⧺ X)) A B
             ≃ Hom (SequentStructure.dependency (b₁ ⧺ X))
                   (there objects≈' A) (there objects≈' B)
-      hom≈' (inl u) (inl v) = Semicategory.hom≈ wd u v
+      hom≈' (inl u) (inl v) = Semicategory-Equality.hom≈ wd u v
       hom≈' (inr x) (inr y) = ≃-id
       hom≈' (inr x) (inl u) = wt u
       hom≈' (inl u) (inr y) = ≃-id
@@ -371,7 +374,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
           { objects≈ = objects≈'
           ; hom≈ = hom≈'
           ; composition≈ = λ
-              { (inl u) (inl v) (inl e) f g → Semicategory.composition≈ wd u v e f g
+              { (inl u) (inl v) (inl e) f g → Semicategory-Equality.composition≈ wd u v e f g
               ; (inr x) (inr y) (inr z) f g → refl
               ; (inr x) (inr y) (inl u) f g → refl
               ; (inr x) (inl u) (inl v) f g → sym (ap (λ h → h f) (wtn g))
@@ -388,87 +391,23 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
       sequent≈' (inl u) = wseq u
       sequent≈' (inr x) = weakenedSequentEquivalence wh sequentEquivalence-identity
 
-      idSM : {l : Level} {s : Sequent 𝒥 l}
-           → SequentMorphism.sequentMorphism (toSequentMorphism (sequentEquivalence-identity {s = s}))
-             ＝ identity
-      idSM {s = s} = eq (toSequentMorphism-identity {s = s})
-
-      unitLᶜ : {l₀ l₁ : Level} {Γ : Context 𝒥 l₀} {Δ : Context 𝒥 l₁} (β : Γ ⇒ Δ)
-             → identity ∙ β ＝ β
-      unitLᶜ β = eq (record { component≈ = λ j → refl })
-
-      unitRᶜ : {l₀ l₁ : Level} {Γ : Context 𝒥 l₀} {Δ : Context 𝒥 l₁} (β : Γ ⇒ Δ)
-             → β ∙ identity ＝ β
-      unitRᶜ β = eq (record { component≈ = λ j → refl })
-
-      sumStep : (x : Ob 𝒟X)
-              → toSequentMorphism (weakenedSequentEquivalence wh (sequentEquivalence-identity {s = 𝒢X ⟨ x ⟩}))
-                ＝ weakenedSequentMorphism (ContextEquivalence.morphism wh)
-                    (toSequentMorphism (sequentEquivalence-identity {s = 𝒢X ⟨ x ⟩}))
-      sumStep x =
-        ap mkSequentMorphism
-           (map⋊-sum (ContextEquivalence.morphism wh)
-                     (ContextEquivalence.morphism (SequentEquivalence.contextEquivalence
-                        (sequentEquivalence-identity {s = 𝒢X ⟨ x ⟩})))
-                     (Sequent.extensionOrCollapse (𝒢X ⟨ x ⟩))
-                     (Sequent.extensionOrCollapse (𝒢X ⟨ x ⟩))
-                     (SequentEquivalence.extensionOrCollapseEquality
-                        (sequentEquivalence-identity {s = 𝒢X ⟨ x ⟩})))
-
       natural-rr : (x y : Ob 𝒟X) (f : Hom 𝒟X x y)
                  → SequentMorphismEquality
                      (toSequentMorphism (sequent≈' (inr x)) ∙ weakenSequentMorphism h₀ (𝒢X ⟨ f ⟩))
                      (weakenSequentMorphism h₁ (𝒢X ⟨ f ⟩) ∙ toSequentMorphism (sequent≈' (inr y)))
       natural-rr x y f =
         observe ⦃ equalitySequentMorphism ⦄
-          (begin
-            toSequentMorphism (sequent≈' (inr x)) ∙ weakenSequentMorphism h₀ (𝒢X ⟨ f ⟩)
-              ⟪ ap (_∙ weakenSequentMorphism h₀ (𝒢X ⟨ f ⟩)) (sumStep x) ⟫
-            weakenedSequentMorphism (ContextEquivalence.morphism wh)
-              (toSequentMorphism (sequentEquivalence-identity {s = 𝒢X ⟨ x ⟩}))
-              ∙ weakenedSequentMorphism identity (𝒢X ⟨ f ⟩)
-              ⟪ ap (λ m → weakenedSequentMorphism (ContextEquivalence.morphism wh) m
-                          ∙ weakenedSequentMorphism identity (𝒢X ⟨ f ⟩))
-                   (ap mkSequentMorphism (idSM {s = 𝒢X ⟨ x ⟩})) ⟫
-            weakenedSequentMorphism (ContextEquivalence.morphism wh) (mkSequentMorphism identity)
-              ∙ weakenedSequentMorphism identity (𝒢X ⟨ f ⟩)
-              ⟪ sym (weakenedSequentMorphism-composition identity (ContextEquivalence.morphism wh)
-                       (𝒢X ⟨ f ⟩) (mkSequentMorphism identity)) ⟫
-            weakenedSequentMorphism (ContextEquivalence.morphism wh ∙ identity)
-              (𝒢X ⟨ f ⟩ ⨾ mkSequentMorphism identity)
-              ⟪ ap (λ m → weakenedSequentMorphism m (𝒢X ⟨ f ⟩ ⨾ mkSequentMorphism identity))
-                   (unitRᶜ (ContextEquivalence.morphism wh)) ⟫
-            weakenedSequentMorphism (ContextEquivalence.morphism wh)
-              (𝒢X ⟨ f ⟩ ⨾ mkSequentMorphism identity)
-              ⟪ ap (λ m → weakenedSequentMorphism (ContextEquivalence.morphism wh) (mkSequentMorphism m))
-                   (unitLᶜ (SequentMorphism.sequentMorphism (𝒢X ⟨ f ⟩))) ⟫
-            weakenedSequentMorphism (ContextEquivalence.morphism wh) (𝒢X ⟨ f ⟩)
-              ⟪ sym (ap (λ m → weakenedSequentMorphism (ContextEquivalence.morphism wh) (mkSequentMorphism m))
-                        (unitRᶜ (SequentMorphism.sequentMorphism (𝒢X ⟨ f ⟩)))) ⟫
-            weakenedSequentMorphism (ContextEquivalence.morphism wh)
-              (mkSequentMorphism identity ⨾ 𝒢X ⟨ f ⟩)
-              ⟪ sym (ap (λ m → weakenedSequentMorphism m (mkSequentMorphism identity ⨾ 𝒢X ⟨ f ⟩))
-                        (unitLᶜ (ContextEquivalence.morphism wh))) ⟫
-            weakenedSequentMorphism (identity ∙ ContextEquivalence.morphism wh)
-              (mkSequentMorphism identity ⨾ 𝒢X ⟨ f ⟩)
-              ⟪ weakenedSequentMorphism-composition (ContextEquivalence.morphism wh) identity
-                  (mkSequentMorphism identity) (𝒢X ⟨ f ⟩) ⟫
-            weakenedSequentMorphism (ContextEquivalence.morphism wh) (mkSequentMorphism identity)
-              ⨾ weakenedSequentMorphism identity (𝒢X ⟨ f ⟩)
-              ⟪ sym (ap (λ m → weakenedSequentMorphism identity (𝒢X ⟨ f ⟩)
-                              ∙ weakenedSequentMorphism (ContextEquivalence.morphism wh) m)
-                        (ap mkSequentMorphism (idSM {s = 𝒢X ⟨ y ⟩}))) ⟫
-            weakenedSequentMorphism identity (𝒢X ⟨ f ⟩)
-              ∙ weakenedSequentMorphism (ContextEquivalence.morphism wh)
-                  (toSequentMorphism (sequentEquivalence-identity {s = 𝒢X ⟨ y ⟩}))
-              ⟪ sym (ap (weakenSequentMorphism h₁ (𝒢X ⟨ f ⟩) ∙_) (sumStep y)) ⟫
-            weakenSequentMorphism h₁ (𝒢X ⟨ f ⟩) ∙ toSequentMorphism (sequent≈' (inr y))  ∎)
+          (ap mkSequentMorphism
+             (map⋊-sum-square wh
+               (Sequent.extensionOrCollapse (𝒢X ⟨ y ⟩))
+               (Sequent.extensionOrCollapse (𝒢X ⟨ x ⟩))
+               (𝒢X ⟨ f ⟩)))
       natural-rl : (x : Ob 𝒟X) (u : Ob 𝒞₀) (g : ⌞ (depF₀ ⟨ u ⟩) ⌟)
                  → SequentMorphismEquality
                      (toSequentMorphism (sequent≈' (inr x))
                        ∙ mkSequentMorphism (→⋊ (weakenSequent h₀ (𝒢X ⟨ x ⟩)) ∙ (inlContext ∙ r₀ u g)))
                      (mkSequentMorphism (→⋊ (weakenSequent h₁ (𝒢X ⟨ x ⟩))
-                        ∙ (inlContext ∙ r₁ (there (Semicategory.objects≈ wd) u) (there (wt u) g)))
+                        ∙ (inlContext ∙ r₁ (there (Semicategory-Equality.objects≈ wd) u) (there (wt u) g)))
                        ∙ toSequentMorphism (wseq u))
       natural-rl x u g =
         mkSequentMorphismEquality (record { component≈ = λ j → funExt (pw j) })
@@ -476,7 +415,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
           pw : (j : type (Judgment 𝒥)) (z : ⌞ extendedContext (ℱ₀ ⟨ u ⟩) ⟨ j ⟩ ⌟)
              → ((SequentMorphism.sequentMorphism (toSequentMorphism (sequent≈' (inr x)))
                  ∙ (→⋊ (weakenSequent h₀ (𝒢X ⟨ x ⟩)) ∙ (inlContext ∙ r₀ u g))) ⟨ j ⟩) z
-               ＝ (((→⋊ (weakenSequent h₁ (𝒢X ⟨ x ⟩)) ∙ (inlContext ∙ r₁ (there (Semicategory.objects≈ wd) u) (there (wt u) g)))
+               ＝ (((→⋊ (weakenSequent h₁ (𝒢X ⟨ x ⟩)) ∙ (inlContext ∙ r₁ (there (Semicategory-Equality.objects≈ wd) u) (there (wt u) g)))
                    ∙ SequentMorphism.sequentMorphism (toSequentMorphism (wseq u))) ⟨ j ⟩) z
           pw j z =
                map⋊-sum-onAdded (ContextEquivalence.morphism wh)

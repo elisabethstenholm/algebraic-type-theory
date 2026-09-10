@@ -2,8 +2,9 @@ module RuleMorphism.Equality where
 
 open import Prelude
 open import Axioms
-open import Homotopy.SetQuotient
-open import Algebra.Wild.Semi
+open import Homotopy.SetQuotient.Nominal
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
 open import Syntax.Arrowable
 open import Homotopy.Equality
 open import Homotopy.Levels
@@ -15,7 +16,7 @@ open import Structure.Composable
 open import Structure.Identity
 open import Structure.Symmetric
 open import Structure.Associativity
-open Semicategory.Semicategory
+open Semicategory
 
 open import DependentSortVocabulary
 open import Context
@@ -58,30 +59,16 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
       ; sequent≈ = λ x → sequentEquivalence-identity
       ; natural≈ = λ {x} {y} f → idSquareSMEᴿ (SequentStructure.sequent s ⟨ f ⟩) }
     where
-      idSeqMorᵇ : {l : Level} {t : Sequent 𝒥 l}
-                → SequentMorphism.sequentMorphism (toSequentMorphism (sequentEquivalence-identity {s = t}))
-                  ＝ identity
-      idSeqMorᵇ {t = t} = eq (toSequentMorphism-identity {s = t})
-
-      unitLᵇ : {l₀ l₁ : Level} {Γ : Context 𝒥 l₀} {Δ : Context 𝒥 l₁} (β : Γ ⇒ Δ)
-             → identity ∙ β ＝ β
-      unitLᵇ β = eq (record { component≈ = λ j → refl })
-
-      unitRᵇ : {l₀ l₁ : Level} {Γ : Context 𝒥 l₀} {Δ : Context 𝒥 l₁} (β : Γ ⇒ Δ)
-             → β ∙ identity ＝ β
-      unitRᵇ β = eq (record { component≈ = λ j → refl })
-
       idSquareSMEᴿ : {l₀ l₁ : Level} {s₀ : Sequent 𝒥 l₀} {s₁ : Sequent 𝒥 l₁}
                      (α : SequentMorphism s₀ s₁)
                    → SequentMorphismEquality
                        (toSequentMorphism (sequentEquivalence-identity {s = s₁}) ∙ α)
                        (α ∙ toSequentMorphism (sequentEquivalence-identity {s = s₀}))
       idSquareSMEᴿ {s₀ = s₀} {s₁ = s₁} α =
-        observe ⦃ equalitySequentMorphism ⦄
-          (   ap (λ m → mkSequentMorphism (m ∙ SequentMorphism.sequentMorphism α)) (idSeqMorᵇ {t = s₁})
-           ⨾  ap mkSequentMorphism (unitLᵇ (SequentMorphism.sequentMorphism α))
-           ⨾  sym (ap mkSequentMorphism (unitRᵇ (SequentMorphism.sequentMorphism α)))
-           ⨾  sym (ap (λ m → mkSequentMorphism (SequentMorphism.sequentMorphism α ∙ m)) (idSeqMorᵇ {t = s₀})))
+        mkSequentMorphismEquality (record { component≈ = λ j → funExt (λ z →
+             toSequentMorphism-identity-at {s = s₁} j ((SequentMorphism.sequentMorphism α ⟨ j ⟩) z)
+          ⨾  sym (ap (SequentMorphism.sequentMorphism α ⟨ j ⟩)
+                     (toSequentMorphism-identity-at {s = s₀} j z))) })
 
   idContextWithTermsEquality : (b : ContextWithTerms 𝒥 so sa i)
                              → ContextWithTermsEquality b b
@@ -94,21 +81,21 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
           ; termsNatural = λ g → refl
           ; realise≈ = λ x u →
               record { component≈ = λ j → funExt (λ z →
-                  sym (ap (λ h → (SequentDependencyStructure.realiseDependency bd x u ⟨ j ⟩) (h z))
-                          (ContextMorphismEquality.component≈
-                             (toSequentMorphism-identity
-                                {s = SequentStructure.sequent (SequentDependencyStructure.sequentStructure bd) ⟨ x ⟩}) j))) } } }
+                  sym (ap (SequentDependencyStructure.realiseDependency bd x u ⟨ j ⟩)
+                          (toSequentMorphism-identity-at
+                             {s = SequentStructure.sequent (SequentDependencyStructure.sequentStructure bd) ⟨ x ⟩} j z))) } } }
     where
       bd = ContextWithTerms.contextWithTerms b
 
 -- =============== Equality of rule morphisms ===============
 
-castSSM : ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
-        → {o a so sa i : Level} {𝒥 : DependentSortVocabulary o a}
-          {r : Rule 𝒥 so sa i} {b₀ b₁ : ContextWithTerms 𝒥 so sa i}
-        → ContextWithTermsEquality b₀ b₁
-        → SequentStructureMorphism (b₀ ⧺ ⋊ₛ r) (b₁ ⧺ ⋊ₛ r)
-castSSM {r = r} w = equivToSSM (⧺-congruenceˡ (⋊ₛ r) w)
+opaque
+  castSSM : ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
+          → {o a so sa i : Level} {𝒥 : DependentSortVocabulary o a}
+            {r : Rule 𝒥 so sa i} {b₀ b₁ : ContextWithTerms 𝒥 so sa i}
+          → ContextWithTermsEquality b₀ b₁
+          → SequentStructureMorphism (b₀ ⧺ ⋊ₛ r) (b₁ ⧺ ⋊ₛ r)
+  castSSM {r = r} w = equivToSSM (⧺-congruenceˡ (⋊ₛ r) w)
 
 record RuleMorphismEquality
   ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
@@ -137,47 +124,48 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
   private
     T₁ = SequentDependencyStructure.sequentStructure (Rule.rule r₁)
 
-  castIdUnit : {b : ContextWithTerms 𝒥 so sa i}
-               (m : SequentStructureMorphism (b ⧺ ⋊ₛ r₀) T₁)
-             → SequentStructureMorphismEquality m
-                 (sequentStructureMorphism-⨾
-                   {s₀ = b ⧺ ⋊ₛ r₀} {s₁ = b ⧺ ⋊ₛ r₀} {s₂ = T₁}
-                   (castSSM {r = r₀} {b₀ = b} {b₁ = b}
-                            (idContextWithTermsEquality b)) m)
-  castIdUnit {b = b} m =
-    record
-      { dependencyMorphism≈ = record
-          { onObjects≈ = λ { (inl w') → refl ; (inr y) → refl }
-          ; witness≈ =
-              (λ { (inl u) (inl v) f → refl
-                 ; (inr x) (inr y) f → refl
-                 ; (inr x) (inl u) f → refl
-                 ; (inl u) (inr y) () })
-            , (λ A B E g h →
-                 allEqual ⦃ ＝-isLevel ⦃ SequentStructure.dependency-Hom-isSet T₁ _ _ ⦄ ⦄ _ _) }
-      ; sequentEquivalence≈ = seq≈' }
-    where
-      seq≈' : (x : Ob (SequentStructure.dependency (b ⧺ ⋊ₛ r₀))) → _
-      seq≈' (inl w') =
-        record { contextEquivalence≈ = record { morphism≈ = record { component≈ = λ j → refl } } }
-      seq≈' (inr y) =
-        record { contextEquivalence≈ = record { morphism≈ = record { component≈ = λ j → funExt (pt j) } } }
-        where
-          pt : (j : type (Judgment 𝒥))
-               (z : ⌞ Sequent.context (SequentStructure.sequent (b ⧺ ⋊ₛ r₀) ⟨ inr y ⟩) ⟨ j ⟩ ⌟)
-             → (ContextEquivalence.morphism
+  opaque
+    unfolding castSSM
+
+    castIdUnit : {b : ContextWithTerms 𝒥 so sa i}
+                 (m : SequentStructureMorphism (b ⧺ ⋊ₛ r₀) T₁)
+               → SequentStructureMorphismEquality m
+                   (sequentStructureMorphism-⨾
+                     {s₀ = b ⧺ ⋊ₛ r₀} {s₁ = b ⧺ ⋊ₛ r₀} {s₂ = T₁}
+                     (castSSM {r = r₀} {b₀ = b} {b₁ = b}
+                              (idContextWithTermsEquality b)) m)
+    castIdUnit {b = b} m =
+      record
+        { dependencyMorphism≈ = record
+            { onObjects≈ = λ { (inl w') → refl ; (inr y) → refl }
+            ; witness≈ =
+                (λ { (inl u) (inl v) f → refl
+                   ; (inr x) (inr y) f → refl
+                   ; (inr x) (inl u) f → refl
+                   ; (inl u) (inr y) () })
+              , (λ A B E g h →
+                   allEqual ⦃ ＝-isLevel ⦃ SequentStructure.dependency-Hom-isSet T₁ _ _ ⦄ ⦄ _ _) }
+        ; sequentEquivalence≈ = λ
+            { (inl w') →
+                record { contextEquivalence≈ = record { morphism≈ = record { component≈ = λ j → refl } } }
+            ; (inr y) →
+                record { contextEquivalence≈ = record { morphism≈ = record { component≈ = λ j → funExt (pt y j) } } } } }
+      where
+        pt : (y : _) (j : type (Judgment 𝒥))
+             (z : ⌞ Sequent.context (SequentStructure.sequent (b ⧺ ⋊ₛ r₀) ⟨ inr y ⟩) ⟨ j ⟩ ⌟)
+           → (ContextEquivalence.morphism
+                (SequentEquivalence.contextEquivalence
+                   (SequentStructureMorphism.sequentEquivalence m (inr y))) ⟨ j ⟩) z
+             ＝ (ContextEquivalence.morphism
                   (SequentEquivalence.contextEquivalence
-                     (SequentStructureMorphism.sequentEquivalence m (inr y))) ⟨ j ⟩) z
-               ＝ (ContextEquivalence.morphism
-                    (SequentEquivalence.contextEquivalence
-                       (SequentStructureMorphism.sequentEquivalence
-                          (sequentStructureMorphism-⨾
-                            {s₀ = b ⧺ ⋊ₛ r₀} {s₁ = b ⧺ ⋊ₛ r₀} {s₂ = T₁}
-                            (castSSM {r = r₀} {b₀ = b} {b₁ = b}
-                                     (idContextWithTermsEquality b)) m)
-                          (inr y))) ⟨ j ⟩) z
-          pt j (inl h) = refl
-          pt j (inr v) = refl
+                     (SequentStructureMorphism.sequentEquivalence
+                        (sequentStructureMorphism-⨾
+                          {s₀ = b ⧺ ⋊ₛ r₀} {s₁ = b ⧺ ⋊ₛ r₀} {s₂ = T₁}
+                          (castSSM {r = r₀} {b₀ = b} {b₁ = b}
+                                   (idContextWithTermsEquality b)) m)
+                        (inr y))) ⟨ j ⟩) z
+        pt y j (inl h) = refl
+        pt y j (inr v) = refl
 
   identityRuleMorphismEquality :
       (φ : RuleMorphism r₀ r₁) → RuleMorphismEquality φ φ

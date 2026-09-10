@@ -2,14 +2,15 @@ module SequentDependencyStructure where
 
 open import Prelude
 open import Axioms
-open import Algebra.Wild.Semi
-open Semicategory.Semicategory
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
+open Semicategory
 open import Algebra.Wild.TruncatedTypeSemicategory
 open import Homotopy.Equality
 open import Homotopy.Fibre
 open import Homotopy.Levels
 open import Homotopy.StructuredType
-open import Homotopy.SetQuotient
+open import Homotopy.SetQuotient.Nominal
 open import Structure.Composable
 open import Structure.PreservesComposition
 open import Structure.Symmetric

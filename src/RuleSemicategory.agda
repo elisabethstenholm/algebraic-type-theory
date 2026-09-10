@@ -2,8 +2,9 @@ module RuleSemicategory where
 
 open import Prelude
 open import Axioms
-open import Homotopy.SetQuotient
-open import Algebra.Wild.Semi
+open import Homotopy.SetQuotient.Nominal
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
 open import Syntax.Arrowable
 open import Homotopy.Equality
 open import Homotopy.Levels
@@ -15,7 +16,7 @@ open import Structure.Composable
 open import Structure.Identity
 open import Structure.Symmetric
 open import Structure.Associativity
-open Semicategory.Semicategory
+open Semicategory
 
 open import DependentSortVocabulary
 open import Context
@@ -51,11 +52,14 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
   {o a so sa i : Level} {𝒥 : DependentSortVocabulary o a}
   {r₀ r₁ r₂ r₃ : Rule 𝒥 so sa i} where
 
-  ⨾ᴿ-associative :
-      (φ : RuleMorphism r₀ r₁) (ψ : RuleMorphism r₁ r₂) (χ : RuleMorphism r₂ r₃)
-    → ((φ ⨾ᴿ ψ) ⨾ᴿ χ) ＝ (φ ⨾ᴿ (ψ ⨾ᴿ χ))
-  ⨾ᴿ-associative φ ψ χ =
-    sym (eq ⦃ equalityRuleMorphism ⦄
+  opaque
+    unfolding castSSM
+
+    ⨾ᴿ-associative :
+        (φ : RuleMorphism r₀ r₁) (ψ : RuleMorphism r₁ r₂) (χ : RuleMorphism r₂ r₃)
+      → ((φ ⨾ᴿ ψ) ⨾ᴿ χ) ＝ (φ ⨾ᴿ (ψ ⨾ᴿ χ))
+    ⨾ᴿ-associative φ ψ χ =
+      sym (eq ⦃ equalityRuleMorphism ⦄
            {x = φ ⨾ᴿ (ψ ⨾ᴿ χ)} {y = (φ ⨾ᴿ ψ) ⨾ᴿ χ}
            (record
              { baseContext≈ =

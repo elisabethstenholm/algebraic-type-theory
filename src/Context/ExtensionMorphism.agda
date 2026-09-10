@@ -18,10 +18,10 @@ open import Structure.PreservesComposition
 open import Structure.Symmetric
 open import Structure.Unit
 open import Structure.Whiskerable
-open import Algebra.Wild.Semi
-open Semicategory using (tr-hom)
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
 open import Algebra.Wild.TruncatedTypeSemicategory
-open import Homotopy.SetQuotient
+open import Homotopy.SetQuotient.Nominal
 open import Syntax.Arrowable
 open import Foundation.Sum.Equivalence
 open import Structure.Bimappable
@@ -71,33 +71,29 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
       { component = component
       ; natural = funExt ∘ natural~ }
     where
-      module QΓ (j' : type (Judgment 𝒥)) = FromAllSetQuotients (⌞ Γ ⟨ j' ⟩ ⌟) (CollapseRelation c₀ j')
-      module QΔ (j' : type (Judgment 𝒥)) = FromAllSetQuotients (⌞ Δ ⟨ j' ⟩ ⌟) (CollapseRelation c₁ j')
 
       classΓ : (j' : type (Judgment 𝒥)) → ⌞ Γ ⟨ j' ⟩ ⌟ → ⌞ (Γ ⋊ₖ c₀) ⟨ j' ⟩ ⌟
-      classΓ j' = [_] ⦃ QΓ.setQuotient j' ⦄
+      classΓ j' = [_]
 
       classΔ : (j' : type (Judgment 𝒥)) → ⌞ Δ ⟨ j' ⟩ ⌟ → ⌞ (Δ ⋊ₖ c₁) ⟨ j' ⟩ ⌟
-      classΔ j' = [_] ⦃ QΔ.setQuotient j' ⦄
+      classΔ j' = [_]
 
       resp : (j' : type (Judgment 𝒥)) {x y : ⌞ Γ ⟨ j' ⟩ ⌟}
            → CollapseRelation c₀ j' x y
            → classΔ j' ((α ⟨ j' ⟩) x) ＝ classΔ j' ((α ⟨ j' ⟩) y)
       resp j' collapseRelation =
-        begin
-          classΔ j₀ ((α ⟨ j₀ ⟩) ((a₀ ⟨ j₀ ⟩) (inr (inl refl))))  ⟪ ap (λ h → classΔ j₀ (h (inr (inl refl)))) (component≈ a≈ j₀) ⟫
-          classΔ j₀ ((a₁ ⟨ j₀ ⟩) (inr (inl refl)))               ⟪ respects ⦃ QΔ.setQuotient j₀ ⦄ collapseRelation ⟫
-          classΔ j₀ ((a₁ ⟨ j₀ ⟩) (inr (inr refl)))               ⟪ sym (ap (λ h → classΔ j₀ (h (inr (inr refl)))) (component≈ a≈ j₀)) ⟫
-          classΔ j₀ ((α ⟨ j₀ ⟩) ((a₀ ⟨ j₀ ⟩) (inr (inr refl))))  ∎
+           ap (λ h → classΔ j₀ (h (inr (inl refl)))) (component≈ a≈ j₀)
+        ⨾  respects collapseRelation
+        ⨾  sym (ap (λ h → classΔ j₀ (h (inr (inr refl)))) (component≈ a≈ j₀))
 
       component : (j' : type (Judgment 𝒥)) → ⌞ (Γ ⋊ₖ c₀) ⟨ j' ⟩ ⌟ → ⌞ (Δ ⋊ₖ c₁) ⟨ j' ⟩ ⌟
-      component j' = ⁄-rec ⦃ QΓ.setQuotient j' ⦄ ⦃ bset = level-proof ((Δ ⋊ₖ c₁) ⟨ j' ⟩) ⦄
+      component j' = ⁄-rec ⦃ bset = level-proof ((Δ ⋊ₖ c₁) ⟨ j' ⟩) ⦄
                            (classΔ j' ∘ (α ⟨ j' ⟩)) (resp j')
 
       natural~ : {j₀' j₁' : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀' j₁'))
                → (Δ ⋊ₖ c₁) ⟨ f ⟩ ∘ component j₀' ~ component j₁' ∘ (Γ ⋊ₖ c₀) ⟨ f ⟩
       natural~ {j₀'} {j₁'} f =
-        ⁄-elim-proposition ⦃ QΓ.setQuotient j₀' ⦄
+        ⁄-elim-proposition
           (λ q → ((Δ ⋊ₖ c₁) ⟨ f ⟩) (component j₀' q) ＝ component j₁' (((Γ ⋊ₖ c₀) ⟨ f ⟩) q))
           (λ _ → ＝-isLevel ⦃ level-proof ((Δ ⋊ₖ c₁) ⟨ j₁' ⟩) ⦄)
           pointwise
@@ -105,34 +101,12 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
           pointwise : (x : ⌞ Γ ⟨ j₀' ⟩ ⌟)
                     → ((Δ ⋊ₖ c₁) ⟨ f ⟩) (component j₀' (classΓ j₀' x))
                       ＝ component j₁' (((Γ ⋊ₖ c₀) ⟨ f ⟩) (classΓ j₀' x))
-          pointwise x =
-            begin
-              ((Δ ⋊ₖ c₁) ⟨ f ⟩) (component j₀' (classΓ j₀' x))  ⟪ ap ((Δ ⋊ₖ c₁) ⟨ f ⟩)
-                                                                     (⁄-rec-β ⦃ QΓ.setQuotient j₀' ⦄ ⦃ bset = level-proof ((Δ ⋊ₖ c₁) ⟨ j₀' ⟩) ⦄
-                                                                              (classΔ j₀' ∘ (α ⟨ j₀' ⟩)) (resp j₀') x) ⟫
-              ((Δ ⋊ₖ c₁) ⟨ f ⟩) (classΔ j₀' ((α ⟨ j₀' ⟩) x))    ⟪ ⁄-rec-β ⦃ QΔ.setQuotient j₀' ⦄ ⦃ bset = level-proof ((Δ ⋊ₖ c₁) ⟨ j₁' ⟩) ⦄
-                                                                          (classΔ j₁' ∘ (Δ ⟨ f ⟩)) _ ((α ⟨ j₀' ⟩) x) ⟫
-              classΔ j₁' ((Δ ⟨ f ⟩) ((α ⟨ j₀' ⟩) x))            ⟪ ap (classΔ j₁') (ap (λ h → h x) (ContextMorphism.natural α f)) ⟫
-              classΔ j₁' ((α ⟨ j₁' ⟩) ((Γ ⟨ f ⟩) x))            ⟪ sym (⁄-rec-β ⦃ QΓ.setQuotient j₁' ⦄ ⦃ bset = level-proof ((Δ ⋊ₖ c₁) ⟨ j₁' ⟩) ⦄
-                                                                               (classΔ j₁' ∘ (α ⟨ j₁' ⟩)) (resp j₁') ((Γ ⟨ f ⟩) x)) ⟫
-              component j₁' (classΓ j₁' ((Γ ⟨ f ⟩) x))          ⟪ ap (component j₁')
-                                                                     (sym (⁄-rec-β ⦃ QΓ.setQuotient j₀' ⦄ ⦃ bset = level-proof ((Γ ⋊ₖ c₀) ⟨ j₁' ⟩) ⦄
-                                                                                   (classΓ j₁' ∘ (Γ ⟨ f ⟩)) _ x)) ⟫
-              component j₁' (((Γ ⋊ₖ c₀) ⟨ f ⟩) (classΓ j₀' x))  ∎
+          pointwise x = ap (classΔ j₁') (ap (λ h → h x) (ContextMorphism.natural α f))
 
   map⋊ : (e₀ : ExtensionOrCollapse Γ) (e₁ : ExtensionOrCollapse Δ)
        → mapExtensionOrCollapse α e₀ ≈ e₁ → Γ ⋊ e₀ ⇒ Δ ⋊ e₁
   map⋊ (extend e₀) (extend e₁) (extendEq q) = map⋊ₑ α e₀ e₁ q
   map⋊ (collapse c₀) (collapse c₁) (collapseEq q) = map⋊ₖ c₀ c₁ q
-
-  map⋊ₖ-class : (c₀ : Collapse Γ) (c₁ : Collapse Δ)
-                (p : mapCollapse α c₀ ≈ c₁) (j' : type (Judgment 𝒥)) (x : ⌞ Γ ⟨ j' ⟩ ⌟)
-              → (map⋊ₖ c₀ c₁ p ⟨ j' ⟩) ((σ {Γ = Γ} {c = c₀} ⟨ j' ⟩) x)
-                ＝ (σ {Γ = Δ} {c = c₁} ⟨ j' ⟩) ((α ⟨ j' ⟩) x)
-  map⋊ₖ-class c₀@(mkCollapse j₀ a₀) c₁@(mkCollapse .j₀ a₁) (mkCollapseEquality refl a≈) j' x =
-    ⁄-rec-β ⦃ bset = level-proof ((Δ ⋊ₖ c₁) ⟨ j' ⟩) ⦄ _ _ x
-    where
-      open FromAllSetQuotients (⌞ Γ ⟨ j' ⟩ ⌟) (CollapseRelation c₀ j')
 
 
 -- ============== Composing extended context morphisms ==============
@@ -151,10 +125,8 @@ module _ ⦃ _ : FunExt ⦄
     where
       component≈~ : (j' : type (Judgment 𝒥)) → ((α ⨾ β) ∙ a₀) ⟨ j' ⟩ ＝ a₂ ⟨ j' ⟩
       component≈~ j' =
-        begin
-          ((α ⨾ β) ∙ a₀) ⟨ j' ⟩     ⟪ ap ((β ⟨ j' ⟩) ∘_) (component≈ p j') ⟫
-          (β ⟨ j' ⟩) ∘ (a₁ ⟨ j' ⟩)  ⟪ component≈ q j' ⟫
-          a₂ ⟨ j' ⟩                 ∎
+           ap ((β ⟨ j' ⟩) ∘_) (component≈ p j')
+        ⨾  component≈ q j'
 
   mapCollapse-⨾ : (c₀ : Collapse Γ) (c₁ : Collapse Δ) (c₂ : Collapse Θ)
                 → mapCollapse α c₀ ≈ c₁ → mapCollapse β c₁ ≈ c₂
@@ -165,10 +137,8 @@ module _ ⦃ _ : FunExt ⦄
     where
       component≈~ : (j' : type (Judgment 𝒥)) → ((α ⨾ β) ∙ a₀) ⟨ j' ⟩ ＝ a₂ ⟨ j' ⟩
       component≈~ j' =
-        begin
-          ((α ⨾ β) ∙ a₀) ⟨ j' ⟩     ⟪ ap ((β ⟨ j' ⟩) ∘_) (component≈ p j') ⟫
-          (β ⟨ j' ⟩) ∘ (a₁ ⟨ j' ⟩)  ⟪ component≈ q j' ⟫
-          a₂ ⟨ j' ⟩                 ∎
+           ap ((β ⟨ j' ⟩) ∘_) (component≈ p j')
+        ⨾  component≈ q j'
 
   mapExtensionOrCollapse-⨾ : (e₀ : ExtensionOrCollapse Γ) (e₁ : ExtensionOrCollapse Δ) (e₂ : ExtensionOrCollapse Θ)
                            → mapExtensionOrCollapse α e₀ ≈ e₁ → mapExtensionOrCollapse β e₁ ≈ e₂
@@ -217,39 +187,27 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
       pointwise : (j' : type (Judgment 𝒥)) (z : ⌞ (Γ ⋊ₖ c₀) ⟨ j' ⟩ ⌟)
                 → (mapαβ ⟨ j' ⟩) z ＝ ((mapα ⨾ mapβ) ⟨ j' ⟩) z
       pointwise j' =
-        ⁄-elim-proposition _ (λ _ → ＝-isLevel ⦃ level-proof ((Θ ⋊ₖ c₂) ⟨ j' ⟩) ⦄) onClass
-        where
-          open FromAllSetQuotients (⌞ Γ ⟨ j' ⟩ ⌟) (CollapseRelation c₀ j')
-
-          onClass : (x : ⌞ Γ ⟨ j' ⟩ ⌟)
-                  → (mapαβ ⟨ j' ⟩) ((σ {c = c₀} ⟨ j' ⟩) x)
-                    ＝ ((mapα ⨾ mapβ) ⟨ j' ⟩) ((σ {c = c₀} ⟨ j' ⟩) x)
-          onClass x =
-            begin
-              (mapαβ ⟨ j' ⟩) ((σ {c = c₀} ⟨ j' ⟩) x)                 ⟪ map⋊ₖ-class (α ⨾ β) c₀ c₂ (mapCollapse-⨾ α β c₀ c₁ c₂ p' q') j' x ⟫
-              (σ {c = c₂} ⟨ j' ⟩) ((β ⟨ j' ⟩) ((α ⟨ j' ⟩) x))        ⟪ sym (map⋊ₖ-class β c₁ c₂ q' j' ((α ⟨ j' ⟩) x)) ⟫
-              (mapβ ⟨ j' ⟩) ((σ {c = c₁} ⟨ j' ⟩) ((α ⟨ j' ⟩) x))     ⟪ ap (mapβ ⟨ j' ⟩) (sym (map⋊ₖ-class α c₀ c₁ p' j' x)) ⟫
-              (mapβ ⟨ j' ⟩) ((mapα ⟨ j' ⟩) ((σ {c = c₀} ⟨ j' ⟩) x))  ∎
+        ⁄-elim-proposition _ (λ _ → ＝-isLevel ⦃ level-proof ((Θ ⋊ₖ c₂) ⟨ j' ⟩) ⦄) (λ x → refl)
 
 
 module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
   {o a i : Level} {𝒥 : DependentSortVocabulary o a} {Γ : Context 𝒥 i} where
 
+  map⋊-identity-at : (E : ExtensionOrCollapse Γ) (j' : type (Judgment 𝒥))
+                     (z : ⌞ (Γ ⋊ E) ⟨ j' ⟩ ⌟)
+                   → (map⋊ identity E E (mapExtensionOrCollapse-identity E) ⟨ j' ⟩) z ＝ z
+  map⋊-identity-at (extend (mkExtension j a)) j' (inl x) = refl
+  map⋊-identity-at (extend (mkExtension j a)) j' (inr p) = refl
+  map⋊-identity-at (collapse c@(mkCollapse j a)) j' =
+    ⁄-elim-proposition
+      (λ q → (map⋊ₖ identity c c (mapCollapse-identity c) ⟨ j' ⟩) q ＝ q)
+      (λ _ → ＝-isLevel ⦃ level-proof ((Γ ⋊ₖ c) ⟨ j' ⟩) ⦄)
+      (λ x → refl)
+
   map⋊-identity : (E : ExtensionOrCollapse Γ)
                 → map⋊ identity E E (mapExtensionOrCollapse-identity E) ≈ identity
-  map⋊-identity (extend (mkExtension j a)) =
-    record { component≈ = λ j' → funExt (λ { (inl x) → refl ; (inr p) → refl }) }
-  map⋊-identity (collapse c@(mkCollapse j a)) =
-    record { component≈ = λ j' → funExt (onClass j') }
-    where
-      onClass : (j' : type (Judgment 𝒥)) (q : ⌞ (Γ ⋊ₖ c) ⟨ j' ⟩ ⌟)
-              → (map⋊ₖ identity c c (mapCollapse-identity c) ⟨ j' ⟩) q ＝ q
-      onClass j' =
-        ⁄-elim-proposition
-          (λ q → (map⋊ₖ identity c c (mapCollapse-identity c) ⟨ j' ⟩) q ＝ q)
-          (λ _ → ＝-isLevel ⦃ level-proof ((Γ ⋊ₖ c) ⟨ j' ⟩) ⦄)
-          (λ x → map⋊ₖ-class identity c c (mapCollapse-identity c) j' x)
-        where open FromAllSetQuotients (⌞ Γ ⟨ j' ⟩ ⌟) (CollapseRelation c j')
+  map⋊-identity E =
+    record { component≈ = λ j' → funExt (map⋊-identity-at E j') }
 
 
 module _ ⦃ _ : FunExt ⦄
@@ -343,11 +301,9 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
     where
       classΓ : (k : type (Judgment 𝒥)) → ⌞ Γ ⟨ k ⟩ ⌟ → ⌞ (Γ ⋊ₖ c₀) ⟨ k ⟩ ⌟
       classΓ k = [_]
-        where open FromAllSetQuotients (⌞ Γ ⟨ k ⟩ ⌟) (CollapseRelation c₀ k)
 
       classΔ : (k : type (Judgment 𝒥)) → ⌞ Δ ⟨ k ⟩ ⌟ → ⌞ (Δ ⋊ₖ c₁) ⟨ k ⟩ ⌟
       classΔ k = [_]
-        where open FromAllSetQuotients (⌞ Δ ⟨ k ⟩ ⌟) (CollapseRelation c₁ k)
 
       resp : (k : type (Judgment 𝒥)) {u v : ⌞ Δ ⟨ k ⟩ ⌟}
            → CollapseRelation c₁ k u v
@@ -356,16 +312,14 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
            ap (λ z → classΓ j₀ (backwards j₀ z))
               (sym (ap (λ h → h (inr (inl refl))) (component≈ a≈ j₀)))
         ⨾  ap (classΓ j₀) (backwardsRetraction j₀ ((a₀ ⟨ j₀ ⟩) (inr (inl refl))))
-        ⨾  respects ⦃ setQuotient ⦄ collapseRelation
+        ⨾  respects collapseRelation
         ⨾  sym (ap (classΓ j₀) (backwardsRetraction j₀ ((a₀ ⟨ j₀ ⟩) (inr (inr refl)))))
         ⨾  ap (λ z → classΓ j₀ (backwards j₀ z))
               (ap (λ h → h (inr (inr refl))) (component≈ a≈ j₀))
-        where open FromAllSetQuotients (⌞ Γ ⟨ j₀ ⟩ ⌟) (CollapseRelation c₀ j₀)
 
       back : (k : type (Judgment 𝒥)) → ⌞ (Δ ⋊ₖ c₁) ⟨ k ⟩ ⌟ → ⌞ (Γ ⋊ₖ c₀) ⟨ k ⟩ ⌟
       back k = ⁄-rec ⦃ bset = level-proof ((Γ ⋊ₖ c₀) ⟨ k ⟩) ⦄
                      (λ y → classΓ k (backwards k y)) (resp k)
-        where open FromAllSetQuotients (⌞ Δ ⟨ k ⟩ ⌟) (CollapseRelation c₁ k)
 
       isSection~ : (y : ⌞ (Δ ⋊ₖ c₁) ⟨ j' ⟩ ⌟)
                  → (map⋊ₖ α c₀ c₁ q ⟨ j' ⟩) (back j' y) ＝ y
@@ -373,31 +327,14 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
         ⁄-elim-proposition
           (λ y → (map⋊ₖ α c₀ c₁ q ⟨ j' ⟩) (back j' y) ＝ y)
           (λ _ → ＝-isLevel ⦃ level-proof ((Δ ⋊ₖ c₁) ⟨ j' ⟩) ⦄)
-          (λ y →
-               ap (map⋊ₖ α c₀ c₁ q ⟨ j' ⟩)
-                  (⁄-rec-β ⦃ bset = level-proof ((Γ ⋊ₖ c₀) ⟨ j' ⟩) ⦄
-                           (λ z → classΓ j' (backwards j' z)) (resp j') y)
-            ⨾  map⋊ₖ-class α c₀ c₁ q j' (backwards j' y)
-            ⨾  ap (classΔ j') (backwardsSection j' y))
-        where
-          open FromAllSetQuotients (⌞ Δ ⟨ j' ⟩ ⌟) (CollapseRelation c₁ j')
-          open FromAllSetQuotients (⌞ Γ ⟨ j' ⟩ ⌟) (CollapseRelation c₀ j')
-
+          (λ y → ap (classΔ j') (backwardsSection j' y))
       isRetraction~ : (x : ⌞ (Γ ⋊ₖ c₀) ⟨ j' ⟩ ⌟)
                     → back j' ((map⋊ₖ α c₀ c₁ q ⟨ j' ⟩) x) ＝ x
       isRetraction~ =
         ⁄-elim-proposition
           (λ x → back j' ((map⋊ₖ α c₀ c₁ q ⟨ j' ⟩) x) ＝ x)
           (λ _ → ＝-isLevel ⦃ level-proof ((Γ ⋊ₖ c₀) ⟨ j' ⟩) ⦄)
-          (λ x →
-               ap (back j') (map⋊ₖ-class α c₀ c₁ q j' x)
-            ⨾  ⁄-rec-β ⦃ bset = level-proof ((Γ ⋊ₖ c₀) ⟨ j' ⟩) ⦄
-                       (λ z → classΓ j' (backwards j' z)) (resp j') ((α ⟨ j' ⟩) x)
-            ⨾  ap (classΓ j') (backwardsRetraction j' x))
-        where
-          open FromAllSetQuotients (⌞ Γ ⟨ j' ⟩ ⌟) (CollapseRelation c₀ j')
-          open FromAllSetQuotients (⌞ Δ ⟨ j' ⟩ ⌟) (CollapseRelation c₁ j')
-
+          (λ x → ap (classΓ j') (backwardsRetraction j' x))
 
 module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
   {o a i j : Level} {𝒥 : DependentSortVocabulary o a}

@@ -2,7 +2,7 @@ module SequentStructureMorphism.Equality where
 
 open import Prelude
 open import Axioms
-open import Homotopy.SetQuotient
+open import Homotopy.SetQuotient.Nominal
 open import Syntax.Addable
 open import Syntax.Arrowable
 open import Structure.Associativity
@@ -12,8 +12,9 @@ open import Structure.PreservesComposition
 open import Structure.Reasoning
 open import Structure.Symmetric
 open import Homotopy.StructuredType
-open import Algebra.Wild.Semi
-open Semicategory.Semicategory
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
+open Semicategory
 open import Homotopy.Equality
 open import Homotopy.Fibre
 open import Homotopy.Levels
@@ -49,13 +50,13 @@ record SequentDependencyMorphismEquality
   constructor mkSequentDependencyMorphismEquality
   field
     onObjects≈ :
-      SemifunctorProjections.onObjects (SequentDependencyMorphism.onDependencies F₀)
-      ~ SemifunctorProjections.onObjects (SequentDependencyMorphism.onDependencies F₁)
+      Semifunctor.onObjects (SequentDependencyMorphism.onDependencies F₀)
+      ~ Semifunctor.onObjects (SequentDependencyMorphism.onDependencies F₁)
     witness≈ :
-      Semifunctor.SemifunctorWitness {C = s₀} {D = s₁}
-        (SemifunctorProjections.semifunctorial (SequentDependencyMorphism.onDependencies F₀))
+      SemifunctorWitness {C = s₀} {D = s₁}
+        (Semifunctor.semifunctorial (SequentDependencyMorphism.onDependencies F₀))
         onObjects≈
-        (SemifunctorProjections.semifunctorial (SequentDependencyMorphism.onDependencies F₁))
+        (Semifunctor.semifunctorial (SequentDependencyMorphism.onDependencies F₁))
 
 module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
   {so₀ sa₀ so₁ sa₁ : Level}
@@ -66,8 +67,8 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
   identitySequentDependencyMorphismEquality F =
     record { onObjects≈ = ~-refl
            ; witness≈ =
-               Semifunctor.semifunctorWitness-refl {C = s₀} {D = s₁}
-                 (SemifunctorProjections.semifunctorial
+               semifunctorWitness-refl {C = s₀} {D = s₁}
+                 (Semifunctor.semifunctorial
                     (SequentDependencyMorphism.onDependencies F)) }
 
   instance
@@ -92,7 +93,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
     sequentDependencyMorphismTotalSpace-Contractible F₀ =
       retract-Contractible toParts fromParts roundTrip
         (∑-Contractible-over
-           (equality-Contractible ⦃ w = Semifunctor.Semifunctor-hasEquality ⦄
+           (equality-Contractible ⦃ w = Semifunctor-hasEquality ⦄
               (SequentDependencyMorphism.onDependencies F₀))
            (equivalenceField-Contractible
               (SequentDependencyMorphism.onDependencies F₀)
@@ -100,7 +101,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
       where
         Base : Type (so₀ ⊔ sa₀ ⊔ so₁ ⊔ sa₁)
         Base = ∑[ Φ ∶ Semifunctor s₀ s₁ ]
-                 Semifunctor.Semifunctor-Equality
+                 Semifunctor-Equality
                    (SequentDependencyMorphism.onDependencies F₀) Φ
 
         Parts : Type (so₀ ⊔ sa₀ ⊔ so₁ ⊔ sa₁)
@@ -110,7 +111,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
                      SequentDependencyMorphismEquality F₀ F₁)
                 → Parts
         toParts (mkSequentDependencyMorphism Φ e , w) =
-          (Φ , Semifunctor.semifunctor≈ (SequentDependencyMorphismEquality.onObjects≈ w)
+          (Φ , semifunctor≈ (SequentDependencyMorphismEquality.onObjects≈ w)
                             (p₀ (SequentDependencyMorphismEquality.witness≈ w))
                             (p₁ (SequentDependencyMorphismEquality.witness≈ w))) , e
 
@@ -119,8 +120,8 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
                       SequentDependencyMorphismEquality F₀ F₁
         fromParts ((Φ , w) , e) =
           mkSequentDependencyMorphism Φ e ,
-          record { onObjects≈ = Semifunctor.objects≈ w
-                 ; witness≈ = Semifunctor.map≈ w , Semifunctor.preservesComposition≈ w }
+          record { onObjects≈ = Semifunctor-Equality.objects≈ w
+                 ; witness≈ = Semifunctor-Equality.map≈ w , Semifunctor-Equality.preservesComposition≈ w }
 
         roundTrip : fromParts ∘ toParts ~ id
         roundTrip (mkSequentDependencyMorphism Φ e , w) = refl

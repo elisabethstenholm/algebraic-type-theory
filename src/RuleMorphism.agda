@@ -2,7 +2,7 @@ module RuleMorphism where
 
 open import Prelude
 open import Axioms
-open import Homotopy.SetQuotient
+open import Homotopy.SetQuotient.Nominal
 open import Syntax.Arrowable
 
 open import DependentSortVocabulary

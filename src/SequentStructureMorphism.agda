@@ -2,7 +2,7 @@ module SequentStructureMorphism where
 
 open import Prelude
 open import Axioms
-open import Homotopy.SetQuotient
+open import Homotopy.SetQuotient.Nominal
 open import Syntax.Addable
 open import Syntax.Arrowable
 open import Structure.Associativity
@@ -12,8 +12,9 @@ open import Structure.PreservesComposition
 open import Structure.Reasoning
 open import Structure.Symmetric
 open import Homotopy.StructuredType
-open import Algebra.Wild.Semi
-open Semicategory.Semicategory
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
+open Semicategory
 open import Homotopy.Equality
 open import Homotopy.Fibre
 open import Homotopy.Levels
@@ -189,15 +190,13 @@ weakenWithEmptyContext {so₀ = so₀} {sa₀ = sa₀} {i₀ = i₀} {𝒥 = �
             ＝ ℋ ⟨ Φ ⟨ f ⟩ ⟩
               ∙ toSequentMorphism (sequentEquivalence (inr y))
     natural {x} {y} f =
-      begin
-        toSequentMorphism (sequentEquivalence (inr x)) ∙ C  ⟪ ap (_∙ C) (toSequentMorphism-⨾ (Ex-equivalence) (Φ-equivalence x)) ⟫
-        (Φx ∙ Ex) ∙ C                                       ⟪ sym (∙-associative {f = C} {g = Ex} {h = Φx}) ⟫
-        Φx ∙ (Ex ∙ C)                                       ⟪ ap (Φx ∙_) (weakenWithEmptySequentEquivalence-natural {k = i₀} (𝒢 ⟨ f ⟩)) ⟫
-        Φx ∙ (G ∙ Ey)                                       ⟪ ∙-associative {f = Ey} {g = G} {h = Φx} ⟫
-        (Φx ∙ G) ∙ Ey                                       ⟪ ap (_∙ Ey) (SequentStructureMorphism.natural φ f) ⟫
-        (S ∙ Φy) ∙ Ey                                       ⟪ sym (∙-associative {f = Ey} {g = Φy} {h = S}) ⟫
-        S ∙ (Φy ∙ Ey)                                       ⟪ ap (S ∙_) (sym (toSequentMorphism-⨾ (Ey-equivalence) (Φ-equivalence y))) ⟫
-        S ∙ toSequentMorphism (sequentEquivalence (inr y))  ∎
+         ap (_∙ C) (toSequentMorphism-⨾ (Ex-equivalence) (Φ-equivalence x))
+      ⨾  sym (∙-associative {f = C} {g = Ex} {h = Φx})
+      ⨾  ap (Φx ∙_) (weakenWithEmptySequentEquivalence-natural {k = i₀} (𝒢 ⟨ f ⟩))
+      ⨾  ∙-associative {f = Ey} {g = G} {h = Φx}
+      ⨾  ap (_∙ Ey) (SequentStructureMorphism.natural φ f)
+      ⨾  sym (∙-associative {f = Ey} {g = Φy} {h = S})
+      ⨾  ap (S ∙_) (sym (toSequentMorphism-⨾ (Ey-equivalence) (Φ-equivalence y)))
       where
         Φ-equivalence = SequentStructureMorphism.sequentEquivalence φ
         Ex-equivalence = weakenWithEmptySequentEquivalence {k = i₀} (𝒢 ⟨ x ⟩)
@@ -268,16 +267,13 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
               → toSequentMorphism (sequentEquivalence x) ∙ 𝒢 ⟨ f ⟩
               ＝ ℐ ⟨ dependencyMorphism ⟨ f ⟩ ⟩ ∙ toSequentMorphism (sequentEquivalence y)
       natural {x} {y} f =
-        begin
-          toSequentMorphism (sequentEquivalence x) ∙ Gf
-                                      ⟪ ap (_∙ Gf) (toSequentMorphism-⨾ (seφ x) (seψ (Φ ⟨ x ⟩))) ⟫
-          (Bx ∙ Ax) ∙ Gf              ⟪ sym (∙-associative {f = Gf} {g = Ax} {h = Bx}) ⟫
-          Bx ∙ (Ax ∙ Gf)              ⟪ ap (Bx ∙_) (SequentStructureMorphism.natural φ f) ⟫
-          Bx ∙ (Hf ∙ Ay)              ⟪ ∙-associative {f = Ay} {g = Hf} {h = Bx} ⟫
-          (Bx ∙ Hf) ∙ Ay              ⟪ ap (_∙ Ay) (SequentStructureMorphism.natural ψ (Φ ⟨ f ⟩)) ⟫
-          (If ∙ By) ∙ Ay              ⟪ sym (∙-associative {f = Ay} {g = By} {h = If}) ⟫
-          If ∙ (By ∙ Ay)              ⟪ ap (If ∙_) (sym (toSequentMorphism-⨾ (seφ y) (seψ (Φ ⟨ y ⟩)))) ⟫
-          If ∙ toSequentMorphism (sequentEquivalence y)  ∎
+           ap (_∙ Gf) (toSequentMorphism-⨾ (seφ x) (seψ (Φ ⟨ x ⟩)))
+        ⨾  sym (∙-associative {f = Gf} {g = Ax} {h = Bx})
+        ⨾  ap (Bx ∙_) (SequentStructureMorphism.natural φ f)
+        ⨾  ∙-associative {f = Ay} {g = Hf} {h = Bx}
+        ⨾  ap (_∙ Ay) (SequentStructureMorphism.natural ψ (Φ ⟨ f ⟩))
+        ⨾  sym (∙-associative {f = Ay} {g = By} {h = If})
+        ⨾  ap (If ∙_) (sym (toSequentMorphism-⨾ (seφ y) (seψ (Φ ⟨ y ⟩))))
         where
           Ax = toSequentMorphism (seφ x)
           Ay = toSequentMorphism (seφ y)
@@ -313,21 +309,21 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
       onDependencies : Semifunctor 𝒟₀ 𝒟₁
       onDependencies =
         record
-          { onObjects = there (Semicategory.objects≈ d≈)
+          { onObjects = there (Semicategory-Equality.objects≈ d≈)
           ; semifunctorial = record
-              { mappable = record { map = λ {x} {y} → there (Semicategory.hom≈ d≈ x y) }
+              { mappable = record { map = λ {x} {y} → there (Semicategory-Equality.hom≈ d≈ x y) }
               ; preservesComposition = record
                   { preserves-composition = λ {x} {y} {z} f g →
-                      Semicategory.composition≈ d≈ x y z f g } } }
+                      Semicategory-Equality.composition≈ d≈ x y z f g } } }
 
       dependenciesEquivalence : (x : Ob 𝒟₀)
                               → isEquivalence (mapDependencies onDependencies x)
       dependenciesEquivalence x =
         ~transfer-isEquivalence
-          (equiv-∑ (Semicategory.objects≈ d≈) (λ y → Semicategory.hom≈ d≈ x y))
+          (equiv-∑ (Semicategory-Equality.objects≈ d≈) (λ y → Semicategory-Equality.hom≈ d≈ x y))
           pointwise
         where
-          pointwise : there (equiv-∑ (Semicategory.objects≈ d≈) (λ y → Semicategory.hom≈ d≈ x y))
+          pointwise : there (equiv-∑ (Semicategory-Equality.objects≈ d≈) (λ y → Semicategory-Equality.hom≈ d≈ x y))
                       ~ mapDependencies onDependencies x
           pointwise (y , f) = refl
 

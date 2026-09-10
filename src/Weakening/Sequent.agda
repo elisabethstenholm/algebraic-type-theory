@@ -2,15 +2,16 @@ module Weakening.Sequent where
 
 open import Prelude
 open import Axioms
-open import Homotopy.SetQuotient
+open import Homotopy.SetQuotient.Nominal
 open import Structure.Associativity
 open import Structure.Composable
 open import Structure.Identity
 open import Structure.PreservesComposition
 open import Structure.Symmetric
 open import Homotopy.StructuredType
-open import Algebra.Wild.Semi
-open Semicategory.Semicategory
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
+open Semicategory
 open import Algebra.Wild.TruncatedTypeSemicategory
 open import Homotopy.Equality
 open import Homotopy.Levels
@@ -92,39 +93,25 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
         onEntries : (j : type (Judgment 𝒥)) → ⌞ (H + Γ) ⟨ j ⟩ ⌟ → ⌞ target ⟨ j ⟩ ⌟
         onEntries j (inl h) = inl h
         onEntries j (inr x) = inr [ x ]
-          where open FromAllSetQuotients ( ⌞ Γ ⟨ j ⟩ ⌟) (CollapseRelation col j)
 
         respectsCollapse : (j : type (Judgment 𝒥)) {x y : ⌞ (H + Γ) ⟨ j ⟩ ⌟}
                          → CollapseRelation addedCollapse j x y
                          → onEntries j x ＝ onEntries j y
         respectsCollapse j collapseRelation = ap inr (respects collapseRelation)
-          where open FromAllSetQuotients ( ⌞ Γ ⟨ j ⟩ ⌟) (CollapseRelation col j)
 
         component : (j : type (Judgment 𝒥)) → ⌞ ((H + Γ) ⋊ₖ addedCollapse) ⟨ j ⟩ ⌟ → ⌞ target ⟨ j ⟩ ⌟
         component j = ⁄-rec ⦃ bset = target-isSet j ⦄ (onEntries j) (respectsCollapse j)
-          where open FromAllSetQuotients (⌞ (H + Γ) ⟨ j ⟩ ⌟) (CollapseRelation addedCollapse j)
 
         natural~ : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
                  → target ⟨ f ⟩ ∘ component j₀ ~ component j₁ ∘ ((H + Γ) ⋊ₖ addedCollapse) ⟨ f ⟩
         natural~ {j₀} {j₁} f =
           ⁄-elim-proposition _ (λ q → ＝-isLevel ⦃ target-isSet j₁ ⦄) pointwise
           where
-            open FromAllSetQuotients (⌞ (H + Γ) ⟨ j₀ ⟩ ⌟) (CollapseRelation addedCollapse j₀)
-            open FromAllSetQuotients (⌞ (H + Γ) ⟨ j₁ ⟩ ⌟) (CollapseRelation addedCollapse j₁)
-            open FromAllSetQuotients ( ⌞ Γ ⟨ j₀ ⟩ ⌟) (CollapseRelation col j₀)
-            open FromAllSetQuotients ( ⌞ Γ ⟨ j₁ ⟩ ⌟) (CollapseRelation col j₁)
-
-            step : (x : ⌞ (H + Γ) ⟨ j₀ ⟩ ⌟) → (target ⟨ f ⟩) (onEntries j₀ x) ＝ onEntries j₁ (((H + Γ) ⟨ f ⟩) x)
-            step (inl h) = refl
-            step (inr x) = ap inr (⁄-rec-β ([_] ∘ (Γ ⟨ f ⟩)) _ x)
 
             pointwise : (x : ⌞ (H + Γ) ⟨ j₀ ⟩ ⌟)
                       → (target ⟨ f ⟩) (component j₀ [ x ]) ＝ component j₁ ((((H + Γ) ⋊ₖ addedCollapse) ⟨ f ⟩) [ x ])
-            pointwise x =
-                 ap (target ⟨ f ⟩) (⁄-rec-β ⦃ bset = target-isSet j₀ ⦄ (onEntries j₀) (respectsCollapse j₀) x)
-              ⨾  step x
-              ⨾  sym (⁄-rec-β ⦃ bset = target-isSet j₁ ⦄ (onEntries j₁) (respectsCollapse j₁) (((H + Γ) ⟨ f ⟩) x))
-              ⨾  ap (component j₁) (sym (⁄-rec-β ([_] ∘ ((H + Γ) ⟨ f ⟩)) _ x))
+            pointwise (inl h) = refl
+            pointwise (inr x) = refl
 
     gatherExtended : {l : Level} (s : Sequent 𝒥 l)
                    → H + extendedContext s ⇒ extendedContext (weakenSequent H s)
@@ -156,68 +143,34 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
 
         classOf : (j : type (Judgment 𝒥)) → ⌞ (H + Γ) ⟨ j ⟩ ⌟ → ⌞ target ⟨ j ⟩ ⌟
         classOf j = [_]
-          where open FromAllSetQuotients (⌞ (H + Γ) ⟨ j ⟩ ⌟) (CollapseRelation addedCollapse j)
 
         respectsCollapse : (j : type (Judgment 𝒥)) {x y : ⌞ Γ ⟨ j ⟩ ⌟}
                          → CollapseRelation col j x y
                          → classOf j (inr x) ＝ classOf j (inr y)
         respectsCollapse j collapseRelation = respects collapseRelation
-          where open FromAllSetQuotients (⌞ (H + Γ) ⟨ j ⟩ ⌟) (CollapseRelation addedCollapse j)
 
         component : (j : type (Judgment 𝒥)) → ⌞ source ⟨ j ⟩ ⌟ → ⌞ target ⟨ j ⟩ ⌟
         component j (inl h) = classOf j (inl h)
         component j (inr q) = ⁄-rec (classOf j ∘ inr) (respectsCollapse j) q
-          where
-            open FromAllSetQuotients (⌞ Γ ⟨ j ⟩ ⌟) (CollapseRelation col j)
-            open FromAllSetQuotients (⌞ (H + Γ) ⟨ j ⟩ ⌟) (CollapseRelation addedCollapse j)
-
         natural~ : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
                  → target ⟨ f ⟩ ∘ component j₀ ~ component j₁ ∘ source ⟨ f ⟩
-        natural~ {j₀} {j₁} f (inl h) = ⁄-rec-β ([_] ∘ ((H + Γ) ⟨ f ⟩)) _ (inl h)
+        natural~ {j₀} {j₁} f (inl h) = refl
+        natural~ {j₀} {j₁} f (inr q) =
+          ⁄-elim-proposition
+            (λ q' → (target ⟨ f ⟩) (component j₀ (inr q')) ＝ component j₁ ((source ⟨ f ⟩) (inr q')))
+            (λ _ → fromInstance) pointwise q
           where
-            open FromAllSetQuotients (⌞ (H + Γ) ⟨ j₀ ⟩ ⌟) (CollapseRelation addedCollapse j₀)
-            open FromAllSetQuotients (⌞ (H + Γ) ⟨ j₁ ⟩ ⌟) (CollapseRelation addedCollapse j₁)
-        natural~ {j₀} {j₁} f (inr q) = ⁄-elim-proposition _ (λ _ → fromInstance) pointwise q
-          where
-            open FromAllSetQuotients (⌞ Γ ⟨ j₀ ⟩ ⌟) (CollapseRelation col j₀)
-            open FromAllSetQuotients (⌞ Γ ⟨ j₁ ⟩ ⌟) (CollapseRelation col j₁)
-            open FromAllSetQuotients (⌞ (H + Γ) ⟨ j₀ ⟩ ⌟) (CollapseRelation addedCollapse j₀)
-            open FromAllSetQuotients (⌞ (H + Γ) ⟨ j₁ ⟩ ⌟) (CollapseRelation addedCollapse j₁)
 
             pointwise : (x : ⌞ Γ ⟨ j₀ ⟩ ⌟)
                       → (target ⟨ f ⟩) (component j₀ (inr [ x ])) ＝ component j₁ ((source ⟨ f ⟩) (inr [ x ]))
-            pointwise x =
-                 ap (target ⟨ f ⟩) (⁄-rec-β (classOf j₀ ∘ inr) (respectsCollapse j₀) x)
-              ⨾  ⁄-rec-β ([_] ∘ ((H + Γ) ⟨ f ⟩)) _ (inr x)
-              ⨾  sym (⁄-rec-β (classOf j₁ ∘ inr) (respectsCollapse j₁) ((Γ ⟨ f ⟩) x))
-              ⨾  ap (λ q → component j₁ (inr q)) (sym (⁄-rec-β ([_] ∘ (Γ ⟨ f ⟩)) _ x))
+            pointwise x = refl
 
     distribute-gather : {l : Level} (s : Sequent 𝒥 l) (j : type (Judgment 𝒥)) (w : ⌞ (H + extendedContext s) ⟨ j ⟩ ⌟)
                       → (distributeExtended s ⟨ j ⟩) ((gatherExtended s ⟨ j ⟩) w) ＝ w
     distribute-gather (mkSequent Γ (extend ext)) j (inl h) = refl
     distribute-gather (mkSequent Γ (extend ext)) j (inr (inl x)) = refl
     distribute-gather (mkSequent Γ (extend ext)) j (inr (inr p)) = refl
-    distribute-gather {l} (mkSequent Γ (collapse col)) j (inl h) =
-      ⁄-rec-β ⦃ bset = level-proof (target ⟨ j ⟩) ⦄ _ _ (inl h)
-      where
-        target : Context 𝒥 (k ⊔ (o ⊔ l))
-        target = H + (Γ ⋊ₖ col)
-
-        entriesΓ : (j : type (Judgment 𝒥)) → Type l
-        entriesΓ j = ⌞ Γ ⟨ j ⟩ ⌟
-
-        entriesHΓ : (j : type (Judgment 𝒥)) → Type (k ⊔ l)
-        entriesHΓ j = ⌞ (H + Γ) ⟨ j ⟩ ⌟
-
-        addedCollapse : Collapse (H + Γ)
-        addedCollapse = mapCollapse inrContext col
-
-        open FromAllSetQuotients (entriesΓ j) (CollapseRelation col j)
-        open FromAllSetQuotients (entriesHΓ j) (CollapseRelation addedCollapse j)
-
-        instance
-          entriesH-isSet : isSet ⌞ H ⟨ j ⟩ ⌟
-          entriesH-isSet = level-proof (H ⟨ j ⟩)
+    distribute-gather {l} (mkSequent Γ (collapse col)) j (inl h) = refl
     distribute-gather {l} (mkSequent Γ (collapse col)) j (inr q) =
       ⁄-elim-proposition
         (λ q' → (distributeExtended (mkSequent Γ (collapse col)) ⟨ j ⟩)
@@ -229,18 +182,6 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
         target : Context 𝒥 (k ⊔ (o ⊔ l))
         target = H + (Γ ⋊ₖ col)
 
-        entriesΓ : (j : type (Judgment 𝒥)) → Type l
-        entriesΓ j = ⌞ Γ ⟨ j ⟩ ⌟
-
-        entriesHΓ : (j : type (Judgment 𝒥)) → Type (k ⊔ l)
-        entriesHΓ j = ⌞ (H + Γ) ⟨ j ⟩ ⌟
-
-        addedCollapse : Collapse (H + Γ)
-        addedCollapse = mapCollapse inrContext col
-
-        open FromAllSetQuotients (entriesΓ j) (CollapseRelation col j)
-        open FromAllSetQuotients (entriesHΓ j) (CollapseRelation addedCollapse j)
-
         instance
           entriesH-isSet : isSet ⌞ H ⟨ j ⟩ ⌟
           entriesH-isSet = level-proof (H ⟨ j ⟩)
@@ -249,9 +190,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
                   → (distributeExtended (mkSequent Γ (collapse col)) ⟨ j ⟩)
                       ((gatherExtended (mkSequent Γ (collapse col)) ⟨ j ⟩) (inr [ x ]))
                   ＝ inr [ x ]
-        pointwise x =
-             ap (distributeExtended (mkSequent Γ (collapse col)) ⟨ j ⟩) (⁄-rec-β _ _ x)
-          ⨾  ⁄-rec-β ⦃ bset = level-proof (target ⟨ j ⟩) ⦄ _ _ (inr x)
+        pointwise x = refl
 
     gather-distribute : {l : Level} (s : Sequent 𝒥 l) (j : type (Judgment 𝒥)) (w : ⌞ extendedContext (weakenSequent H s) ⟨ j ⟩ ⌟)
                       → (gatherExtended s ⟨ j ⟩) ((distributeExtended s ⟨ j ⟩) w) ＝ w
@@ -276,8 +215,6 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
         target : Context 𝒥 (k ⊔ (o ⊔ l))
         target = H + (Γ ⋊ₖ col)
 
-        open FromAllSetQuotients (⌞ Γ ⟨ j ⟩ ⌟) (CollapseRelation col j)
-        open FromAllSetQuotients (⌞ (H + Γ) ⟨ j ⟩ ⌟) (CollapseRelation addedCollapse j)
 
         instance
           entriesH-isSet : isSet ⌞ H ⟨ j ⟩ ⌟
@@ -287,16 +224,8 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
                   → (gatherExtended (mkSequent Γ (collapse col)) ⟨ j ⟩)
                       ((distributeExtended (mkSequent Γ (collapse col)) ⟨ j ⟩) [ x ])
                     ＝ [ x ]
-        pointwise (inl h) =
-          ap (gatherExtended (mkSequent Γ (collapse col)) ⟨ j ⟩)
-             (⁄-rec-β ⦃ bset = level-proof (target ⟨ j ⟩) ⦄ _ _ (inl h))
-        pointwise (inr x) =
-          begin
-            (gatherExtended (mkSequent Γ (collapse col)) ⟨ j ⟩)
-              ((distributeExtended (mkSequent Γ (collapse col)) ⟨ j ⟩) [ inr x ])  ⟪ ap (gatherExtended (mkSequent Γ (collapse col)) ⟨ j ⟩)
-                                                                                        (⁄-rec-β ⦃ bset = level-proof (target ⟨ j ⟩) ⦄ _ _ (inr x)) ⟫
-            (gatherExtended (mkSequent Γ (collapse col)) ⟨ j ⟩) (inr [ x ])        ⟪ ⁄-rec-β _ _ x ⟫
-            [ inr x ]                                                             ∎
+        pointwise (inl h) = refl
+        pointwise (inr x) = refl
 
     distributeExtendedEquivalence : {l : Level} (s : Sequent 𝒥 l)
                                   → ContextEquivalence (extendedContext (weakenSequent H s))
@@ -324,27 +253,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
                                → (distributeExtended s ⟨ j ⟩) ((→⋊ (weakenSequent H s) ⟨ j ⟩) (inl u))
                                ＝ inl u
     distributeExtended-onAdded (mkSequent Γ (extend ext)) j u = refl
-    distributeExtended-onAdded {l} (mkSequent Γ (collapse col)) j u =
-      ⁄-rec-β ⦃ bset = level-proof (target ⟨ j ⟩) ⦄ _ _ (inl u)
-      where
-        target : Context 𝒥 (k ⊔ (o ⊔ l))
-        target = H + (Γ ⋊ₖ col)
-
-        entriesΓ : (j : type (Judgment 𝒥)) → Type l
-        entriesΓ j = ⌞ Γ ⟨ j ⟩ ⌟
-
-        entriesHΓ : (j : type (Judgment 𝒥)) → Type (k ⊔ l)
-        entriesHΓ j = ⌞ (H + Γ) ⟨ j ⟩ ⌟
-
-        addedCollapse : Collapse (H + Γ)
-        addedCollapse = mapCollapse inrContext col
-
-        open FromAllSetQuotients (entriesΓ j) (CollapseRelation col j)
-        open FromAllSetQuotients (entriesHΓ j) (CollapseRelation addedCollapse j)
-
-        instance
-          entriesH-isSet : isSet ⌞ H ⟨ j ⟩ ⌟
-          entriesH-isSet = level-proof (H ⟨ j ⟩)
+    distributeExtended-onAdded {l} (mkSequent Γ (collapse col)) j u = refl
 
     gatherExtended-onAdded : {l : Level} (s : Sequent 𝒥 l) (j : type (Judgment 𝒥)) (u : ⌞ H ⟨ j ⟩ ⌟)
                            → (gatherExtended s ⟨ j ⟩) (inl u)
@@ -426,26 +335,19 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
       collapseEquality : mapCollapse ε (mapCollapse inrContext c) ≈ c
       collapseEquality = mkCollapseEquality refl (record { component≈ = λ _ → refl })
 
-      open FromAllSetQuotients (⌞ (∅ + Γ) ⟨ j ⟩ ⌟) (CollapseRelation (mapCollapse inrContext c) j)
 
       onClass : (z : ⌞ (∅ + Γ) ⟨ j ⟩ ⌟)
               → (distributeExtended ∅ s ⟨ j ⟩) ((σ ⟨ j ⟩) z)
                 ＝ inr ((fromEmptyContext {k} s ⟨ j ⟩) ((σ ⟨ j ⟩) z))
-      onClass (inr x) =
-        begin
-          (distributeExtended ∅ s ⟨ j ⟩) ((σ ⟨ j ⟩) (inr x))       ⟪ ⁄-rec-β ⦃ bset = level-proof ((∅ + extendedContext s) ⟨ j ⟩) ⦄ _ _ (inr x) ⟫
-          inr ((σ ⟨ j ⟩) x)                                        ⟪ ap inr (sym (map⋊ₖ-class ε (mapCollapse inrContext c) c collapseEquality j (inr x))) ⟫
-          inr ((fromEmptyContext {k} s ⟨ j ⟩) ((σ ⟨ j ⟩) (inr x))) ∎
+      onClass (inr x) = refl
 
   gatherExtended-empty : {k l : Level} (s : Sequent 𝒥 l) (j : type (Judgment 𝒥))
                          (v : ⌞ extendedContext s ⟨ j ⟩ ⌟)
                        → (fromEmptyContext {k} s ⟨ j ⟩) ((gatherExtended (emptyContext 𝒥 k) s ⟨ j ⟩) (inr v))
                          ＝ v
   gatherExtended-empty {k} s j v =
-    begin
-      (fromEmptyContext {k} s ⟨ j ⟩) (gathered)              ⟪ sym (ap (ε ⟨ j ⟩) (distributeExtended-empty {k} s j gathered)) ⟫
-      (ε ⟨ j ⟩) ((distributeExtended ∅ s ⟨ j ⟩) gathered)    ⟪ ap (ε ⟨ j ⟩) (distribute-gather ∅ s j (inr v)) ⟫
-      v                                                      ∎
+       sym (ap (ε ⟨ j ⟩) (distributeExtended-empty {k} s j gathered))
+    ⨾  ap (ε ⟨ j ⟩) (distribute-gather ∅ s j (inr v))
     where
       ∅ = emptyContext 𝒥 k
 
@@ -469,15 +371,11 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
                 → ((fromEmptyContext {k} s₁ ∙ weakenSequentMorphism ∅ α) ⟨ j ⟩) w
                   ＝ ((α ∙ fromEmptyContext {k} s₀) ⟨ j ⟩) w
       pointwise j w =
-        begin
-          ((fromEmptyContext {k} s₁ ∙ weakenSequentMorphism ∅ α) ⟨ j ⟩) w  ⟪ ap (λ v → (fromEmptyContext {k} s₁ ⟨ j ⟩)
-                                                                                              ((gatherExtended ∅ s₁ ⟨ j ⟩)
-                                                                                                ((sumContextMorphism (identityH ∅) α' ⟨ j ⟩) v)))
-                                                                                       (distributeExtended-empty {k} s₀ j w) ⟫
-          (fromEmptyContext {k} s₁ ⟨ j ⟩)
-            ((gatherExtended ∅ s₁ ⟨ j ⟩) (inr ((α' ⟨ j ⟩) ((fromEmptyContext {k} s₀ ⟨ j ⟩) w))))
-                                                                                 ⟪ gatherExtended-empty {k} s₁ j ((α' ⟨ j ⟩) ((fromEmptyContext {k} s₀ ⟨ j ⟩) w)) ⟫
-          ((α ∙ fromEmptyContext {k} s₀) ⟨ j ⟩) w                                ∎
+           ap (λ v → (fromEmptyContext {k} s₁ ⟨ j ⟩)
+                       ((gatherExtended ∅ s₁ ⟨ j ⟩)
+                         ((sumContextMorphism (identityH ∅) α' ⟨ j ⟩) v)))
+              (distributeExtended-empty {k} s₀ j w)
+        ⨾  gatherExtended-empty {k} s₁ j ((α' ⟨ j ⟩) ((fromEmptyContext {k} s₀ ⟨ j ⟩) w))
 
 
 
@@ -492,22 +390,6 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
     → (gatherExtended H s ⟨ j ⟩) (inr ((→⋊ s ⟨ j ⟩) v))
       ＝ (→⋊ (weakenSequent H s) ⟨ j ⟩) (inr v)
   gatherExtended-onCtx H (mkSequent Γ (extend (mkExtension jf args))) j v = refl
-  gatherExtended-onCtx {k} {l} H (mkSequent Γ (collapse col@(mkCollapse jf args))) j v =
-    ⁄-rec-β ⦃ QΓ.setQuotient j ⦄ ⦃ bset = tgt-isSet j ⦄
-            (classT j ∘ inr) _ v
-    where
-      module QΓ (j' : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ Γ ⟨ j' ⟩ ⌟) (CollapseRelation col j')
-      module QT (j' : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ (H + Γ) ⟨ j' ⟩ ⌟)
-          (CollapseRelation (mapCollapse (inrContext {Γ = H} {Δ = Γ}) col) j')
-
-      tgt-isSet : (j' : type (Judgment 𝒥))
-                → isSet ⌞ ((H + Γ) ⋊ₖ mapCollapse (inrContext {Γ = H} {Δ = Γ}) col) ⟨ j' ⟩ ⌟
-      tgt-isSet j' = level-proof (((H + Γ) ⋊ₖ mapCollapse (inrContext {Γ = H} {Δ = Γ}) col) ⟨ j' ⟩)
-
-      classT : (j' : type (Judgment 𝒥)) → ⌞ (H + Γ) ⟨ j' ⟩ ⌟
-             → ⌞ ((H + Γ) ⋊ₖ mapCollapse (inrContext {Γ = H} {Δ = Γ}) col) ⟨ j' ⟩ ⌟
-      classT j' = [_] ⦃ QT.setQuotient j' ⦄
+  gatherExtended-onCtx {k} {l} H (mkSequent Γ (collapse col@(mkCollapse jf args))) j v = refl
 
 

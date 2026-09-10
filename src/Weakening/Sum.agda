@@ -2,15 +2,16 @@ module Weakening.Sum where
 
 open import Prelude
 open import Axioms
-open import Homotopy.SetQuotient
+open import Homotopy.SetQuotient.Nominal
 open import Structure.Associativity
 open import Structure.Composable
 open import Structure.Identity
 open import Structure.PreservesComposition
 open import Structure.Symmetric
 open import Homotopy.StructuredType
-open import Algebra.Wild.Semi
-open Semicategory.Semicategory
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
+open Semicategory
 open import Algebra.Wild.TruncatedTypeSemicategory
 open import Homotopy.Equality
 open import Homotopy.Levels
@@ -186,14 +187,6 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
       lhs = map⋊ₖ (sumContextMorphism η ζ) addedCol₀ addedCol₁ (sumCollapseEquality η ζ w)
       inner = map⋊ₖ ζ col₀ col₁ w
 
-      module Q₀ (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ (H₀ + Γ₀) ⟨ j ⟩ ⌟) (CollapseRelation addedCol₀ j)
-      module Q₁ (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ (H₁ + Γ₁) ⟨ j ⟩ ⌟) (CollapseRelation addedCol₁ j)
-      module QΓ₀ (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ Γ₀ ⟨ j ⟩ ⌟) (CollapseRelation col₀ j)
-      module QΓ₁ (j : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ Γ₁ ⟨ j ⟩ ⌟) (CollapseRelation col₁ j)
 
       tgt : Context 𝒥 (o ⊔ (k₁ ⊔ l₁))
       tgt = (H₁ + Γ₁) ⋊ₖ addedCol₁
@@ -208,10 +201,10 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
       innerTgt-isSet j = level-proof ((Γ₁ ⋊ₖ col₁) ⟨ j ⟩)
 
       class₁ : (j : type (Judgment 𝒥)) → ⌞ (H₁ + Γ₁) ⟨ j ⟩ ⌟ → ⌞ tgt ⟨ j ⟩ ⌟
-      class₁ j = [_] ⦃ Q₁.setQuotient j ⦄
+      class₁ j = [_]
 
       classΓ₁ : (j : type (Judgment 𝒥)) → ⌞ Γ₁ ⟨ j ⟩ ⌟ → ⌞ (Γ₁ ⋊ₖ col₁) ⟨ j ⟩ ⌟
-      classΓ₁ j = [_] ⦃ QΓ₁.setQuotient j ⦄
+      classΓ₁ j = [_]
 
       G : (j : type (Judgment 𝒥)) → ⌞ (H₁ + (Γ₁ ⋊ₖ col₁)) ⟨ j ⟩ ⌟ → ⌞ tgt ⟨ j ⟩ ⌟
       G j = gatherExtended H₁ (mkSequent Γ₁ (collapse col₁)) ⟨ j ⟩
@@ -220,26 +213,13 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
       S j = sumContextMorphism η inner ⟨ j ⟩
 
       chase : (j : type (Judgment 𝒥)) (u : ⌞ (H₀ + Γ₀) ⟨ j ⟩ ⌟)
-            → (lhs ⟨ j ⟩) ([_] ⦃ Q₀.setQuotient j ⦄ u)
+            → (lhs ⟨ j ⟩) ([_] u)
               ＝ ((gatherExtended H₁ (mkSequent Γ₁ (collapse col₁))
                   ∙ (sumContextMorphism η inner
                   ∙ distributeExtended H₀ (mkSequent Γ₀ (collapse col₀)))) ⟨ j ⟩)
-                  ([_] ⦃ Q₀.setQuotient j ⦄ u)
-      chase j (inl h) =
-           ⁄-rec-β ⦃ Q₀.setQuotient j ⦄ ⦃ bset = tgt-isSet j ⦄
-                   (class₁ j ∘ (sumContextMorphism η ζ ⟨ j ⟩)) _ (inl h)
-        ⨾  sym (ap (λ v → G j (S j v))
-                   (⁄-rec-β ⦃ Q₀.setQuotient j ⦄ ⦃ bset = mid₀-isSet j ⦄ _ _ (inl h)))
-      chase j (inr x) =
-           ⁄-rec-β ⦃ Q₀.setQuotient j ⦄ ⦃ bset = tgt-isSet j ⦄
-                   (class₁ j ∘ (sumContextMorphism η ζ ⟨ j ⟩)) _ (inr x)
-        ⨾  sym (   ap (λ v → G j (S j v))
-                      (⁄-rec-β ⦃ Q₀.setQuotient j ⦄ ⦃ bset = mid₀-isSet j ⦄ _ _ (inr x))
-                ⨾  ap (λ v → G j (inr v))
-                      (⁄-rec-β ⦃ QΓ₀.setQuotient j ⦄ ⦃ bset = innerTgt-isSet j ⦄
-                               (classΓ₁ j ∘ (ζ ⟨ j ⟩)) _ x)
-                ⨾  ⁄-rec-β ⦃ QΓ₁.setQuotient j ⦄ ⦃ bset = tgt-isSet j ⦄
-                           (class₁ j ∘ inr) _ ((ζ ⟨ j ⟩) x))
+                  ([_] u)
+      chase j (inl h) = refl
+      chase j (inr x) = refl
 
       pointwise : (j : type (Judgment 𝒥))
                 → (lhs ⟨ j ⟩)
@@ -248,7 +228,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
                       ∙ distributeExtended H₀ (mkSequent Γ₀ (collapse col₀)))) ⟨ j ⟩)
       pointwise j =
         funExt
-          (⁄-elim-proposition ⦃ Q₀.setQuotient j ⦄
+          (⁄-elim-proposition
             _
             (λ _ → ＝-isLevel ⦃ tgt-isSet j ⦄)
             (chase j))
@@ -271,35 +251,137 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
     (extendEq (mkExtensionEquality refl q)) j u = refl
   map⋊-sum-onAdded {H₀ = H₀} {H₁ = H₁} {Γ₀ = Γ₀} {Γ₁ = Γ₁} η ζ
     (collapse col₀@(mkCollapse jf a₀)) (collapse col₁@(mkCollapse jf₁ a₁))
-    (collapseEq w@(mkCollapseEquality refl q)) j u =
-    ⁄-rec-β ⦃ Q₀.setQuotient j ⦄ ⦃ bset = tgt-isSet j ⦄
-            (class₁ j ∘ (sumContextMorphism η ζ ⟨ j ⟩)) _ (inl u)
+    (collapseEq w@(mkCollapseEquality refl q)) j u = refl
+
+
+module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
+  {o a : Level} {𝒥 : DependentSortVocabulary o a}
+  {k₀ k₁ l₀ l₁ : Level} {H₀ : Context 𝒥 k₀} {H₁ : Context 𝒥 k₁}
+  {Γ₀ : Context 𝒥 l₀} {Γ₁ : Context 𝒥 l₁}
+  (he : ContextEquivalence H₀ H₁) where
+
+  private
+    wT : {l : Level} (s : Sequent 𝒥 l)
+       → extendedContext (weakenSequent H₀ s) ⇒ extendedContext (weakenSequent H₁ s)
+    wT s = SequentMorphism.sequentMorphism
+             (toSequentMorphism (weakenedSequentEquivalence he (sequentEquivalence-identity {s = s})))
+
+  map⋊-sum-square :
+      (E₀ : ExtensionOrCollapse Γ₀) (E₁ : ExtensionOrCollapse Γ₁)
+      (μ : SequentMorphism (mkSequent Γ₀ E₀) (mkSequent Γ₁ E₁))
+    → wT (mkSequent Γ₁ E₁)
+        ∙ SequentMorphism.sequentMorphism (weakenSequentMorphism H₀ μ)
+      ＝ SequentMorphism.sequentMorphism (weakenSequentMorphism H₁ μ)
+        ∙ wT (mkSequent Γ₀ E₀)
+  map⋊-sum-square E₀'@(extend (mkExtension jf₀ a₀)) E₁'@(extend (mkExtension jf₁ a₁)) μ =
+    eq (record { component≈ = λ j → funExt (pw j) })
     where
-      addedCol₀ = mapCollapse (inrContext {Γ = H₀} {Δ = Γ₀}) col₀
-      addedCol₁ = mapCollapse (inrContext {Γ = H₁} {Δ = Γ₁}) col₁
+      μ' = SequentMorphism.sequentMorphism μ
+      t₀ = mkSequent Γ₀ E₀'
+      t₁ = mkSequent Γ₁ E₁'
 
-      module Q₀ (j' : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ (H₀ + Γ₀) ⟨ j' ⟩ ⌟) (CollapseRelation addedCol₀ j')
-      module Q₁ (j' : type (Judgment 𝒥)) =
-        FromAllSetQuotients (⌞ (H₁ + Γ₁) ⟨ j' ⟩ ⌟) (CollapseRelation addedCol₁ j')
+      lhsMor = wT t₁ ∙ SequentMorphism.sequentMorphism (weakenSequentMorphism H₀ μ)
+      rhsMor = SequentMorphism.sequentMorphism (weakenSequentMorphism H₁ μ) ∙ wT t₀
 
-      tgt-isSet : (j' : type (Judgment 𝒥)) → isSet ⌞ ((H₁ + Γ₁) ⋊ₖ addedCol₁) ⟨ j' ⟩ ⌟
-      tgt-isSet j' = level-proof (((H₁ + Γ₁) ⋊ₖ addedCol₁) ⟨ j' ⟩)
+      tail : (j : type (Judgment 𝒥)) (y : ⌞ extendedContext t₁ ⟨ j ⟩ ⌟)
+           → (wT t₁ ⟨ j ⟩) ((gatherExtended H₀ t₁ ⟨ j ⟩) (inr y))
+             ＝ (gatherExtended H₁ t₁ ⟨ j ⟩) (inr y)
+      tail j (inl γ₁) = refl
+      tail j (inr p₁) = refl
 
-      class₁ : (j' : type (Judgment 𝒥)) → ⌞ (H₁ + Γ₁) ⟨ j' ⟩ ⌟ → ⌞ ((H₁ + Γ₁) ⋊ₖ addedCol₁) ⟨ j' ⟩ ⌟
-      class₁ j' = [_] ⦃ Q₁.setQuotient j' ⦄
+      pw : (j : type (Judgment 𝒥))
+           (w : ⌞ extendedContext (weakenSequent H₀ t₀) ⟨ j ⟩ ⌟)
+         → (lhsMor ⟨ j ⟩) w ＝ (rhsMor ⟨ j ⟩) w
+      pw j (inl (inl h)) = refl
+      pw j (inl (inr γ)) = tail j ((μ' ⟨ j ⟩) (inl γ))
+      pw j (inr p) = tail j ((μ' ⟨ j ⟩) (inr p))
+  map⋊-sum-square E₀'@(extend (mkExtension jf₀ a₀)) E₁'@(collapse col₁@(mkCollapse jf₁ a₁)) μ =
+    eq (record { component≈ = λ j → funExt (pw j) })
+    where
+      μ' = SequentMorphism.sequentMorphism μ
+      t₀ = mkSequent Γ₀ E₀'
+      t₁ = mkSequent Γ₁ E₁'
 
-  toSequentMorphism-weakened :
-      {k₀ k₁ l₀ l₁ : Level} {H₀ : Context 𝒥 k₀} {H₁ : Context 𝒥 k₁}
-      {s₀ : Sequent 𝒥 l₀} {s₁ : Sequent 𝒥 l₁}
-      (he : ContextEquivalence H₀ H₁) (se : SequentEquivalence s₀ s₁)
-    → toSequentMorphism (weakenedSequentEquivalence he se)
-      ＝ weakenedSequentMorphism (ContextEquivalence.morphism he) (toSequentMorphism se)
-  toSequentMorphism-weakened {s₀ = s₀} {s₁ = s₁} he se =
-    ap mkSequentMorphism
-       (map⋊-sum (ContextEquivalence.morphism he)
-                 (ContextEquivalence.morphism (SequentEquivalence.contextEquivalence se))
-                 (Sequent.extensionOrCollapse s₀) (Sequent.extensionOrCollapse s₁)
-                 (SequentEquivalence.extensionOrCollapseEquality se))
+      lhsMor = wT t₁ ∙ SequentMorphism.sequentMorphism (weakenSequentMorphism H₀ μ)
+      rhsMor = SequentMorphism.sequentMorphism (weakenSequentMorphism H₁ μ) ∙ wT t₀
+
+      tail : (j : type (Judgment 𝒥)) (y : ⌞ extendedContext t₁ ⟨ j ⟩ ⌟)
+           → (wT t₁ ⟨ j ⟩) ((gatherExtended H₀ t₁ ⟨ j ⟩) (inr y))
+             ＝ (gatherExtended H₁ t₁ ⟨ j ⟩) (inr y)
+      tail j =
+        ⁄-elim-proposition
+          (λ y → (wT t₁ ⟨ j ⟩) ((gatherExtended H₀ t₁ ⟨ j ⟩) (inr y))
+                 ＝ (gatherExtended H₁ t₁ ⟨ j ⟩) (inr y))
+          (λ _ → ＝-isLevel ⦃ level-proof (extendedContext (weakenSequent H₁ t₁) ⟨ j ⟩) ⦄)
+          (λ v₁ → refl)
+
+      pw : (j : type (Judgment 𝒥))
+           (w : ⌞ extendedContext (weakenSequent H₀ t₀) ⟨ j ⟩ ⌟)
+         → (lhsMor ⟨ j ⟩) w ＝ (rhsMor ⟨ j ⟩) w
+      pw j (inl (inl h)) = refl
+      pw j (inl (inr γ)) = tail j ((μ' ⟨ j ⟩) (inl γ))
+      pw j (inr p) = tail j ((μ' ⟨ j ⟩) (inr p))
+  map⋊-sum-square E₀'@(collapse col₀@(mkCollapse jf₀ a₀)) E₁'@(extend (mkExtension jf₁ a₁)) μ =
+    eq (record { component≈ = λ j → funExt (pw j) })
+    where
+      μ' = SequentMorphism.sequentMorphism μ
+      t₀ = mkSequent Γ₀ E₀'
+      t₁ = mkSequent Γ₁ E₁'
+
+      lhsMor = wT t₁ ∙ SequentMorphism.sequentMorphism (weakenSequentMorphism H₀ μ)
+      rhsMor = SequentMorphism.sequentMorphism (weakenSequentMorphism H₁ μ) ∙ wT t₀
+
+      tail : (j : type (Judgment 𝒥)) (y : ⌞ extendedContext t₁ ⟨ j ⟩ ⌟)
+           → (wT t₁ ⟨ j ⟩) ((gatherExtended H₀ t₁ ⟨ j ⟩) (inr y))
+             ＝ (gatherExtended H₁ t₁ ⟨ j ⟩) (inr y)
+      tail j (inl γ₁) = refl
+      tail j (inr p₁) = refl
+
+      chase : (j : type (Judgment 𝒥)) (u : ⌞ (H₀ + Γ₀) ⟨ j ⟩ ⌟)
+            → (lhsMor ⟨ j ⟩) ([_] u) ＝ (rhsMor ⟨ j ⟩) ([_] u)
+      chase j (inl h) = refl
+      chase j (inr γ) = tail j ((μ' ⟨ j ⟩) ([_] γ))
+
+      pw : (j : type (Judgment 𝒥))
+           (w : ⌞ extendedContext (weakenSequent H₀ t₀) ⟨ j ⟩ ⌟)
+         → (lhsMor ⟨ j ⟩) w ＝ (rhsMor ⟨ j ⟩) w
+      pw j =
+        ⁄-elim-proposition
+          (λ w → (lhsMor ⟨ j ⟩) w ＝ (rhsMor ⟨ j ⟩) w)
+          (λ _ → ＝-isLevel ⦃ level-proof (extendedContext (weakenSequent H₁ t₁) ⟨ j ⟩) ⦄)
+          (chase j)
+  map⋊-sum-square E₀'@(collapse col₀@(mkCollapse jf₀ a₀)) E₁'@(collapse col₁@(mkCollapse jf₁ a₁)) μ =
+    eq (record { component≈ = λ j → funExt (pw j) })
+    where
+      μ' = SequentMorphism.sequentMorphism μ
+      t₀ = mkSequent Γ₀ E₀'
+      t₁ = mkSequent Γ₁ E₁'
+
+      lhsMor = wT t₁ ∙ SequentMorphism.sequentMorphism (weakenSequentMorphism H₀ μ)
+      rhsMor = SequentMorphism.sequentMorphism (weakenSequentMorphism H₁ μ) ∙ wT t₀
+
+      tail : (j : type (Judgment 𝒥)) (y : ⌞ extendedContext t₁ ⟨ j ⟩ ⌟)
+           → (wT t₁ ⟨ j ⟩) ((gatherExtended H₀ t₁ ⟨ j ⟩) (inr y))
+             ＝ (gatherExtended H₁ t₁ ⟨ j ⟩) (inr y)
+      tail j =
+        ⁄-elim-proposition
+          (λ y → (wT t₁ ⟨ j ⟩) ((gatherExtended H₀ t₁ ⟨ j ⟩) (inr y))
+                 ＝ (gatherExtended H₁ t₁ ⟨ j ⟩) (inr y))
+          (λ _ → ＝-isLevel ⦃ level-proof (extendedContext (weakenSequent H₁ t₁) ⟨ j ⟩) ⦄)
+          (λ v₁ → refl)
+
+      chase : (j : type (Judgment 𝒥)) (u : ⌞ (H₀ + Γ₀) ⟨ j ⟩ ⌟)
+            → (lhsMor ⟨ j ⟩) ([_] u) ＝ (rhsMor ⟨ j ⟩) ([_] u)
+      chase j (inl h) = refl
+      chase j (inr γ) = tail j ((μ' ⟨ j ⟩) ([_] γ))
+
+      pw : (j : type (Judgment 𝒥))
+           (w : ⌞ extendedContext (weakenSequent H₀ t₀) ⟨ j ⟩ ⌟)
+         → (lhsMor ⟨ j ⟩) w ＝ (rhsMor ⟨ j ⟩) w
+      pw j =
+        ⁄-elim-proposition
+          (λ w → (lhsMor ⟨ j ⟩) w ＝ (rhsMor ⟨ j ⟩) w)
+          (λ _ → ＝-isLevel ⦃ level-proof (extendedContext (weakenSequent H₁ t₁) ⟨ j ⟩) ⦄)
+          (chase j)
 
 

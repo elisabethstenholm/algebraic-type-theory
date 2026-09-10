@@ -1,8 +1,9 @@
 module WellfoundedSemicategory where
 
 open import Foundation
-open import Algebra.Wild.Semi
-open Semicategory.Semicategory
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
+open Semicategory
 import Structure.Wellfounded as Wellfounded
 
 record WellfoundedSemicategory

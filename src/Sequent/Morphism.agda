@@ -2,7 +2,7 @@ module Sequent.Morphism where
 
 open import Prelude
 open import Axioms
-open import Homotopy.SetQuotient
+open import Homotopy.SetQuotient.Nominal
 open import Structure.Associativity
 open import Structure.Composable
 open import Structure.Identity
@@ -12,8 +12,10 @@ open import Homotopy.Equality
 open import Homotopy.Levels
 open import Homotopy.StructuredType
 open import Syntax.Arrowable
-open import Algebra.Wild.Semi
-open Semicategory.Semicategory
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
+open import Structure.Semicategorical using (Semicategorical)
+open Semicategory
 
 open import DependentSortVocabulary
 open import Context
@@ -60,9 +62,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
     associativeCompositionSequentMorphism =
       record
         { ⨾-associative = λ {B = B} {C = C} {f = f} {g = g} {h = h} → ap mkSequentMorphism
-          (begin
-            sequentMorphism h ∙ (sequentMorphism g ∙ sequentMorphism f)  ⟪ ∙-associative {g = sequentMorphism g} ⟫
-            (sequentMorphism h ∙ sequentMorphism g) ∙ sequentMorphism f  ∎) }
+          (∙-associative {g = sequentMorphism g}) }
 
     sequentSemicategorical : Semicategorical _ (Sequent 𝒥) SequentMorphism (λ _ _ → _＝_)
     sequentSemicategorical = record {}
@@ -152,6 +152,14 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
                                  (toSequentMorphism (sequentEquivalence-identity {s = s}))
                                ≈ identity
   toSequentMorphism-identity {s = mkSequent Γ E} = map⋊-identity E
+
+  toSequentMorphism-identity-at :
+      {i : Level} {s : Sequent 𝒥 i} (j : type (Judgment 𝒥))
+      (z : ⌞ extendedContext s ⟨ j ⟩ ⌟)
+    → (SequentMorphism.sequentMorphism
+         (toSequentMorphism (sequentEquivalence-identity {s = s})) ⟨ j ⟩) z
+      ＝ z
+  toSequentMorphism-identity-at {s = mkSequent Γ E} = map⋊-identity-at E
 
   toSequentMorphism-isEquivalence :
       {i₀ i₁ : Level} {s₀ : Sequent 𝒥 i₀} {s₁ : Sequent 𝒥 i₁}

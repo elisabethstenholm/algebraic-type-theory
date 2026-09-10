@@ -4,8 +4,10 @@ open import Prelude
 open import Axioms
 open import Structure.Associativity
 open import Structure.Composable
-open import Algebra.Wild.Semi
-open Semicategory.Semicategory
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
+open import Structure.Semicategorical using (Semicategorical)
+open Semicategory
 import Structure.Wellfounded as Wellfounded
 open Wellfounded using (Wellfounded)
 import Structure.Accessible as Accessible

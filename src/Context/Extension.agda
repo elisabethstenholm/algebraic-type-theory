@@ -1,6 +1,6 @@
 module Context.Extension where
 
-open import Prelude
+open import Prelude hiding (＝-in)
 open import Axioms
 open import Homotopy.Equality
 open import Homotopy.Equality.StructureIdentity
@@ -18,10 +18,10 @@ open import Structure.PreservesComposition
 open import Structure.Symmetric
 open import Structure.Unit
 open import Structure.Whiskerable
-open import Algebra.Wild.Semi
-open Semicategory using (tr-hom)
+open import Algebra.Wild.Semicategory
+open import Algebra.Wild.Semifunctor
 open import Algebra.Wild.TruncatedTypeSemicategory
-open import Homotopy.SetQuotient
+open import Homotopy.SetQuotient.Nominal
 open import Syntax.Arrowable
 open import Foundation.Sum.Equivalence
 open import Structure.Bimappable
@@ -367,14 +367,9 @@ _⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
 
     onObjects : type (Judgment 𝒥) → hSet (o ⊔ i)
     onObjects j = ((⌞ Γ ⟨ j ⟩ ⌟) ⁄ CollapseRelation col j) has-level fromInstance
-      where
-        open FromAllSetQuotients (⌞ Γ ⟨ j ⟩ ⌟) (CollapseRelation col j)
-
     onMorphisms : ∀ {j₀ j₁} → type (JudgmentDependency 𝒥 j₀ j₁) → ⌞ onObjects j₀ ⌟ → ⌞ onObjects j₁ ⌟
     onMorphisms {j₀} {j₁} f = ⁄-rec ([_] ∘ (Γ ⟨ f ⟩)) respectsCollapseRelation
       where
-        open FromAllSetQuotients (⌞ Γ ⟨ j₀ ⟩ ⌟) (CollapseRelation col j₀)
-        open FromAllSetQuotients (⌞ Γ ⟨ j₁ ⟩ ⌟) (CollapseRelation col j₁)
 
         respectsCollapseRelation : {x y : ⌞ Γ ⟨ j₀ ⟩ ⌟}
                                  → CollapseRelation col j₀ x y → [ (Γ ⟨ f ⟩) x ] ＝ [ (Γ ⟨ f ⟩) y ]
@@ -393,9 +388,6 @@ _⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
         resp
         x
       where
-        open FromAllSetQuotients (⌞ Γ ⟨ j₀ ⟩ ⌟) (CollapseRelation col j₀)
-        open FromAllSetQuotients (⌞ Γ ⟨ j₁ ⟩ ⌟) (CollapseRelation col j₁)
-        open FromAllSetQuotients (⌞ Γ ⟨ j₂ ⟩ ⌟) (CollapseRelation col j₂)
         open Semifunctor.Reasoning (Context.semifunctor Γ)
         open Semicategory.Reasoning (hSet-Semicategory i)
 
@@ -403,16 +395,7 @@ _⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
         set q = raise-level (pathLevel (onMorphisms (g ∙ f) q) (onMorphisms g (onMorphisms f q)))
 
         preserves : (x : ⌞ Γ ⟨ j₀ ⟩ ⌟) → onMorphisms (g ∙ f) ([ x ]) ＝ onMorphisms g (onMorphisms f ([ x ]))
-        preserves x =
-          begin
-            onMorphisms (g ∙ f) ([ x ])            ⟪ ⁄-rec-β ([_] ∘ (Γ ⟨ g ∙ f ⟩)) _ x ⟫
-            [ (Γ ⟨ g ∙ f ⟩) x ]                    ⟪ ap (λ σ → [ σ x ]) (preserves-composition f g) ⟫
-            [ (Γ ⟨ g ⟩) ((Γ ⟨ f ⟩) x) ]            ⟪ sym (⁄-rec-β ([_] ∘ (Γ ⟨ g ⟩)) _ ((Γ ⟨ f ⟩) x)) ⟫
-            onMorphisms g ([ (Γ ⟨ f ⟩) x ])        ⟪ ap (onMorphisms g) (sym p) ⟫
-            onMorphisms g (onMorphisms f ([ x ]))  ∎
-          where
-            p : onMorphisms f ([ x ]) ＝ [ (Γ ⟨ f ⟩) x ]
-            p = ⁄-rec-β ([_] ∘ (Γ ⟨ f ⟩)) _ x
+        preserves x = ap (λ σ → [ σ x ]) (preserves-composition f g)
 
         resp : {x y : ⌞ Γ ⟨ j₀ ⟩ ⌟} (r : CollapseRelation col j₀ x y)
              → tr (λ x → onMorphisms (g ∙ f) x ＝ onMorphisms g (onMorphisms f x))
@@ -432,14 +415,8 @@ _⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
   where
     component : ∀ j → ⌞ Γ ⟨ j ⟩ ⌟ → ⌞ (Γ ⋊ₖ c) ⟨ j ⟩ ⌟
     component j = [_]
-      where
-        open FromAllSetQuotients (⌞ Γ ⟨ j ⟩ ⌟) (CollapseRelation c j)
-
     natural : ∀ {j₀ j₁} (f : type (JudgmentDependency 𝒥 j₀ j₁)) → (Γ ⋊ₖ c) ⟨ f ⟩ ∘ component j₀ ~ component j₁ ∘ Γ ⟨ f ⟩
-    natural {j₀} {j₁} f = ⁄-rec-β ([_] ∘ (Γ ⟨ f ⟩)) _
-      where
-        open FromAllSetQuotients (⌞ Γ ⟨ j₀ ⟩ ⌟) (CollapseRelation c j₀)
-        open FromAllSetQuotients (⌞ Γ ⟨ j₁ ⟩ ⌟) (CollapseRelation c j₁)
+    natural f x = refl
 
 infix 20 _⋊_
 _⋊_ : ⦃ _ : FunExt ⦄
