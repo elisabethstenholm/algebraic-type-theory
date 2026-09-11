@@ -70,16 +70,32 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
                        → extendedContext (weakenSequent H s) ⇒ H + extendedContext s
     distributeExtended (mkSequent Γ (extend ext)) =
       record
-        { component = λ j → λ { (inl (inl h)) → inl h
-                              ; (inl (inr x)) → inr (inl x)
-                              ; (inr p)       → inr (inr p) }
-        ; natural = λ f → funExt λ { (inl (inl h)) → refl
-                                   ; (inl (inr x)) → refl
-                                   ; (inr refl)    → refl } }
+        { component = component
+        ; natural = naturalPath }
+      where
+        component : (j : type (Judgment 𝒥))
+                  → ⌞ extendedContext (weakenSequent H (mkSequent Γ (extend ext))) ⟨ j ⟩ ⌟
+                  → ⌞ (H + extendedContext (mkSequent Γ (extend ext))) ⟨ j ⟩ ⌟
+        component j (inl (inl h)) = inl h
+        component j (inl (inr x)) = inr (inl x)
+        component j (inr p) = inr (inr p)
+
+        natural~ : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
+                 → (H + extendedContext (mkSequent Γ (extend ext))) ⟨ f ⟩ ∘ component j₀
+                   ~ component j₁ ∘ extendedContext (weakenSequent H (mkSequent Γ (extend ext))) ⟨ f ⟩
+        natural~ f (inl (inl h)) = refl
+        natural~ f (inl (inr x)) = refl
+        natural~ f (inr refl) = refl
+
+        opaque
+          naturalPath : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
+                      → (H + extendedContext (mkSequent Γ (extend ext))) ⟨ f ⟩ ∘ component j₀
+                        ＝ component j₁ ∘ extendedContext (weakenSequent H (mkSequent Γ (extend ext))) ⟨ f ⟩
+          naturalPath f = funExt (natural~ f)
     distributeExtended {l} (mkSequent Γ (collapse col)) =
       record
         { component = component
-        ; natural = λ f → funExt (natural~ f) }
+        ; natural = naturalPath }
       where
         addedCollapse : Collapse (H + Γ)
         addedCollapse = mapCollapse inrContext col
@@ -94,10 +110,11 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
         onEntries j (inl h) = inl h
         onEntries j (inr x) = inr [ x ]
 
-        respectsCollapse : (j : type (Judgment 𝒥)) {x y : ⌞ (H + Γ) ⟨ j ⟩ ⌟}
-                         → CollapseRelation addedCollapse j x y
-                         → onEntries j x ＝ onEntries j y
-        respectsCollapse j collapseRelation = ap inr (respects collapseRelation)
+        opaque
+          respectsCollapse : (j : type (Judgment 𝒥)) {x y : ⌞ (H + Γ) ⟨ j ⟩ ⌟}
+                           → CollapseRelation addedCollapse j x y
+                           → onEntries j x ＝ onEntries j y
+          respectsCollapse j collapseRelation = ap inr (respects collapseRelation)
 
         component : (j : type (Judgment 𝒥)) → ⌞ ((H + Γ) ⋊ₖ addedCollapse) ⟨ j ⟩ ⌟ → ⌞ target ⟨ j ⟩ ⌟
         component j = ⁄-rec ⦃ bset = target-isSet j ⦄ (onEntries j) (respectsCollapse j)
@@ -113,20 +130,41 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
             pointwise (inl h) = refl
             pointwise (inr x) = refl
 
+        opaque
+          naturalPath : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
+                      → target ⟨ f ⟩ ∘ component j₀ ＝ component j₁ ∘ ((H + Γ) ⋊ₖ addedCollapse) ⟨ f ⟩
+          naturalPath f = funExt (natural~ f)
+
     gatherExtended : {l : Level} (s : Sequent 𝒥 l)
                    → H + extendedContext s ⇒ extendedContext (weakenSequent H s)
     gatherExtended (mkSequent Γ (extend ext)) =
       record
-        { component = λ j → λ { (inl h)       → inl (inl h)
-                              ; (inr (inl x)) → inl (inr x)
-                              ; (inr (inr p)) → inr p }
-        ; natural = λ f → funExt λ { (inl h)          → refl
-                                   ; (inr (inl x))    → refl
-                                   ; (inr (inr refl)) → refl } }
+        { component = component
+        ; natural = naturalPath }
+      where
+        component : (j : type (Judgment 𝒥))
+                  → ⌞ (H + extendedContext (mkSequent Γ (extend ext))) ⟨ j ⟩ ⌟
+                  → ⌞ extendedContext (weakenSequent H (mkSequent Γ (extend ext))) ⟨ j ⟩ ⌟
+        component j (inl h) = inl (inl h)
+        component j (inr (inl x)) = inl (inr x)
+        component j (inr (inr p)) = inr p
+
+        natural~ : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
+                 → extendedContext (weakenSequent H (mkSequent Γ (extend ext))) ⟨ f ⟩ ∘ component j₀
+                   ~ component j₁ ∘ (H + extendedContext (mkSequent Γ (extend ext))) ⟨ f ⟩
+        natural~ f (inl h) = refl
+        natural~ f (inr (inl x)) = refl
+        natural~ f (inr (inr refl)) = refl
+
+        opaque
+          naturalPath : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
+                      → extendedContext (weakenSequent H (mkSequent Γ (extend ext))) ⟨ f ⟩ ∘ component j₀
+                        ＝ component j₁ ∘ (H + extendedContext (mkSequent Γ (extend ext))) ⟨ f ⟩
+          naturalPath f = funExt (natural~ f)
     gatherExtended {l} (mkSequent Γ (collapse col)) =
       record
         { component = component
-        ; natural = λ f → funExt (natural~ f) }
+        ; natural = naturalPath }
       where
         addedCollapse : Collapse (H + Γ)
         addedCollapse = mapCollapse inrContext col
@@ -144,10 +182,11 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
         classOf : (j : type (Judgment 𝒥)) → ⌞ (H + Γ) ⟨ j ⟩ ⌟ → ⌞ target ⟨ j ⟩ ⌟
         classOf j = [_]
 
-        respectsCollapse : (j : type (Judgment 𝒥)) {x y : ⌞ Γ ⟨ j ⟩ ⌟}
-                         → CollapseRelation col j x y
-                         → classOf j (inr x) ＝ classOf j (inr y)
-        respectsCollapse j collapseRelation = respects collapseRelation
+        opaque
+          respectsCollapse : (j : type (Judgment 𝒥)) {x y : ⌞ Γ ⟨ j ⟩ ⌟}
+                           → CollapseRelation col j x y
+                           → classOf j (inr x) ＝ classOf j (inr y)
+          respectsCollapse j collapseRelation = respects collapseRelation
 
         component : (j : type (Judgment 𝒥)) → ⌞ source ⟨ j ⟩ ⌟ → ⌞ target ⟨ j ⟩ ⌟
         component j (inl h) = classOf j (inl h)
@@ -164,6 +203,11 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
             pointwise : (x : ⌞ Γ ⟨ j₀ ⟩ ⌟)
                       → (target ⟨ f ⟩) (component j₀ (inr [ x ])) ＝ component j₁ ((source ⟨ f ⟩) (inr [ x ]))
             pointwise x = refl
+
+        opaque
+          naturalPath : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
+                      → target ⟨ f ⟩ ∘ component j₀ ＝ component j₁ ∘ source ⟨ f ⟩
+          naturalPath f = funExt (natural~ f)
 
     distribute-gather : {l : Level} (s : Sequent 𝒥 l) (j : type (Judgment 𝒥)) (w : ⌞ (H + extendedContext s) ⟨ j ⟩ ⌟)
                       → (distributeExtended s ⟨ j ⟩) ((gatherExtended s ⟨ j ⟩) w) ＝ w

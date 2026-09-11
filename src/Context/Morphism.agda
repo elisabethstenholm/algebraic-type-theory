@@ -181,14 +181,22 @@ module _ {o a : Level} {𝒥 : DependentSortVocabulary o a} where
                              → Appliable (ContextMorphism Γ Δ) (type (Judgment 𝒥)) (λ _ j → ⌞ Γ ⟨ j ⟩ ⌟ → ⌞ Δ ⟨ j ⟩ ⌟)
     appliableContextMorphism = record { function = λ ϵ → ContextMorphism.component ϵ }
 
+  opaque
+    compositeNatural : {i j k : Level} {Γ : Context 𝒥 i} {Δ : Context 𝒥 j} {Θ : Context 𝒥 k}
+                       (ϵ : ContextMorphism Γ Δ) (δ : ContextMorphism Δ Θ)
+                       {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
+                     → Θ ⟨ f ⟩ ∘ (δ ⟨ j₀ ⟩ ∙ ϵ ⟨ j₀ ⟩) ＝ (δ ⟨ j₁ ⟩ ∙ ϵ ⟨ j₁ ⟩) ∘ Γ ⟨ f ⟩
+    compositeNatural ϵ δ {j₀} {j₁} f =
+      ap (δ ⟨ j₁ ⟩ ∘_) (ContextMorphism.natural ϵ f)
+      ∙ ap (_∘ ϵ ⟨ j₀ ⟩) (ContextMorphism.natural δ f)
+
+  instance
     composableContextMorphism : Composable _ (Context 𝒥) ContextMorphism
     composableContextMorphism =
       record
         { composition = λ ϵ δ → record
-            { component = λ j → δ ⟨ j ⟩ ∙ ϵ ⟨ j ⟩ 
-            ; natural = λ {j₀ j₁} f
-                → ap (δ ⟨ j₁ ⟩ ∘_) (ContextMorphism.natural ϵ f)
-                ∙ ap (_∘ ϵ ⟨ j₀ ⟩) (ContextMorphism.natural δ f) } }
+            { component = λ j → δ ⟨ j ⟩ ∙ ϵ ⟨ j ⟩
+            ; natural = compositeNatural ϵ δ } }
 
     associativeCompositionContextMorphism : ⦃ _ : FunExt ⦄ → AssociativeComposition (ContextMorphism { 𝒥 = 𝒥 }) (λ _ _ → _＝_)
     associativeCompositionContextMorphism =
@@ -210,7 +218,7 @@ module _ {o a : Level} {𝒥 : DependentSortVocabulary o a} where
   sumContextMorphism {Γ₀ = Γ₀} {Γ₁ = Γ₁} {Δ₀ = Δ₀} {Δ₁ = Δ₁} α β =
     record
       { component = component
-      ; natural = funExt ∘ natural~ }
+      ; natural = naturalPath }
     where
       component : (j : type (Judgment 𝒥)) → ⌞ (Γ₀ + Δ₀) ⟨ j ⟩ ⌟ → ⌞ (Γ₁ + Δ₁) ⟨ j ⟩ ⌟
       component j (inl x) = inl ((α ⟨ j ⟩) x)
@@ -220,6 +228,11 @@ module _ {o a : Level} {𝒥 : DependentSortVocabulary o a} where
                → (Γ₁ + Δ₁) ⟨ f ⟩ ∘ component j₀ ~ component j₁ ∘ (Γ₀ + Δ₀) ⟨ f ⟩
       natural~ f (inl x) = ap (λ h → inl (h x)) (ContextMorphism.natural α f)
       natural~ f (inr y) = ap (λ h → inr (h y)) (ContextMorphism.natural β f)
+
+      opaque
+        naturalPath : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
+                    → (Γ₁ + Δ₁) ⟨ f ⟩ ∘ component j₀ ＝ component j₁ ∘ (Γ₀ + Δ₀) ⟨ f ⟩
+        naturalPath f = funExt (natural~ f)
 
   inlContext : ⦃ _ : FunExt ⦄ {i j : Level} {Γ : Context 𝒥 i} {Δ : Context 𝒥 j} → Γ ⇒ Γ + Δ
   inlContext =

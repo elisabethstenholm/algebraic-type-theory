@@ -49,15 +49,16 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
   {o a so sa i : Level} {𝒥 : DependentSortVocabulary o a} where
 
   private
-    idSquareᴿ : {l₀ l₁ : Level} {s₀ : Sequent 𝒥 l₀} {s₁ : Sequent 𝒥 l₁}
-                (α : SequentMorphism s₀ s₁)
-              → toSequentMorphism (sequentEquivalence-identity {s = s₁}) ∙ α
-                ＝ α ∙ toSequentMorphism (sequentEquivalence-identity {s = s₀})
-    idSquareᴿ {s₀ = s₀} {s₁ = s₁} α =
-      ap mkSequentMorphism (eq (record { component≈ = λ j → funExt (λ z →
-           toSequentMorphism-identity-at {s = s₁} j ((SequentMorphism.sequentMorphism α ⟨ j ⟩) z)
-        ⨾  sym (ap (SequentMorphism.sequentMorphism α ⟨ j ⟩)
-                   (toSequentMorphism-identity-at {s = s₀} j z))) }))
+    opaque
+      idSquareᴿ : {l₀ l₁ : Level} {s₀ : Sequent 𝒥 l₀} {s₁ : Sequent 𝒥 l₁}
+                  (α : SequentMorphism s₀ s₁)
+                → toSequentMorphism (sequentEquivalence-identity {s = s₁}) ∙ α
+                  ＝ α ∙ toSequentMorphism (sequentEquivalence-identity {s = s₀})
+      idSquareᴿ {s₀ = s₀} {s₁ = s₁} α =
+        ap mkSequentMorphism (eq (record { component≈ = λ j → funExt (λ z →
+             toSequentMorphism-identity-at {s = s₁} j ((SequentMorphism.sequentMorphism α ⟨ j ⟩) z)
+          ⨾  sym (ap (SequentMorphism.sequentMorphism α ⟨ j ⟩)
+                     (toSequentMorphism-identity-at {s = s₀} j z))) }))
 
   premiseInclusion : (r : Rule 𝒥 so sa i)
                    → SequentStructureMorphism (premises r) (⋊ₛ r)

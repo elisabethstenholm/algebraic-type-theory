@@ -133,6 +133,9 @@ agda src/Sequent.agda         # typecheck one module and its dependencies
 Silent output with exit 0 means success. Interface files land in
 `_build/2.8.0/agda/`.
 
+Always keep track of type-checking performance when writing code; if a module's
+type-checking time suddenly blows up, try to optimize it.
+
 **Important:** always cap agda's memory usage to 5 GB. It tends to eat up the
 entire RAM if uncapped.
 
@@ -176,3 +179,4 @@ about the workings of `UniLib`.
   equational reasoning first and only swap if there is a reason.
 - Don't write any comments, apart from when explicitly asked for.
 - `record` or `data` definitions should be in the top module.
+- Don't commit to the `main` branch. Only commit to feature branches made by you.

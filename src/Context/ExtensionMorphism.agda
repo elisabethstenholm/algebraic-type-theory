@@ -48,7 +48,7 @@ module _ ⦃ _ : FunExt ⦄
   map⋊ₑ e₀@(mkExtension j₀ a₀) e₁@(mkExtension .j₀ a₁) (mkExtensionEquality refl a≈) =
     record
       { component = component
-      ; natural = funExt ∘ natural~ }
+      ; natural = naturalPath }
     where
       component : (j' : type (Judgment 𝒥)) → ⌞ (Γ ⋊ₑ e₀) ⟨ j' ⟩ ⌟ → ⌞ (Δ ⋊ₑ e₁) ⟨ j' ⟩ ⌟
       component j' (inl x) = inl ((α ⟨ j' ⟩) x)
@@ -58,6 +58,11 @@ module _ ⦃ _ : FunExt ⦄
                → (Δ ⋊ₑ e₁) ⟨ f ⟩ ∘ component j₀' ~ component j₁' ∘ (Γ ⋊ₑ e₀) ⟨ f ⟩
       natural~ f (inl x) = ap (λ h → inl (h x)) (ContextMorphism.natural α f)
       natural~ {j₁' = j₁'} f (inr refl) = ap (λ h → inl (h f)) (sym (component≈ a≈ j₁'))
+
+      opaque
+        naturalPath : {j₀' j₁' : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀' j₁'))
+                    → (Δ ⋊ₑ e₁) ⟨ f ⟩ ∘ component j₀' ＝ component j₁' ∘ (Γ ⋊ₑ e₀) ⟨ f ⟩
+        naturalPath f = funExt (natural~ f)
 
 module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
   {o a i j : Level} {𝒥 : DependentSortVocabulary o a}
@@ -69,7 +74,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
   map⋊ₖ c₀@(mkCollapse j₀ a₀) c₁@(mkCollapse .j₀ a₁) (mkCollapseEquality refl a≈) =
     record
       { component = component
-      ; natural = funExt ∘ natural~ }
+      ; natural = naturalPath }
     where
 
       classΓ : (j' : type (Judgment 𝒥)) → ⌞ Γ ⟨ j' ⟩ ⌟ → ⌞ (Γ ⋊ₖ c₀) ⟨ j' ⟩ ⌟
@@ -78,13 +83,14 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
       classΔ : (j' : type (Judgment 𝒥)) → ⌞ Δ ⟨ j' ⟩ ⌟ → ⌞ (Δ ⋊ₖ c₁) ⟨ j' ⟩ ⌟
       classΔ j' = [_]
 
-      resp : (j' : type (Judgment 𝒥)) {x y : ⌞ Γ ⟨ j' ⟩ ⌟}
-           → CollapseRelation c₀ j' x y
-           → classΔ j' ((α ⟨ j' ⟩) x) ＝ classΔ j' ((α ⟨ j' ⟩) y)
-      resp j' collapseRelation =
-           ap (λ h → classΔ j₀ (h (inr (inl refl)))) (component≈ a≈ j₀)
-        ⨾  respects collapseRelation
-        ⨾  sym (ap (λ h → classΔ j₀ (h (inr (inr refl)))) (component≈ a≈ j₀))
+      opaque
+        resp : (j' : type (Judgment 𝒥)) {x y : ⌞ Γ ⟨ j' ⟩ ⌟}
+             → CollapseRelation c₀ j' x y
+             → classΔ j' ((α ⟨ j' ⟩) x) ＝ classΔ j' ((α ⟨ j' ⟩) y)
+        resp j' collapseRelation =
+             ap (λ h → classΔ j₀ (h (inr (inl refl)))) (component≈ a≈ j₀)
+          ⨾  respects collapseRelation
+          ⨾  sym (ap (λ h → classΔ j₀ (h (inr (inr refl)))) (component≈ a≈ j₀))
 
       component : (j' : type (Judgment 𝒥)) → ⌞ (Γ ⋊ₖ c₀) ⟨ j' ⟩ ⌟ → ⌞ (Δ ⋊ₖ c₁) ⟨ j' ⟩ ⌟
       component j' = ⁄-rec ⦃ bset = level-proof ((Δ ⋊ₖ c₁) ⟨ j' ⟩) ⦄
@@ -102,6 +108,11 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
                     → ((Δ ⋊ₖ c₁) ⟨ f ⟩) (component j₀' (classΓ j₀' x))
                       ＝ component j₁' (((Γ ⋊ₖ c₀) ⟨ f ⟩) (classΓ j₀' x))
           pointwise x = ap (classΔ j₁') (ap (λ h → h x) (ContextMorphism.natural α f))
+
+      opaque
+        naturalPath : {j₀' j₁' : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀' j₁'))
+                    → (Δ ⋊ₖ c₁) ⟨ f ⟩ ∘ component j₀' ＝ component j₁' ∘ (Γ ⋊ₖ c₀) ⟨ f ⟩
+        naturalPath f = funExt (natural~ f)
 
   map⋊ : (e₀ : ExtensionOrCollapse Γ) (e₁ : ExtensionOrCollapse Δ)
        → mapExtensionOrCollapse α e₀ ≈ e₁ → Γ ⋊ e₀ ⇒ Δ ⋊ e₁
@@ -279,7 +290,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
 
   inverseContextMorphism : Δ ⇒ Γ
   inverseContextMorphism =
-    record { component = backwards ; natural = λ f → funExt (natural~ f) }
+    record { component = backwards ; natural = naturalPath }
     where
       natural~ : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
                → Γ ⟨ f ⟩ ∘ backwards j₀ ~ backwards j₁ ∘ Δ ⟨ f ⟩
@@ -288,6 +299,11 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
         ⨾  ap (backwards j₁)
               (sym (ap (λ h → h (backwards j₀ y)) (ContextMorphism.natural α f)))
         ⨾  ap (λ z → backwards j₁ ((Δ ⟨ f ⟩) z)) (backwardsSection j₀ y)
+
+      opaque
+        naturalPath : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
+                    → Γ ⟨ f ⟩ ∘ backwards j₀ ＝ backwards j₁ ∘ Δ ⟨ f ⟩
+        naturalPath f = funExt (natural~ f)
 
   map⋊ₖ-isEquivalence : (c₀ : Collapse Γ) (c₁ : Collapse Δ)
                         (q : mapCollapse α c₀ ≈ c₁)

@@ -123,7 +123,7 @@ weakenWithEmptyContext {so₀ = so₀} {sa₀ = sa₀} {i₀ = i₀} {𝒥 = �
           { onDependencies = onDependencies
           ; dependenciesEquivalence = dependenciesEquivalence }
     ; sequentEquivalence = sequentEquivalence
-    ; natural = λ { {inr x} {inr y} f → natural f } }
+    ; natural = λ { {inr x} {inr y} f → naturalOpaque f } }
   where
     𝒟 = SequentStructure.dependency sd
     𝒢 = SequentStructure.sequent sd
@@ -210,6 +210,14 @@ weakenWithEmptyContext {so₀ = so₀} {sa₀ = sa₀} {i₀ = i₀} {𝒥 = �
         C  = weakenSequentMorphism (emptyContext 𝒥 i₀) (𝒢 ⟨ f ⟩)
         S  = ℋ ⟨ Φ ⟨ f ⟩ ⟩
 
+    opaque
+      naturalOpaque : {x y : Ob 𝒟} (f : Hom 𝒟 x y)
+                    → toSequentMorphism (sequentEquivalence (inr x))
+                      ∙ weakenSequentMorphism (emptyContext 𝒥 i₀) (𝒢 ⟨ f ⟩)
+                    ＝ ℋ ⟨ Φ ⟨ f ⟩ ⟩
+                      ∙ toSequentMorphism (sequentEquivalence (inr y))
+      naturalOpaque f = natural f
+
 
 
 -- =============== Composition of sequent structure morphisms ===============
@@ -243,7 +251,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
     record
       { dependencyMorphism = dependencyMorphism
       ; sequentEquivalence = sequentEquivalence
-      ; natural = λ {x} {y} f → natural {x} {y} f }
+      ; natural = λ {x} {y} f → naturalOpaque {x} {y} f }
     where
       𝒟 = SequentStructure.dependency s₀
       𝒢 = SequentStructure.sequent s₀
@@ -283,6 +291,12 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
           Hf = ℋ ⟨ Φ ⟨ f ⟩ ⟩
           If = ℐ ⟨ Ψ ⟨ Φ ⟨ f ⟩ ⟩ ⟩
 
+      opaque
+        naturalOpaque : {x y : Ob 𝒟} (f : Hom 𝒟 x y)
+                      → toSequentMorphism (sequentEquivalence x) ∙ 𝒢 ⟨ f ⟩
+                      ＝ ℐ ⟨ dependencyMorphism ⟨ f ⟩ ⟩ ∙ toSequentMorphism (sequentEquivalence y)
+        naturalOpaque f = natural f
+
 
 
 -- =============== Sequent structure morphisms from equalities ===============
@@ -298,8 +312,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
           { onDependencies = onDependencies
           ; dependenciesEquivalence = dependenciesEquivalence }
       ; sequentEquivalence = SequentStructureEquality.sequent≈ w
-      ; natural = λ {x} {y} f →
-          eq ⦃ equalitySequentMorphism ⦄ (SequentStructureEquality.natural≈ w f) }
+      ; natural = λ {x} {y} f → naturalPath {x} {y} f }
     where
       𝒟₀ = SequentStructure.dependency s₀
       𝒟₁ = SequentStructure.dependency s₁
@@ -326,5 +339,14 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
           pointwise : there (equiv-∑ (Semicategory-Equality.objects≈ d≈) (λ y → Semicategory-Equality.hom≈ d≈ x y))
                       ~ mapDependencies onDependencies x
           pointwise (y , f) = refl
+
+      opaque
+        naturalPath : {x y : Ob 𝒟₀} (f : Hom 𝒟₀ x y)
+                    → toSequentMorphism (SequentStructureEquality.sequent≈ w x)
+                        ∙ SequentStructure.sequent s₀ ⟨ f ⟩
+                      ＝ SequentStructure.sequent s₁ ⟨ onDependencies ⟨ f ⟩ ⟩
+                        ∙ toSequentMorphism (SequentStructureEquality.sequent≈ w y)
+        naturalPath f =
+          eq ⦃ equalitySequentMorphism ⦄ (SequentStructureEquality.natural≈ w f)
 
 

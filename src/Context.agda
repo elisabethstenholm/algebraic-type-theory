@@ -66,7 +66,7 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a} w
                ; semifunctorial = record
                    { mappable = record { map = onMorphisms }
                    ; preservesComposition = record
-                       { preserves-composition = λ f g → funExt (preservesComposition~ f g) } } } }
+                       { preserves-composition = preservesCompositionPath } } } }
     where
       open Semicategory.Reasoning (semicategory 𝒥)
 
@@ -91,6 +91,11 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a} w
         where
           open Semifunctor.Reasoning (Context.semifunctor Δ)
           open Semicategory.Reasoning (hSet-Semicategory j)
+
+      opaque
+        preservesCompositionPath : ∀ {j₀ j₁ j₂} (f : type (JudgmentDependency 𝒥 j₀ j₁)) (g : type (JudgmentDependency 𝒥 j₁ j₂))
+                                 → onMorphisms (g ∙ f) ＝ onMorphisms g ∘ onMorphisms f
+        preservesCompositionPath f g = funExt (preservesComposition~ f g)
 
   instance
     addableSumContext : Addable Level (Context 𝒥) _⊔_

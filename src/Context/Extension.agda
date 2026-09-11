@@ -43,9 +43,16 @@ open import Context.Morphism
            ; semifunctorial = record
                { mappable = record { map = λ f g → f ∙ g }
                ; preservesComposition = record
-                   { preserves-composition = λ f g → funExt (λ h → sym ⨾-associative) } } } }
+                   { preserves-composition = preservesCompositionPath } } } }
   where
   open Semicategory.Reasoning (semicategory 𝒥)
+
+  opaque
+    preservesCompositionPath : {j₁ j₂ j₃ : type (Judgment 𝒥)}
+                               (f : type (JudgmentDependency 𝒥 j₁ j₂)) (g : type (JudgmentDependency 𝒥 j₂ j₃))
+                             → (λ (h : type (JudgmentDependency 𝒥 j j₁)) → (g ∙ f) ∙ h)
+                               ＝ (λ h → g ∙ (f ∙ h))
+    preservesCompositionPath f g = funExt (λ h → sym ⨾-associative)
 
 𝒴⁺⁺ : ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a}
     → (j : type (Judgment 𝒥)) → Context 𝒥 (o ⊔ a)
@@ -55,7 +62,7 @@ open import Context.Morphism
            ; semifunctorial = record
                { mappable = record { map = onMorphisms }
                ; preservesComposition = record
-                   { preserves-composition = λ f g → funExt (preservesComposition~ f g) } } } }
+                   { preserves-composition = preservesCompositionPath } } } }
   where
   open Semicategory.Reasoning (semicategory 𝒥)
 
@@ -78,6 +85,11 @@ open import Context.Morphism
   preservesComposition~ f g (inl h) = ap inl (sym ∙-associative)
   preservesComposition~ f g (inr (inl refl)) = refl
   preservesComposition~ f g (inr (inr refl)) = refl
+
+  opaque
+    preservesCompositionPath : ∀ {j₁ j₂ j₃} (f : type (JudgmentDependency 𝒥 j₁ j₂)) (g : type (JudgmentDependency 𝒥 j₂ j₃))
+                             → onMorphisms (g ∙ f) ＝ onMorphisms g ∘ onMorphisms f
+    preservesCompositionPath f g = funExt (preservesComposition~ f g)
 
 
 -- =============== Context extension and collapse ==============
@@ -280,7 +292,7 @@ _⋊ₑ_ {o} {a} {i} {𝒥} Γ ext =
              ; semifunctorial = record
                  { mappable = record { map = onMorphisms }
                  ; preservesComposition = record
-                     { preserves-composition = λ f g → funExt (preservesComposition~ f g) } } } }
+                     { preserves-composition = preservesCompositionPath } } } }
   where
     open Semicategory.Reasoning (semicategory 𝒥)
     open Semifunctor.Reasoning (Context.semifunctor Γ)
@@ -301,6 +313,11 @@ _⋊ₑ_ {o} {a} {i} {𝒥} Γ ext =
     preservesComposition~ f g (inl x) = ap (λ h → inl (h x)) (preserves-composition f g)
       where open Semicategory.Reasoning (hSet-Semicategory i)
     preservesComposition~ f g (inr refl) = ap (λ h → inl (h f)) (sym (ContextMorphism.natural (Extension.arguments ext) g))
+
+    opaque
+      preservesCompositionPath : ∀ {j₀ j₁ j₂} (f : type (JudgmentDependency 𝒥 j₀ j₁)) (g : type (JudgmentDependency 𝒥 j₁ j₂))
+                               → onMorphisms (g ∙ f) ＝ onMorphisms g ∘ onMorphisms f
+      preservesCompositionPath f g = funExt (preservesComposition~ f g)
 
 ι : ⦃ _ : FunExt ⦄
   → {o a i : Level} {𝒥 : DependentSortVocabulary o a}
@@ -326,7 +343,7 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a} w
   ⇒⋊ₑ {Γ = Γ} ϵ =
     record
       { component = component
-      ; natural = funExt ∘ natural~ }
+      ; natural = naturalPath }
     where
       component : (j : type (Judgment 𝒥)) → ⌞ (𝒴⁺ (Extension.judgmentForm ϵ)) ⟨ j ⟩ ⌟ → ⌞ (Γ ⋊ₑ ϵ) ⟨ j ⟩ ⌟
       component j (inl x) = inl ((Extension.arguments ϵ ⟨ j ⟩) x)
@@ -336,6 +353,11 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a} w
                → (Γ ⋊ₑ ϵ) ⟨ f ⟩ ∘ component j₀ ~ component j₁ ∘ (𝒴⁺ (Extension.judgmentForm ϵ)) ⟨ f ⟩
       natural~ f (inl x) = ap (λ h → inl (h x)) (ContextMorphism.natural (Extension.arguments ϵ) f)
       natural~ f (inr refl) = refl
+
+      opaque
+        naturalPath : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
+                    → (Γ ⋊ₑ ϵ) ⟨ f ⟩ ∘ component j₀ ＝ component j₁ ∘ (𝒴⁺ (Extension.judgmentForm ϵ)) ⟨ f ⟩
+        naturalPath f = funExt (natural~ f)
 
 data CollapseRelation
   ⦃ _ : FunExt ⦄
@@ -360,7 +382,7 @@ _⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
              ; semifunctorial = record
                  { mappable = record { map = onMorphisms }
                  ; preservesComposition = record
-                     { preserves-composition = λ f g → funExt (preservesComposition~ f g) } } } }
+                     { preserves-composition = preservesCompositionPath } } } }
   where
     open Semicategory.Reasoning (semicategory 𝒥)
     open Semifunctor.Reasoning (Context.semifunctor Γ)
@@ -371,12 +393,15 @@ _⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
     onMorphisms {j₀} {j₁} f = ⁄-rec ([_] ∘ (Γ ⟨ f ⟩)) respectsCollapseRelation
       where
 
-        respectsCollapseRelation : {x y : ⌞ Γ ⟨ j₀ ⟩ ⌟}
-                                 → CollapseRelation col j₀ x y → [ (Γ ⟨ f ⟩) x ] ＝ [ (Γ ⟨ f ⟩) y ]
-        respectsCollapseRelation collapseRelation =
-          ap [_]
-             (sym (ap (λ σ → σ (inr (inr refl))) (ContextMorphism.natural (Collapse.arguments col) f))
-             ∙ ap (λ σ → σ (inr (inl refl))) (ContextMorphism.natural (Collapse.arguments col) f))
+        opaque
+          respectsCollapseRelation : {x y : ⌞ Γ ⟨ j₀ ⟩ ⌟}
+                                   → CollapseRelation col j₀ x y
+                                   → [_] {R = CollapseRelation col j₁} ((Γ ⟨ f ⟩) x)
+                                     ＝ [_] {R = CollapseRelation col j₁} ((Γ ⟨ f ⟩) y)
+          respectsCollapseRelation collapseRelation =
+            ap ([_] {R = CollapseRelation col j₁})
+               (sym (ap (λ σ → σ (inr (inr refl))) (ContextMorphism.natural (Collapse.arguments col) f))
+               ∙ ap (λ σ → σ (inr (inl refl))) (ContextMorphism.natural (Collapse.arguments col) f))
 
     preservesComposition~ : ∀ {j₀ j₁ j₂} (f : type (JudgmentDependency 𝒥 j₀ j₁)) (g : type (JudgmentDependency 𝒥 j₁ j₂))
                           → onMorphisms (g ∙ f) ~ onMorphisms g ∘ onMorphisms f
@@ -404,6 +429,11 @@ _⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
                ＝ preserves y
         resp r = allEqual _ _
 
+    opaque
+      preservesCompositionPath : ∀ {j₀ j₁ j₂} (f : type (JudgmentDependency 𝒥 j₀ j₁)) (g : type (JudgmentDependency 𝒥 j₁ j₂))
+                               → onMorphisms (g ∙ f) ＝ onMorphisms g ∘ onMorphisms f
+      preservesCompositionPath f g = funExt (preservesComposition~ f g)
+
 σ : ⦃ _ : FunExt ⦄
   → ⦃ _ : AllSetQuotients ⦄
   → {o a i : Level} {𝒥 : DependentSortVocabulary o a}
@@ -411,12 +441,17 @@ _⋊ₖ_ {o} {a} {i} {𝒥} Γ col =
   → Γ ⇒ Γ ⋊ₖ c
 σ {𝒥 = 𝒥} {Γ = Γ} {c = c} = record
   { component = component
-  ; natural = funExt ∘ natural }
+  ; natural = naturalPath }
   where
     component : ∀ j → ⌞ Γ ⟨ j ⟩ ⌟ → ⌞ (Γ ⋊ₖ c) ⟨ j ⟩ ⌟
     component j = [_]
     natural : ∀ {j₀ j₁} (f : type (JudgmentDependency 𝒥 j₀ j₁)) → (Γ ⋊ₖ c) ⟨ f ⟩ ∘ component j₀ ~ component j₁ ∘ Γ ⟨ f ⟩
     natural f x = refl
+
+    opaque
+      naturalPath : ∀ {j₀ j₁} (f : type (JudgmentDependency 𝒥 j₀ j₁))
+                  → (Γ ⋊ₖ c) ⟨ f ⟩ ∘ component j₀ ＝ component j₁ ∘ Γ ⟨ f ⟩
+      naturalPath f = funExt (natural f)
 
 infix 20 _⋊_
 _⋊_ : ⦃ _ : FunExt ⦄
