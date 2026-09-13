@@ -54,15 +54,12 @@ module _ ⦃ _ : FunExt ⦄
       component j' (inl x) = inl ((α ⟨ j' ⟩) x)
       component j' (inr p) = inr p
 
-      natural~ : {j₀' j₁' : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀' j₁'))
-               → (Δ ⋊ₑ e₁) ⟨ f ⟩ ∘ component j₀' ~ component j₁' ∘ (Γ ⋊ₑ e₀) ⟨ f ⟩
-      natural~ f (inl x) = ap (λ h → inl (h x)) (ContextMorphism.natural α f)
-      natural~ {j₁' = j₁'} f (inr refl) = ap (λ h → inl (h f)) (sym (component≈ a≈ j₁'))
-
       opaque
         naturalPath : {j₀' j₁' : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀' j₁'))
                     → (Δ ⋊ₑ e₁) ⟨ f ⟩ ∘ component j₀' ＝ component j₁' ∘ (Γ ⋊ₑ e₀) ⟨ f ⟩
-        naturalPath f = funExt (natural~ f)
+        naturalPath {j₁' = j₁'} f = funExt
+          (λ { (inl x) → ap (λ h → inl (h x)) (ContextMorphism.natural α f)
+             ; (inr refl) → ap (λ h → inl (h f)) (sym (component≈ a≈ j₁')) })
 
 module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
   {o a i j : Level} {𝒥 : DependentSortVocabulary o a}
@@ -240,8 +237,14 @@ module _ ⦃ _ : FunExt ⦄
   map⋊ₑ-isEquivalence e₀@(mkExtension j₀ a₀) e₁@(mkExtension _ a₁)
                       (mkExtensionEquality refl a≈) j' =
     makeIsEquivalence
-      (record { sectionBack = backS ; isSection = isSection~ })
-      (record { retractionBack = backR ; isRetraction = isRetraction~ })
+      (record
+        { sectionBack = backS
+        ; isSection = λ { (inl y) → ap inl (isSection (section (αEquiv j')) y)
+                        ; (inr p) → refl } })
+      (record
+        { retractionBack = backR
+        ; isRetraction = λ { (inl x) → ap inl (isRetraction (retraction (αEquiv j')) x)
+                           ; (inr p) → refl } })
     where
       backS : ⌞ (Δ ⋊ₑ e₁) ⟨ j' ⟩ ⌟ → ⌞ (Γ ⋊ₑ e₀) ⟨ j' ⟩ ⌟
       backS (inl y) = inl (sectionBack (section (αEquiv j')) y)
@@ -250,16 +253,6 @@ module _ ⦃ _ : FunExt ⦄
       backR : ⌞ (Δ ⋊ₑ e₁) ⟨ j' ⟩ ⌟ → ⌞ (Γ ⋊ₑ e₀) ⟨ j' ⟩ ⌟
       backR (inl y) = inl (retractionBack (retraction (αEquiv j')) y)
       backR (inr p) = inr p
-
-      isSection~ : (y : ⌞ (Δ ⋊ₑ e₁) ⟨ j' ⟩ ⌟)
-                 → (map⋊ₑ α e₀ e₁ (mkExtensionEquality refl a≈) ⟨ j' ⟩) (backS y) ＝ y
-      isSection~ (inl y) = ap inl (isSection (section (αEquiv j')) y)
-      isSection~ (inr p) = refl
-
-      isRetraction~ : (x : ⌞ (Γ ⋊ₑ e₀) ⟨ j' ⟩ ⌟)
-                    → backR ((map⋊ₑ α e₀ e₁ (mkExtensionEquality refl a≈) ⟨ j' ⟩) x) ＝ x
-      isRetraction~ (inl x) = ap inl (isRetraction (retraction (αEquiv j')) x)
-      isRetraction~ (inr p) = refl
 
 
 module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄

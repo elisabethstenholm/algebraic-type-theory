@@ -128,26 +128,26 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
       depsEq : (x : Ob 𝒟BX) → isEquivalence (mapDependencies onDep x)
       depsEq (inl w) =
         record
-          { section = record { sectionBack = backL ; isSection = sectL }
-          ; retraction = record { retractionBack = backL ; isRetraction = retrL } }
+          { section = record
+              { sectionBack = backL
+              ; isSection = λ { (inl w' , g) → refl ; (inr y , ()) } }
+          ; retraction = record
+              { retractionBack = backL
+              ; isRetraction = λ { (inl w' , g) → refl ; (inr y , ()) } } }
         where
           backL : dependenciesOf 𝒟BY (inl w) → dependenciesOf 𝒟BX (inl w)
           backL (inl w' , g) = inl w' , g
           backL (inr y , ())
-
-          sectL : (d : dependenciesOf 𝒟BY (inl w))
-                → mapDependencies onDep (inl w) (backL d) ＝ d
-          sectL (inl w' , g) = refl
-          sectL (inr y , ())
-
-          retrL : (d : dependenciesOf 𝒟BX (inl w))
-                → backL (mapDependencies onDep (inl w) d) ＝ d
-          retrL (inl w' , g) = refl
-          retrL (inr y , ())
       depsEq (inr x) =
         record
-          { section = record { sectionBack = backS ; isSection = sectR }
-          ; retraction = record { retractionBack = backT ; isRetraction = retrR } }
+          { section = record
+              { sectionBack = backS
+              ; isSection = λ { (inl w , g) → refl
+                              ; (inr y , f) → ap injY (isSection (section σeq) (y , f)) } }
+          ; retraction = record
+              { retractionBack = backT
+              ; isRetraction = λ { (inl w , g) → refl
+                                 ; (inr y , f) → ap injX (isRetraction (retraction σeq) (y , f)) } } }
         where
           σeq = SequentDependencyMorphism.dependenciesEquivalence σd x
 
@@ -165,16 +165,6 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
           backT (inl w , g) = inl w , g
           backT (inr y , f) = injX (retractionBack (retraction σeq) (y , f))
 
-          sectR : (d : dependenciesOf 𝒟BY (inr (Φ ⟨ x ⟩)))
-                → mapDependencies onDep (inr x) (backS d) ＝ d
-          sectR (inl w , g) = refl
-          sectR (inr y , f) = ap injY (isSection (section σeq) (y , f))
-
-          retrR : (d : dependenciesOf 𝒟BX (inr x))
-                → backT (mapDependencies onDep (inr x) d) ＝ d
-          retrR (inl w , g) = refl
-          retrR (inr y , f) = ap injX (isRetraction (retraction σeq) (y , f))
-
       idH-equiv : ContextEquivalence H H
       idH-equiv = identity
 
@@ -190,29 +180,13 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
                    ＝ ℱB ⟨ f ⟩ ∙ toSequentMorphism (sequentEquivalence-identity {s = ℱB ⟨ w' ⟩})
       natural-ll f = idSquare (ℱB ⟨ f ⟩)
 
-      sumStep : (x : Ob 𝒟X)
-              → toSequentMorphism (seqEq (inr x))
-                ＝ weakenedSequentMorphism identity (toSequentMorphism (σse x))
-      sumStep x =
-        ap mkSequentMorphism
-           (map⋊-sum (ContextEquivalence.morphism idH-equiv)
-                     (ContextEquivalence.morphism (SequentEquivalence.contextEquivalence (σse x)))
-                     (Sequent.extensionOrCollapse (𝒢X ⟨ x ⟩))
-                     (Sequent.extensionOrCollapse (𝒢Y ⟨ Φ ⟨ x ⟩ ⟩))
-                     (SequentEquivalence.extensionOrCollapseEquality (σse x)))
-
       opaque
         natural-rr : {x x' : Ob 𝒟X} (f : Hom 𝒟X x x')
                    → toSequentMorphism (seqEq (inr x)) ∙ weakenSequentMorphism H (𝒢X ⟨ f ⟩)
                      ＝ weakenSequentMorphism H (𝒢Y ⟨ Φ ⟨ f ⟩ ⟩) ∙ toSequentMorphism (seqEq (inr x'))
         natural-rr {x} {x'} f =
-             ap (_∙ weakenSequentMorphism H (𝒢X ⟨ f ⟩)) (sumStep x)
-          ⨾  sym (weakenedSequentMorphism-composition identity identity (𝒢X ⟨ f ⟩) (toSequentMorphism (σse x)))
-          ⨾  ap (λ m → weakenedSequentMorphism m (toSequentMorphism (σse x) ∙ 𝒢X ⟨ f ⟩)) idCM＝
-          ⨾  ap (weakenedSequentMorphism identity) (SequentStructureMorphism.natural σ f)
-          ⨾  sym (ap (λ m → weakenedSequentMorphism m (𝒢Y ⟨ Φ ⟨ f ⟩ ⟩ ∙ toSequentMorphism (σse x'))) idCM＝)
-          ⨾  weakenedSequentMorphism-composition identity identity (toSequentMorphism (σse x')) (𝒢Y ⟨ Φ ⟨ f ⟩ ⟩)
-          ⨾  sym (ap (weakenSequentMorphism H (𝒢Y ⟨ Φ ⟨ f ⟩ ⟩) ∙_) (sumStep x'))
+          weakenSequentMorphism-square H (σse x) (σse x') (𝒢X ⟨ f ⟩) (𝒢Y ⟨ Φ ⟨ f ⟩ ⟩)
+            (SequentStructureMorphism.natural σ f)
 
       natural-rl : {x : Ob 𝒟X}
                    {w : Ob (SequentStructure.dependency (SequentDependencyStructure.sequentStructure Bd))}
@@ -222,24 +196,16 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
                    ＝ mkSequentMorphism (→⋊ (weakenSequent H (𝒢Y ⟨ Φ ⟨ x ⟩ ⟩)) ∙ (inlContext ∙ rB w g))
                      ∙ toSequentMorphism (sequentEquivalence-identity {s = ℱB ⟨ w ⟩})
       natural-rl {x} {w} g =
-        ap mkSequentMorphism (eq (record { component≈ = λ j → funExt (pw j) }))
-        where
-          tsm = SequentMorphism.sequentMorphism (toSequentMorphism (seqEq (inr x)))
-          idM = SequentMorphism.sequentMorphism
-                  (toSequentMorphism (sequentEquivalence-identity {s = ℱB ⟨ w ⟩}))
-          rhsM = →⋊ (weakenSequent H (𝒢Y ⟨ Φ ⟨ x ⟩ ⟩)) ∙ (inlContext ∙ rB w g)
-          lhsM = tsm ∙ (→⋊ (weakenSequent H (𝒢X ⟨ x ⟩)) ∙ (inlContext ∙ rB w g))
-
-          pw : (j : type (Judgment 𝒥)) (z : ⌞ extendedContext (ℱB ⟨ w ⟩) ⟨ j ⟩ ⌟)
-             → (lhsM ⟨ j ⟩) z ＝ ((rhsM ∙ idM) ⟨ j ⟩) z
-          pw j z =
+        ap mkSequentMorphism (eq (record { component≈ = λ j → funExt (λ z →
                map⋊-sum-onAdded (ContextEquivalence.morphism idH-equiv)
                                 (ContextEquivalence.morphism (SequentEquivalence.contextEquivalence (σse x)))
                                 (Sequent.extensionOrCollapse (𝒢X ⟨ x ⟩))
                                 (Sequent.extensionOrCollapse (𝒢Y ⟨ Φ ⟨ x ⟩ ⟩))
                                 (SequentEquivalence.extensionOrCollapseEquality (σse x))
                                 j ((rB w g ⟨ j ⟩) z)
-            ⨾  sym (ap (rhsM ⟨ j ⟩) (toSequentMorphism-identity-at {s = ℱB ⟨ w ⟩} j z))
+            ⨾  sym (ap (rhsM ⟨ j ⟩) (toSequentMorphism-identity-at {s = ℱB ⟨ w ⟩} j z))) }))
+        where
+          rhsM = →⋊ (weakenSequent H (𝒢Y ⟨ Φ ⟨ x ⟩ ⟩)) ∙ (inlContext ∙ rB w g)
 
 
 
@@ -283,7 +249,15 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
     record
       { dependency≈ = record
           { objects≈ = assocSum
-          ; hom≈ = hom≈'
+          ; hom≈ = λ { (inl (inl u)) (inl (inl v)) → ≃-id
+                     ; (inl (inr x)) (inl (inr y)) → ≃-id
+                     ; (inr p) (inr q) → ≃-id
+                     ; (inl (inr x)) (inl (inl u)) → ≃-id
+                     ; (inr p) (inl (inl u)) → ≃-id
+                     ; (inr p) (inl (inr x)) → ≃-id
+                     ; (inl (inl u)) (inl (inr x)) → ≃-id
+                     ; (inl (inl u)) (inr q) → ≃-id
+                     ; (inl (inr x)) (inr q) → ≃-id }
           ; composition≈ = λ
               { (inl (inl u)) (inl (inl v)) (inl (inl e)) f g → refl
               ; (inl (inr x)) (inl (inr y)) (inl (inr z)) f g → refl
@@ -337,19 +311,22 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
       𝒟X = SequentStructure.dependency X
       𝒢X = SequentStructure.sequent X
 
-      hom≈' : (A B : Ob (SequentStructure.dependency ((b₁ ⧺ᶜ b₀) ⧺ X)))
-            → Hom (SequentStructure.dependency ((b₁ ⧺ᶜ b₀) ⧺ X)) A B
-            ≃ Hom (SequentStructure.dependency (b₁ ⧺ (b₀ ⧺ X)))
-                  (there assocSum A) (there assocSum B)
-      hom≈' (inl (inl u)) (inl (inl v)) = ≃-id
-      hom≈' (inl (inr x)) (inl (inr y)) = ≃-id
-      hom≈' (inr p) (inr q) = ≃-id
-      hom≈' (inl (inr x)) (inl (inl u)) = ≃-id
-      hom≈' (inr p) (inl (inl u)) = ≃-id
-      hom≈' (inr p) (inl (inr x)) = ≃-id
-      hom≈' (inl (inl u)) (inl (inr x)) = ≃-id
-      hom≈' (inl (inl u)) (inr q) = ≃-id
-      hom≈' (inl (inr x)) (inr q) = ≃-id
+      innerLL : (p : Ob 𝒟X)
+                (u : Ob (SequentStructure.dependency (SequentDependencyStructure.sequentStructure bd₁)))
+                (g : ⌞ (SequentDependencyStructure.dependency bd₁ ⟨ u ⟩) ⌟)
+              → SequentMorphism (ℱB₁ ⟨ u ⟩) (weakenSequent h₁ (weakenSequent h₀ (𝒢X ⟨ p ⟩)))
+      innerLL p u g =
+        mkSequentMorphism
+          (→⋊ (weakenSequent h₁ (weakenSequent h₀ (𝒢X ⟨ p ⟩))) ∙ (inlContext ∙ rB₁ u g))
+
+      innerLR : (p : Ob 𝒟X)
+                (x : Ob (SequentStructure.dependency (SequentDependencyStructure.sequentStructure bd₀)))
+                (g : ⌞ (SequentDependencyStructure.dependency bd₀ ⟨ x ⟩) ⌟)
+              → SequentMorphism (weakenSequent h₁ (ℱB₀ ⟨ x ⟩))
+                                (weakenSequent h₁ (weakenSequent h₀ (𝒢X ⟨ p ⟩)))
+      innerLR p x g =
+        weakenSequentMorphism h₁
+          (mkSequentMorphism (→⋊ (weakenSequent h₀ (𝒢X ⟨ p ⟩)) ∙ (inlContext ∙ rB₀ x g)))
 
       seq≈ : (A : Ob (SequentStructure.dependency ((b₁ ⧺ᶜ b₀) ⧺ X)))
            → SequentEquivalence (SequentStructure.sequent ((b₁ ⧺ᶜ b₀) ⧺ X) ⟨ A ⟩)
@@ -367,11 +344,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
                          ∙ toSequentMorphism (seq≈ (inr q)))
         natural-rr p q f =
           observe ⦃ equalitySequentMorphism ⦄
-            (ap mkSequentMorphism
-               (map⋊-assoc-square h₁ h₀
-                 (Sequent.extensionOrCollapse (𝒢X ⟨ q ⟩))
-                 (Sequent.extensionOrCollapse (𝒢X ⟨ p ⟩))
-                 (𝒢X ⟨ f ⟩)))
+            (assocWeakenSequentMorphism-square h₁ h₀ (𝒢X ⟨ f ⟩))
 
       opaque
         natural-r-ll : (p : Ob 𝒟X)
@@ -383,30 +356,12 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
                                {s₁ = ℱB₁ ⟨ u ⟩} {s₂ = weakenSequent (h₁ + h₀) (𝒢X ⟨ p ⟩)}
                                (→⋊ (weakenSequent (h₁ + h₀) (𝒢X ⟨ p ⟩))
                                  ∙ (inlContext ∙ (inlContext {Γ = h₁} {Δ = h₀} ∙ rB₁ u g))))
-                         (mkSequentMorphism
-                             {s₁ = ℱB₁ ⟨ u ⟩}
-                             {s₂ = weakenSequent h₁ (weakenSequent h₀ (𝒢X ⟨ p ⟩))}
-                             (→⋊ (weakenSequent h₁ (weakenSequent h₀ (𝒢X ⟨ p ⟩)))
-                               ∙ (inlContext ∙ rB₁ u g))
+                         (innerLL p u g
                            ∙ toSequentMorphism (sequentEquivalence-identity {s = ℱB₁ ⟨ u ⟩}))
         natural-r-ll p u g =
           observe ⦃ equalitySequentMorphism ⦄
-            (   ap mkSequentMorphism
-                  (eq (record { component≈ = λ j → funExt (λ z →
-                      map⋊-→⋊ (ContextEquivalence.morphism
-                                 (assocSumContextEquivalence {Γ = h₁} {Δ = h₀} {Ψ = Sequent.context (𝒢X ⟨ p ⟩)}))
-                              (mapExtensionOrCollapse (inrContext {Γ = h₁ + h₀} {Δ = Sequent.context (𝒢X ⟨ p ⟩)})
-                                 (Sequent.extensionOrCollapse (𝒢X ⟨ p ⟩)))
-                              (mapExtensionOrCollapse (inrContext {Γ = h₁} {Δ = h₀ + Sequent.context (𝒢X ⟨ p ⟩)})
-                                 (mapExtensionOrCollapse (inrContext {Γ = h₀} {Δ = Sequent.context (𝒢X ⟨ p ⟩)})
-                                    (Sequent.extensionOrCollapse (𝒢X ⟨ p ⟩))))
-                              (assocEocEquality h₁ h₀ (Sequent.extensionOrCollapse (𝒢X ⟨ p ⟩)))
-                              j (inl (inl ((rB₁ u g ⟨ j ⟩) z))) ) }))
-             ⨾  sym (killIdᵣ (mkSequentMorphism
-                   {s₁ = ℱB₁ ⟨ u ⟩}
-                   {s₂ = weakenSequent h₁ (weakenSequent h₀ (𝒢X ⟨ p ⟩))}
-                   (→⋊ (weakenSequent h₁ (weakenSequent h₀ (𝒢X ⟨ p ⟩)))
-                     ∙ (inlContext ∙ rB₁ u g)))))
+            (   assocWeakenSequentMorphism-left h₁ h₀ (𝒢X ⟨ p ⟩) (rB₁ u g)
+             ⨾  sym (killIdᵣ (innerLL p u g)))
 
       opaque
         natural-r-lr : (p : Ob 𝒟X)
@@ -421,22 +376,13 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
                                  ∙ (inlContext
                                  ∙ (sumContextMorphism (identityH h₁) (rB₀ x g)
                                  ∙ distributeExtended h₁ (ℱB₀ ⟨ x ⟩)))))
-                         (weakenSequentMorphism h₁
-                             (mkSequentMorphism
-                               {s₁ = ℱB₀ ⟨ x ⟩} {s₂ = weakenSequent h₀ (𝒢X ⟨ p ⟩)}
-                               (→⋊ (weakenSequent h₀ (𝒢X ⟨ p ⟩))
-                               ∙ (inlContext ∙ rB₀ x g)))
+                         (innerLR p x g
                            ∙ toSequentMorphism (sequentEquivalence-identity {s = weakenSequent h₁ (ℱB₀ ⟨ x ⟩)}))
         natural-r-lr p x g =
           observe ⦃ equalitySequentMorphism ⦄
-            (   ap mkSequentMorphism
-                  (map⋊-assoc-cross h₁ h₀ (𝒢X ⟨ p ⟩)
-                    (Sequent.extensionOrCollapse (ℱB₀ ⟨ x ⟩)) (rB₀ x g))
-             ⨾  sym (killIdᵣ (weakenSequentMorphism h₁
-                   (mkSequentMorphism
-                     {s₁ = ℱB₀ ⟨ x ⟩} {s₂ = weakenSequent h₀ (𝒢X ⟨ p ⟩)}
-                     (→⋊ (weakenSequent h₀ (𝒢X ⟨ p ⟩))
-                     ∙ (inlContext ∙ rB₀ x g))))))
+            (   assocWeakenSequentMorphism-cross h₁ h₀ (𝒢X ⟨ p ⟩)
+                  (Sequent.extensionOrCollapse (ℱB₀ ⟨ x ⟩)) (rB₀ x g)
+             ⨾  sym (killIdᵣ (innerLR p x g)))
 
 
 -- =============== Associativity of the collage of contexts with terms ===============

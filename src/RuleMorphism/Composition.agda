@@ -85,23 +85,19 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
       depsEq : (x : Ob 𝒟) → isEquivalence (mapDependencies onDep x)
       depsEq x =
         record
-          { section = record { sectionBack = back ; isSection = sect }
-          ; retraction = record { retractionBack = back ; isRetraction = retr } }
+          { section = record
+              { sectionBack = back
+              ; isSection = λ { (ExtendedSequentStructure.injOb y , ExtendedSequentStructure.include f) → refl
+                              ; (ExtendedSequentStructure.newOb , ExtendedSequentStructure.include ()) } }
+          ; retraction = record
+              { retractionBack = back
+              ; isRetraction = λ { (y , f) → refl } } }
         where
           back : dependenciesOf (SequentStructure.dependency (⋊ₛ r))
                    (ExtendedSequentStructure.injOb x)
                → dependenciesOf 𝒟 x
           back (ExtendedSequentStructure.injOb y , ExtendedSequentStructure.include f) = y , f
           back (ExtendedSequentStructure.newOb , ExtendedSequentStructure.include ())
-
-          sect : (d : dependenciesOf (SequentStructure.dependency (⋊ₛ r))
-                        (ExtendedSequentStructure.injOb x))
-               → mapDependencies onDep x (back d) ＝ d
-          sect (ExtendedSequentStructure.injOb y , ExtendedSequentStructure.include f) = refl
-          sect (ExtendedSequentStructure.newOb , ExtendedSequentStructure.include ())
-
-          retr : (d : dependenciesOf 𝒟 x) → back (mapDependencies onDep x d) ＝ d
-          retr (y , f) = refl
 
 
 -- =============== Composition of rule morphisms ===============

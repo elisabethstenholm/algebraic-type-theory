@@ -224,15 +224,11 @@ module _ {o a : Level} {𝒥 : DependentSortVocabulary o a} where
       component j (inl x) = inl ((α ⟨ j ⟩) x)
       component j (inr y) = inr ((β ⟨ j ⟩) y)
 
-      natural~ : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
-               → (Γ₁ + Δ₁) ⟨ f ⟩ ∘ component j₀ ~ component j₁ ∘ (Γ₀ + Δ₀) ⟨ f ⟩
-      natural~ f (inl x) = ap (λ h → inl (h x)) (ContextMorphism.natural α f)
-      natural~ f (inr y) = ap (λ h → inr (h y)) (ContextMorphism.natural β f)
-
       opaque
         naturalPath : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
                     → (Γ₁ + Δ₁) ⟨ f ⟩ ∘ component j₀ ＝ component j₁ ∘ (Γ₀ + Δ₀) ⟨ f ⟩
-        naturalPath f = funExt (natural~ f)
+        naturalPath f = funExt (λ { (inl x) → ap (λ h → inl (h x)) (ContextMorphism.natural α f)
+                                  ; (inr y) → ap (λ h → inr (h y)) (ContextMorphism.natural β f) })
 
   inlContext : ⦃ _ : FunExt ⦄ {i j : Level} {Γ : Context 𝒥 i} {Δ : Context 𝒥 j} → Γ ⇒ Γ + Δ
   inlContext =
@@ -433,7 +429,6 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄
                            contextTotalSpace-Contractible }
 
 
-
 -- ============== Equality of context equivalences ==============
 
 module _ ⦃ _ : FunExt ⦄
@@ -500,7 +495,6 @@ module _ ⦃ _ : FunExt ⦄
                                     contextEquivalenceTotalSpace-Contractible }
 
 
-
 -- ============== Closure of context equivalences under sums ==============
 
 module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a} where
@@ -514,7 +508,8 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a} w
     record
       { morphism = α
       ; component-isEquivalence = λ j →
-          ~transfer-isEquivalence (bimapEquiv j) (pointwise j) }
+          ~transfer-isEquivalence (bimapEquiv j) (λ { (inl x) → refl
+                                                    ; (inr y) → refl }) }
     where
       α = sumContextMorphism (ContextEquivalence.morphism e) (ContextEquivalence.morphism d)
 
@@ -523,10 +518,6 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a} w
         bimap (isEquivalence→≃ (ContextEquivalence.component-isEquivalence e j))
               (isEquivalence→≃ (ContextEquivalence.component-isEquivalence d j))
 
-      pointwise : (j : type (Judgment 𝒥)) → there (bimapEquiv j) ~ (α ⟨ j ⟩)
-      pointwise j (inl x) = refl
-      pointwise j (inr y) = refl
-
   assocSumContextEquivalence : {i j k : Level}
                             {Γ : Context 𝒥 i} {Δ : Context 𝒥 j} {Ψ : Context 𝒥 k}
                           → ContextEquivalence ((Γ + Δ) + Ψ) (Γ + (Δ + Ψ))
@@ -534,12 +525,8 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a} w
     record
       { morphism = record
           { component = λ j → there assocSum
-          ; natural = λ f → funExt (natural~ f) }
+          ; natural = λ f → funExt (λ { (inl (inl x)) → refl
+                                      ; (inl (inr y)) → refl
+                                      ; (inr z) → refl }) }
       ; component-isEquivalence = λ j → ≃→isEquivalence assocSum }
-    where
-      natural~ : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
-               → (Γ + (Δ + Ψ)) ⟨ f ⟩ ∘ there assocSum ~ there assocSum ∘ ((Γ + Δ) + Ψ) ⟨ f ⟩
-      natural~ f (inl (inl x)) = refl
-      natural~ f (inl (inr y)) = refl
-      natural~ f (inr z) = refl
 

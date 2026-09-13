@@ -37,7 +37,6 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
       { context = c + Sequent.context s
       ; extensionOrCollapse = mapExtensionOrCollapse inrContext (Sequent.extensionOrCollapse s) }
 
-
   weakenWithEmptyContextEquivalence : {k l : Level} (Γ : Context 𝒥 l)
                   → ContextEquivalence (emptyContext 𝒥 k + Γ) Γ
   weakenWithEmptyContextEquivalence {k} Γ =
@@ -60,7 +59,6 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
       isRetraction~ : (j : type (Judgment 𝒥)) → inr ∘ component j ~ id
       isRetraction~ j (inr x) = refl
 
-
   module _ {k : Level} (H : Context 𝒥 k) where
 
     identityH : H ⇒ H
@@ -80,18 +78,13 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
         component j (inl (inr x)) = inr (inl x)
         component j (inr p) = inr (inr p)
 
-        natural~ : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
-                 → (H + extendedContext (mkSequent Γ (extend ext))) ⟨ f ⟩ ∘ component j₀
-                   ~ component j₁ ∘ extendedContext (weakenSequent H (mkSequent Γ (extend ext))) ⟨ f ⟩
-        natural~ f (inl (inl h)) = refl
-        natural~ f (inl (inr x)) = refl
-        natural~ f (inr refl) = refl
-
         opaque
           naturalPath : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
                       → (H + extendedContext (mkSequent Γ (extend ext))) ⟨ f ⟩ ∘ component j₀
                         ＝ component j₁ ∘ extendedContext (weakenSequent H (mkSequent Γ (extend ext))) ⟨ f ⟩
-          naturalPath f = funExt (natural~ f)
+          naturalPath f = funExt (λ { (inl (inl h)) → refl
+                                    ; (inl (inr x)) → refl
+                                    ; (inr refl) → refl })
     distributeExtended {l} (mkSequent Γ (collapse col)) =
       record
         { component = component
@@ -119,21 +112,16 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
         component : (j : type (Judgment 𝒥)) → ⌞ ((H + Γ) ⋊ₖ addedCollapse) ⟨ j ⟩ ⌟ → ⌞ target ⟨ j ⟩ ⌟
         component j = ⁄-rec ⦃ bset = target-isSet j ⦄ (onEntries j) (respectsCollapse j)
 
-        natural~ : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
-                 → target ⟨ f ⟩ ∘ component j₀ ~ component j₁ ∘ ((H + Γ) ⋊ₖ addedCollapse) ⟨ f ⟩
-        natural~ {j₀} {j₁} f =
-          ⁄-elim-proposition _ (λ q → ＝-isLevel ⦃ target-isSet j₁ ⦄) pointwise
-          where
-
-            pointwise : (x : ⌞ (H + Γ) ⟨ j₀ ⟩ ⌟)
-                      → (target ⟨ f ⟩) (component j₀ [ x ]) ＝ component j₁ ((((H + Γ) ⋊ₖ addedCollapse) ⟨ f ⟩) [ x ])
-            pointwise (inl h) = refl
-            pointwise (inr x) = refl
-
         opaque
           naturalPath : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
                       → target ⟨ f ⟩ ∘ component j₀ ＝ component j₁ ∘ ((H + Γ) ⋊ₖ addedCollapse) ⟨ f ⟩
-          naturalPath f = funExt (natural~ f)
+          naturalPath {j₀} {j₁} f = funExt
+            (⁄-elim-proposition
+              (λ q → (target ⟨ f ⟩) (component j₀ q)
+                     ＝ component j₁ ((((H + Γ) ⋊ₖ addedCollapse) ⟨ f ⟩) q))
+              (λ q → ＝-isLevel ⦃ target-isSet j₁ ⦄)
+              (λ { (inl h) → refl
+                 ; (inr x) → refl }))
 
     gatherExtended : {l : Level} (s : Sequent 𝒥 l)
                    → H + extendedContext s ⇒ extendedContext (weakenSequent H s)
@@ -149,18 +137,13 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
         component j (inr (inl x)) = inl (inr x)
         component j (inr (inr p)) = inr p
 
-        natural~ : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
-                 → extendedContext (weakenSequent H (mkSequent Γ (extend ext))) ⟨ f ⟩ ∘ component j₀
-                   ~ component j₁ ∘ (H + extendedContext (mkSequent Γ (extend ext))) ⟨ f ⟩
-        natural~ f (inl h) = refl
-        natural~ f (inr (inl x)) = refl
-        natural~ f (inr (inr refl)) = refl
-
         opaque
           naturalPath : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
                       → extendedContext (weakenSequent H (mkSequent Γ (extend ext))) ⟨ f ⟩ ∘ component j₀
                         ＝ component j₁ ∘ (H + extendedContext (mkSequent Γ (extend ext))) ⟨ f ⟩
-          naturalPath f = funExt (natural~ f)
+          naturalPath f = funExt (λ { (inl h) → refl
+                                    ; (inr (inl x)) → refl
+                                    ; (inr (inr refl)) → refl })
     gatherExtended {l} (mkSequent Γ (collapse col)) =
       record
         { component = component
@@ -191,23 +174,18 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
         component : (j : type (Judgment 𝒥)) → ⌞ source ⟨ j ⟩ ⌟ → ⌞ target ⟨ j ⟩ ⌟
         component j (inl h) = classOf j (inl h)
         component j (inr q) = ⁄-rec (classOf j ∘ inr) (respectsCollapse j) q
-        natural~ : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
-                 → target ⟨ f ⟩ ∘ component j₀ ~ component j₁ ∘ source ⟨ f ⟩
-        natural~ {j₀} {j₁} f (inl h) = refl
-        natural~ {j₀} {j₁} f (inr q) =
-          ⁄-elim-proposition
-            (λ q' → (target ⟨ f ⟩) (component j₀ (inr q')) ＝ component j₁ ((source ⟨ f ⟩) (inr q')))
-            (λ _ → fromInstance) pointwise q
-          where
-
-            pointwise : (x : ⌞ Γ ⟨ j₀ ⟩ ⌟)
-                      → (target ⟨ f ⟩) (component j₀ (inr [ x ])) ＝ component j₁ ((source ⟨ f ⟩) (inr [ x ]))
-            pointwise x = refl
-
         opaque
           naturalPath : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
                       → target ⟨ f ⟩ ∘ component j₀ ＝ component j₁ ∘ source ⟨ f ⟩
-          naturalPath f = funExt (natural~ f)
+          naturalPath {j₀} {j₁} f = funExt
+            (λ { (inl h) → refl
+               ; (inr q) →
+                   ⁄-elim-proposition
+                     (λ q' → (target ⟨ f ⟩) (component j₀ (inr q'))
+                             ＝ component j₁ ((source ⟨ f ⟩) (inr q')))
+                     (λ _ → fromInstance)
+                     (λ x → refl)
+                     q })
 
     distribute-gather : {l : Level} (s : Sequent 𝒥 l) (j : type (Judgment 𝒥)) (w : ⌞ (H + extendedContext s) ⟨ j ⟩ ⌟)
                       → (distributeExtended s ⟨ j ⟩) ((gatherExtended s ⟨ j ⟩) w) ＝ w
@@ -247,7 +225,8 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
                   ((distributeExtended (mkSequent Γ (collapse col)) ⟨ j ⟩) w')
                 ＝ w')
         (λ _ → ＝-isLevel ⦃ level-proof (source ⟨ j ⟩) ⦄)
-        pointwise
+         (λ { (inl h) → refl
+            ; (inr x) → refl })
         w
       where
         addedCollapse : Collapse (H + Γ)
@@ -256,20 +235,9 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
         source : Context 𝒥 (o ⊔ (k ⊔ l))
         source = (H + Γ) ⋊ₖ addedCollapse
 
-        target : Context 𝒥 (k ⊔ (o ⊔ l))
-        target = H + (Γ ⋊ₖ col)
-
-
         instance
           entriesH-isSet : isSet ⌞ H ⟨ j ⟩ ⌟
           entriesH-isSet = level-proof (H ⟨ j ⟩)
-
-        pointwise : (x : ⌞ (H + Γ) ⟨ j ⟩ ⌟)
-                  → (gatherExtended (mkSequent Γ (collapse col)) ⟨ j ⟩)
-                      ((distributeExtended (mkSequent Γ (collapse col)) ⟨ j ⟩) [ x ])
-                    ＝ [ x ]
-        pointwise (inl h) = refl
-        pointwise (inr x) = refl
 
     distributeExtendedEquivalence : {l : Level} (s : Sequent 𝒥 l)
                                   → ContextEquivalence (extendedContext (weakenSequent H s))
@@ -376,10 +344,6 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
       ε : ∅ + Γ ⇒ Γ
       ε = ContextEquivalence.morphism (weakenWithEmptyContextEquivalence {k} Γ)
 
-      collapseEquality : mapCollapse ε (mapCollapse inrContext c) ≈ c
-      collapseEquality = mkCollapseEquality refl (record { component≈ = λ _ → refl })
-
-
       onClass : (z : ⌞ (∅ + Γ) ⟨ j ⟩ ⌟)
               → (distributeExtended ∅ s ⟨ j ⟩) ((σ ⟨ j ⟩) z)
                 ＝ inr ((fromEmptyContext {k} s ⟨ j ⟩) ((σ ⟨ j ⟩) z))
@@ -420,7 +384,6 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
                          ((sumContextMorphism (identityH ∅) α' ⟨ j ⟩) v)))
               (distributeExtended-empty {k} s₀ j w)
         ⨾  gatherExtended-empty {k} s₁ j ((α' ⟨ j ⟩) ((fromEmptyContext {k} s₀ ⟨ j ⟩) w))
-
 
 
 -- =============== Gathering context elements ===============

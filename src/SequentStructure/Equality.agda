@@ -78,17 +78,33 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
                        (toSequentMorphism-identity-at {s = ℱ ⟨ y ⟩} j z))
 
   private
+    ObjectEquivalences :
+        {𝒞 : Semicategory so sa}
+        (ℱ : Semifunctor (𝒞 ᵒᵖ) (SequentSemicategory 𝒥 i))
+        (ob𝒢 : Ob 𝒞 → Sequent 𝒥 i)
+      → Type (so ⊔ o ⊔ a ⊔ lsuc i)
+    ObjectEquivalences {𝒞} ℱ ob𝒢 = (x : Ob 𝒞) → SequentEquivalence (ℱ ⟨ x ⟩) (ob𝒢 x)
+
+    Square :
+        {𝒞 : Semicategory so sa}
+        (ℱ : Semifunctor (𝒞 ᵒᵖ) (SequentSemicategory 𝒥 i))
+        {ob𝒢 : Ob 𝒞 → Sequent 𝒥 i}
+        (se : ObjectEquivalences ℱ ob𝒢)
+        {x y : Ob 𝒞} (f : Hom 𝒞 x y)
+      → SequentMorphism (ob𝒢 y) (ob𝒢 x)
+      → Type (o ⊔ a ⊔ i)
+    Square ℱ se {x} {y} f mf =
+      SequentMorphismEquality (toSequentMorphism (se x) ∙ (ℱ ⟨ f ⟩)) (mf ∙ toSequentMorphism (se y))
+
     arrowFibre-Contractible :
         {𝒞 : Semicategory so sa}
         (ℱ : Semifunctor (𝒞 ᵒᵖ) (SequentSemicategory 𝒥 i))
         (ob𝒢 : Ob 𝒞 → Sequent 𝒥 i)
-        (se : (x : Ob 𝒞) → SequentEquivalence (ℱ ⟨ x ⟩) (ob𝒢 x))
+        (se : ObjectEquivalences ℱ ob𝒢)
         {x y : Ob 𝒞} (f : Hom 𝒞 x y)
       → Contractible
           (∑[ mf ∶ SequentMorphism (ob𝒢 y) (ob𝒢 x) ]
-             SequentMorphismEquality
-               (toSequentMorphism (se x) ∙ (ℱ ⟨ f ⟩))
-               (mf ∙ toSequentMorphism (se y)))
+             Square ℱ se f mf)
     arrowFibre-Contractible ℱ ob𝒢 se {x} {y} f =
       retract-Contractible toParts fromParts roundTrip
         (≃-Contractible fibre≃∑
@@ -99,9 +115,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
               (toSequentMorphism (se x) ∙ (ℱ ⟨ f ⟩))))
       where
         toParts : (∑[ mf ∶ SequentMorphism (ob𝒢 y) (ob𝒢 x) ]
-                     SequentMorphismEquality
-                       (toSequentMorphism (se x) ∙ (ℱ ⟨ f ⟩))
-                       (mf ∙ toSequentMorphism (se y)))
+                     Square ℱ se f mf)
                 → ∑[ mf ∶ SequentMorphism (ob𝒢 y) (ob𝒢 x) ]
                     (mf ∙ toSequentMorphism (se y)
                      ＝ toSequentMorphism (se x) ∙ (ℱ ⟨ f ⟩))
@@ -111,9 +125,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
                       (mf ∙ toSequentMorphism (se y)
                        ＝ toSequentMorphism (se x) ∙ (ℱ ⟨ f ⟩)))
                   → ∑[ mf ∶ SequentMorphism (ob𝒢 y) (ob𝒢 x) ]
-                      SequentMorphismEquality
-                        (toSequentMorphism (se x) ∙ (ℱ ⟨ f ⟩))
-                        (mf ∙ toSequentMorphism (se y))
+                      Square ℱ se f mf
         fromParts (mf , p) = mf , observe (sym p)
 
         roundTrip : fromParts ∘ toParts ~ id
@@ -125,7 +137,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
         {𝒞 : Semicategory so sa}
         (ℱ : Semifunctor (𝒞 ᵒᵖ) (SequentSemicategory 𝒥 i))
         (ob𝒢 : Ob 𝒞 → Sequent 𝒥 i)
-        (se : (x : Ob 𝒞) → SequentEquivalence (ℱ ⟨ x ⟩) (ob𝒢 x))
+        (se : ObjectEquivalences ℱ ob𝒢)
         {x y : Ob 𝒞} (f : Hom 𝒞 x y)
       → SequentMorphism (ob𝒢 y) (ob𝒢 x)
     transportedMap ℱ ob𝒢 se {x} {y} f =
@@ -137,11 +149,9 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
         {𝒞 : Semicategory so sa}
         (ℱ : Semifunctor (𝒞 ᵒᵖ) (SequentSemicategory 𝒥 i))
         (ob𝒢 : Ob 𝒞 → Sequent 𝒥 i)
-        (se : (x : Ob 𝒞) → SequentEquivalence (ℱ ⟨ x ⟩) (ob𝒢 x))
+        (se : ObjectEquivalences ℱ ob𝒢)
         {x y : Ob 𝒞} (f : Hom 𝒞 x y)
-      → SequentMorphismEquality
-          (toSequentMorphism (se x) ∙ (ℱ ⟨ f ⟩))
-          (transportedMap ℱ ob𝒢 se f ∙ toSequentMorphism (se y))
+      → Square ℱ se f (transportedMap ℱ ob𝒢 se f)
     transportedMap-natural ℱ ob𝒢 se {x} {y} f =
       mkSequentMorphismEquality
         (record { component≈ = λ j → funExt (λ z →
@@ -155,7 +165,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
         {𝒞 : Semicategory so sa}
         (ℱ : Semifunctor (𝒞 ᵒᵖ) (SequentSemicategory 𝒥 i))
         (ob𝒢 : Ob 𝒞 → Sequent 𝒥 i)
-        (se : (x : Ob 𝒞) → SequentEquivalence (ℱ ⟨ x ⟩) (ob𝒢 x))
+        (se : ObjectEquivalences ℱ ob𝒢)
       → Semifunctor (𝒞 ᵒᵖ) (SequentSemicategory 𝒥 i)
     transportedSemifunctor {𝒞} ℱ ob𝒢 se =
       record
@@ -164,9 +174,18 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
             record
               { mappable = record { map = λ {A} {B} f → transportedMap ℱ ob𝒢 se f }
               ; preservesComposition =
-                  record { preserves-composition = λ g h →
+                  record { preserves-composition = λ {A} {B} {E} g h →
                     eq (mkSequentMorphismEquality
-                          (record { component≈ = λ j → funExt (lawAt g h j) })) } } }
+                          (record { component≈ = λ j → funExt (λ z →
+                               ap (λ v → (toSequentMorphism (se E) ⟨ j ⟩)
+                                           ((SequentMorphism.sequentMorphism v ⟨ j ⟩) (bw A j z)))
+                                  (PreservesComposition.preserves-composition pres g h)
+                            ⨾  ap (λ v → (toSequentMorphism (se E) ⟨ j ⟩) ((ℱ ⟨ h ⟩ ⟨ j ⟩) v))
+                                  (sym (backwardsRetraction
+                                          (sequentMorphismEquivalence
+                                             (toSequentMorphism (se B))
+                                             (toSequentMorphism-isEquivalence (se B)))
+                                          j ((ℱ ⟨ g ⟩ ⟨ j ⟩) (bw A j z))))) })) } } }
       where
         open Semicategory.Reasoning (𝒞 ᵒᵖ)
         open Semicategory.Reasoning (SequentSemicategory 𝒥 i)
@@ -177,81 +196,50 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
         bw x j = backwards (sequentMorphismEquivalence (toSequentMorphism (se x))
                                                        (toSequentMorphism-isEquivalence (se x))) j
 
-        lawAt : {A B E : Ob 𝒞} (g : Hom (𝒞 ᵒᵖ) A B) (h : Hom (𝒞 ᵒᵖ) B E)
-                (j : type (Judgment 𝒥))
-                (z : ⌞ extendedContext (ob𝒢 A) ⟨ j ⟩ ⌟)
-              → (transportedMap ℱ ob𝒢 se (g ⨾ h) ⟨ j ⟩) z
-                ＝ (toSequentMorphism (se E) ⟨ j ⟩)
-                     ((ℱ ⟨ h ⟩ ⟨ j ⟩)
-                       ((bw B j)
-                         ((toSequentMorphism (se B) ⟨ j ⟩)
-                           ((ℱ ⟨ g ⟩ ⟨ j ⟩) (bw A j z)))))
-        lawAt {A} {B} {E} g h j z =
-             ap (λ v → (toSequentMorphism (se E) ⟨ j ⟩)
-                         ((SequentMorphism.sequentMorphism v ⟨ j ⟩) (bw A j z)))
-                (PreservesComposition.preserves-composition pres g h)
-          ⨾  ap (λ v → (toSequentMorphism (se E) ⟨ j ⟩) ((ℱ ⟨ h ⟩ ⟨ j ⟩) v))
-                (sym (backwardsRetraction
-                        (sequentMorphismEquivalence (toSequentMorphism (se B))
-                                                    (toSequentMorphism-isEquivalence (se B)))
-                        j ((ℱ ⟨ g ⟩ ⟨ j ⟩) (bw A j z))))
-
     mapNatAt-Contractible :
         {𝒞 : Semicategory so sa}
         (ℱ : Semifunctor (𝒞 ᵒᵖ) (SequentSemicategory 𝒥 i))
         (ob𝒢 : Ob 𝒞 → Sequent 𝒥 i)
-        (se : (x : Ob 𝒞) → SequentEquivalence (ℱ ⟨ x ⟩) (ob𝒢 x))
+        (se : ObjectEquivalences ℱ ob𝒢)
         (x y : Ob 𝒞)
       → Contractible
           (∑[ mp ∶ ((f : Hom 𝒞 x y) → SequentMorphism (ob𝒢 y) (ob𝒢 x)) ]
              ((f : Hom 𝒞 x y)
-               → SequentMorphismEquality
-                   (toSequentMorphism (se x) ∙ (ℱ ⟨ f ⟩))
-                   (mp f ∙ toSequentMorphism (se y))))
+               → Square ℱ se f (mp f)))
     mapNatAt-Contractible ℱ ob𝒢 se x y =
       Π-witness-Contractible
-        (λ f mf → SequentMorphismEquality
-                    (toSequentMorphism (se x) ∙ (ℱ ⟨ f ⟩))
-                    (mf ∙ toSequentMorphism (se y)))
+        (λ f mf → Square ℱ se f mf)
         (λ f → arrowFibre-Contractible ℱ ob𝒢 se {x} {y} f)
 
     mapNatFrom-Contractible :
         {𝒞 : Semicategory so sa}
         (ℱ : Semifunctor (𝒞 ᵒᵖ) (SequentSemicategory 𝒥 i))
         (ob𝒢 : Ob 𝒞 → Sequent 𝒥 i)
-        (se : (x : Ob 𝒞) → SequentEquivalence (ℱ ⟨ x ⟩) (ob𝒢 x))
+        (se : ObjectEquivalences ℱ ob𝒢)
         (x : Ob 𝒞)
       → Contractible
           (∑[ mp ∶ ((y : Ob 𝒞) (f : Hom 𝒞 x y) → SequentMorphism (ob𝒢 y) (ob𝒢 x)) ]
              ((y : Ob 𝒞) (f : Hom 𝒞 x y)
-               → SequentMorphismEquality
-                   (toSequentMorphism (se x) ∙ (ℱ ⟨ f ⟩))
-                   (mp y f ∙ toSequentMorphism (se y))))
+               → Square ℱ se f (mp y f)))
     mapNatFrom-Contractible {𝒞} ℱ ob𝒢 se x =
       Π-witness-Contractible
         (λ y mp → (f : Hom 𝒞 x y)
-                → SequentMorphismEquality
-                    (toSequentMorphism (se x) ∙ (ℱ ⟨ f ⟩))
-                    (mp f ∙ toSequentMorphism (se y)))
+                → Square ℱ se f (mp f))
         (λ y → mapNatAt-Contractible ℱ ob𝒢 se x y)
 
     mapNat-Contractible :
         {𝒞 : Semicategory so sa}
         (ℱ : Semifunctor (𝒞 ᵒᵖ) (SequentSemicategory 𝒥 i))
         (ob𝒢 : Ob 𝒞 → Sequent 𝒥 i)
-        (se : (x : Ob 𝒞) → SequentEquivalence (ℱ ⟨ x ⟩) (ob𝒢 x))
+        (se : ObjectEquivalences ℱ ob𝒢)
       → Contractible
           (∑[ mp ∶ ((x y : Ob 𝒞) (f : Hom 𝒞 x y) → SequentMorphism (ob𝒢 y) (ob𝒢 x)) ]
              ((x y : Ob 𝒞) (f : Hom 𝒞 x y)
-               → SequentMorphismEquality
-                   (toSequentMorphism (se x) ∙ (ℱ ⟨ f ⟩))
-                   (mp x y f ∙ toSequentMorphism (se y))))
+               → Square ℱ se f (mp x y f)))
     mapNat-Contractible {𝒞} ℱ ob𝒢 se =
       Π-witness-Contractible
         (λ x mp → (y : Ob 𝒞) (f : Hom 𝒞 x y)
-                → SequentMorphismEquality
-                    (toSequentMorphism (se x) ∙ (ℱ ⟨ f ⟩))
-                    (mp y f ∙ toSequentMorphism (se y)))
+                → Square ℱ se f (mp y f))
         (λ x → mapNatFrom-Contractible ℱ ob𝒢 se x)
 
     objSe-Contractible :
@@ -259,7 +247,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
         (ℱ : Semifunctor (𝒞 ᵒᵖ) (SequentSemicategory 𝒥 i))
       → Contractible
           (∑[ ob𝒢 ∶ (Ob 𝒞 → Sequent 𝒥 i) ]
-             ((x : Ob 𝒞) → SequentEquivalence (ℱ ⟨ x ⟩) (ob𝒢 x)))
+             ObjectEquivalences ℱ ob𝒢)
     objSe-Contractible ℱ =
       Π-witness-Contractible
         (λ x t → SequentEquivalence (ℱ ⟨ x ⟩) t)
@@ -301,20 +289,16 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
         ∑[ 𝒢 ∶ Semifunctor (𝒞 ᵒᵖ) (SequentSemicategory 𝒥 i) ]
           ∑[ se ∶ ((x : Ob 𝒞) → SequentEquivalence (ℱ ⟨ x ⟩) (𝒢 ⟨ x ⟩)) ]
             ({x y : Ob 𝒞} (f : Hom 𝒞 x y)
-              → SequentMorphismEquality
-                  (toSequentMorphism (se x) ∙ (ℱ ⟨ f ⟩))
-                  ((𝒢 ⟨ f ⟩) ∙ toSequentMorphism (se y)))
+              → Square ℱ se f (𝒢 ⟨ f ⟩))
 
       SemifunctorData : (ℱ : Semifunctor (𝒞 ᵒᵖ) (SequentSemicategory 𝒥 i))
                       → Type (o ⊔ a ⊔ so ⊔ sa ⊔ lsuc i)
       SemifunctorData ℱ =
         ∑[ p ∶ (∑[ ob𝒢 ∶ (Ob 𝒞 → Sequent 𝒥 i) ]
-                  ((x : Ob 𝒞) → SequentEquivalence (ℱ ⟨ x ⟩) (ob𝒢 x))) ]
+                  ObjectEquivalences ℱ ob𝒢) ]
           ∑[ q ∶ (∑[ mp ∶ ArrowsOf (p₀ p) ]
                     ((x y : Ob 𝒞) (f : Hom 𝒞 x y)
-                      → SequentMorphismEquality
-                          (toSequentMorphism (p₁ p x) ∙ (ℱ ⟨ f ⟩))
-                          (mp x y f ∙ toSequentMorphism (p₁ p y)))) ]
+                      → Square ℱ (p₁ p) f (mp x y f))) ]
             LawOf (p₀ p) (p₀ q)
 
       toData : (ℱ : Semifunctor (𝒞 ᵒᵖ) (SequentSemicategory 𝒥 i))
@@ -346,12 +330,10 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
         where
           lawContractible :
               (p : ∑[ ob𝒢 ∶ (Ob 𝒞 → Sequent 𝒥 i) ]
-                     ((x : Ob 𝒞) → SequentEquivalence (ℱ ⟨ x ⟩) (ob𝒢 x)))
+                     ObjectEquivalences ℱ ob𝒢)
               (q : ∑[ mp ∶ ArrowsOf (p₀ p) ]
                      ((x y : Ob 𝒞) (f : Hom 𝒞 x y)
-                       → SequentMorphismEquality
-                           (toSequentMorphism (p₁ p x) ∙ (ℱ ⟨ f ⟩))
-                           (mp x y f ∙ toSequentMorphism (p₁ p y))))
+                       → Square ℱ (p₁ p) f (mp x y f)))
             → Contractible (LawOf (p₀ p) (p₀ q))
           lawContractible p q =
             inhabited-proposition→contractible
@@ -362,9 +344,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
 
               centre : ∑[ mp ∶ ArrowsOf (p₀ p) ]
                          ((x y : Ob 𝒞) (f : Hom 𝒞 x y)
-                           → SequentMorphismEquality
-                               (toSequentMorphism (p₁ p x) ∙ (ℱ ⟨ f ⟩))
-                               (mp x y f ∙ toSequentMorphism (p₁ p y)))
+                           → Square ℱ (p₁ p) f (mp x y f))
               centre = (λ x y f → transportedMap ℱ (p₀ p) (p₁ p) f)
                      , (λ x y f → transportedMap-natural ℱ (p₀ p) (p₁ p) f)
 

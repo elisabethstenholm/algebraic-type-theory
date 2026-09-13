@@ -96,67 +96,71 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
                           {s = SequentStructure.sequent (sequentStructure c) ⟨ x ⟩} j z))) } }
 
   private
+    Realisation : (ss : SequentStructure 𝒥 so sa i)
+                → Semifunctor (SequentStructure.dependency ss) (hSet-Semicategory sa)
+                → A → Type (o ⊔ a ⊔ so ⊔ sa ⊔ i)
+    Realisation ss dep h =
+      (x : Ob (SequentStructure.dependency ss))
+      → ⌞ (dep ⟨ x ⟩) ⌟
+      → ContextMorphism (extendedContext (SequentStructure.sequent ss ⟨ x ⟩)) (f h)
+
+    identityAt : (ss : SequentStructure 𝒥 so sa i) (x : Ob (SequentStructure.dependency ss))
+               → extendedContext (SequentStructure.sequent ss ⟨ x ⟩)
+                 ⇒ extendedContext (SequentStructure.sequent ss ⟨ x ⟩)
+    identityAt ss x =
+      SequentMorphism.sequentMorphism
+        (toSequentMorphism (sequentEquivalence-identity {s = SequentStructure.sequent ss ⟨ x ⟩}))
+
+    transportedRealise :
+        (ss : SequentStructure 𝒥 so sa i)
+        (dep : Semifunctor (SequentStructure.dependency ss) (hSet-Semicategory sa))
+        (h₀ h₁ : A) (hh : A≈ h₀ h₁)
+        (real₀ : Realisation ss dep h₀)
+      → Realisation ss dep h₁
+    transportedRealise ss dep h₀ h₁ hh real₀ x u =
+      ContextEquivalence.morphism (headContext≈ hh) ∙ real₀ x u
+
     realiseAt-Contractible :
         (ss : SequentStructure 𝒥 so sa i)
         (dep₀ : Semifunctor (SequentStructure.dependency ss) (hSet-Semicategory sa))
         (h₀ h₁ : A) (hh : A≈ h₀ h₁)
-        (real₀ : (x : Ob (SequentStructure.dependency ss))
-                 → ⌞ (dep₀ ⟨ x ⟩) ⌟
-                 → ContextMorphism (extendedContext (SequentStructure.sequent ss ⟨ x ⟩)) (f h₀))
+        (real₀ : Realisation ss dep₀ h₀)
         (x : Ob (SequentStructure.dependency ss))
       → Contractible
           (∑[ r ∶ (⌞ (dep₀ ⟨ x ⟩) ⌟
                     → ContextMorphism (extendedContext (SequentStructure.sequent ss ⟨ x ⟩)) (f h₁)) ]
              ((u : ⌞ (dep₀ ⟨ x ⟩) ⌟)
                → ContextMorphismEquality
-                   (ContextEquivalence.morphism (headContext≈ hh) ∙ real₀ x u)
-                   (r u ∙ SequentMorphism.sequentMorphism
-                            (toSequentMorphism
-                               (sequentEquivalence-identity
-                                  {s = SequentStructure.sequent ss ⟨ x ⟩})))))
+                   (transportedRealise ss dep₀ h₀ h₁ hh real₀ x u)
+                   (r u ∙ identityAt ss x)))
     realiseAt-Contractible ss dep₀ h₀ h₁ hh real₀ x =
       Π-witness-Contractible
         (λ u m → ContextMorphismEquality
-                   (ContextEquivalence.morphism (headContext≈ hh) ∙ real₀ x u)
-                   (m ∙ SequentMorphism.sequentMorphism
-                          (toSequentMorphism
-                             (sequentEquivalence-identity
-                                {s = SequentStructure.sequent ss ⟨ x ⟩}))))
+                   (transportedRealise ss dep₀ h₀ h₁ hh real₀ x u)
+                   (m ∙ identityAt ss x))
         (λ u → contextArrowFibre-Contractible
-                 (SequentMorphism.sequentMorphism
-                    (toSequentMorphism
-                       (sequentEquivalence-identity {s = SequentStructure.sequent ss ⟨ x ⟩})))
+                 (identityAt ss x)
                  (toSequentMorphism-isEquivalence
                     (sequentEquivalence-identity {s = SequentStructure.sequent ss ⟨ x ⟩}))
-                 (ContextEquivalence.morphism (headContext≈ hh) ∙ real₀ x u))
+                 (transportedRealise ss dep₀ h₀ h₁ hh real₀ x u))
 
     realiseOver-Contractible :
         (ss : SequentStructure 𝒥 so sa i)
         (dep₀ : Semifunctor (SequentStructure.dependency ss) (hSet-Semicategory sa))
         (h₀ h₁ : A) (hh : A≈ h₀ h₁)
-        (real₀ : (x : Ob (SequentStructure.dependency ss))
-                 → ⌞ (dep₀ ⟨ x ⟩) ⌟
-                 → ContextMorphism (extendedContext (SequentStructure.sequent ss ⟨ x ⟩)) (f h₀))
+        (real₀ : Realisation ss dep₀ h₀)
       → Contractible
-          (∑[ r ∶ ((x : Ob (SequentStructure.dependency ss))
-                    → ⌞ (dep₀ ⟨ x ⟩) ⌟
-                    → ContextMorphism (extendedContext (SequentStructure.sequent ss ⟨ x ⟩)) (f h₁)) ]
+          (∑[ r ∶ (Realisation ss dep₀ h₁) ]
              ((x : Ob (SequentStructure.dependency ss)) (u : ⌞ (dep₀ ⟨ x ⟩) ⌟)
                → ContextMorphismEquality
-                   (ContextEquivalence.morphism (headContext≈ hh) ∙ real₀ x u)
-                   (r x u ∙ SequentMorphism.sequentMorphism
-                              (toSequentMorphism
-                                 (sequentEquivalence-identity
-                                    {s = SequentStructure.sequent ss ⟨ x ⟩})))))
+                   (transportedRealise ss dep₀ h₀ h₁ hh real₀ x u)
+                   (r x u ∙ identityAt ss x)))
     realiseOver-Contractible ss dep₀ h₀ h₁ hh real₀ =
       Π-witness-Contractible
         (λ x r → (u : ⌞ (dep₀ ⟨ x ⟩) ⌟)
                → ContextMorphismEquality
-                   (ContextEquivalence.morphism (headContext≈ hh) ∙ real₀ x u)
-                   (r u ∙ SequentMorphism.sequentMorphism
-                            (toSequentMorphism
-                               (sequentEquivalence-identity
-                                  {s = SequentStructure.sequent ss ⟨ x ⟩}))))
+                   (transportedRealise ss dep₀ h₀ h₁ hh real₀ x u)
+                   (r u ∙ identityAt ss x))
         (λ x → realiseAt-Contractible ss dep₀ h₀ h₁ hh real₀ x)
 
     realiseReindexed-Contractible :
@@ -165,21 +169,14 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
         (te : (x : Ob (SequentStructure.dependency ss))
               → ⌞ (dep₀ ⟨ x ⟩) ⌟ ≃ ⌞ (dep₁ ⟨ x ⟩) ⌟)
         (h₀ h₁ : A) (hh : A≈ h₀ h₁)
-        (real₀ : (x : Ob (SequentStructure.dependency ss))
-                 → ⌞ (dep₀ ⟨ x ⟩) ⌟
-                 → ContextMorphism (extendedContext (SequentStructure.sequent ss ⟨ x ⟩)) (f h₀))
+        (real₀ : Realisation ss dep₀ h₀)
       → Contractible
-          (∑[ r ∶ ((x : Ob (SequentStructure.dependency ss))
-                    → ⌞ (dep₁ ⟨ x ⟩) ⌟
-                    → ContextMorphism (extendedContext (SequentStructure.sequent ss ⟨ x ⟩)) (f h₁)) ]
+          (∑[ r ∶ (Realisation ss dep₁ h₁) ]
              ((x : Ob (SequentStructure.dependency ss)) (u : ⌞ (dep₀ ⟨ x ⟩) ⌟)
                → ContextMorphismEquality
-                   (ContextEquivalence.morphism (headContext≈ hh) ∙ real₀ x u)
+                   (transportedRealise ss dep₀ h₀ h₁ hh real₀ x u)
                    (r x (there (te x) u)
-                     ∙ SequentMorphism.sequentMorphism
-                         (toSequentMorphism
-                            (sequentEquivalence-identity
-                               {s = SequentStructure.sequent ss ⟨ x ⟩})))))
+                     ∙ identityAt ss x)))
     realiseReindexed-Contractible ss dep₀ dep₁ te h₀ h₁ hh real₀ =
       ≃-Contractible
         (sym (equiv-∑ (equiv-Π (λ x → precompose-≃ (te x))) (λ r → ≃-id)))
@@ -188,9 +185,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
     CoherenceOf : (ss : SequentStructure 𝒥 so sa i)
                   (dep : Semifunctor (SequentStructure.dependency ss) (hSet-Semicategory sa))
                   (h : A)
-                → ((x : Ob (SequentStructure.dependency ss))
-                    → ⌞ (dep ⟨ x ⟩) ⌟
-                    → ContextMorphism (extendedContext (SequentStructure.sequent ss ⟨ x ⟩)) (f h))
+                → (Realisation ss dep h)
                 → Type (o ⊔ a ⊔ so ⊔ sa ⊔ i)
     CoherenceOf ss dep h real =
       (d₀ d₁ : Ob (SequentStructure.dependency ss))
@@ -203,34 +198,17 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
         (ss : SequentStructure 𝒥 so sa i)
         (dep : Semifunctor (SequentStructure.dependency ss) (hSet-Semicategory sa))
         (h : A)
-        (real : (x : Ob (SequentStructure.dependency ss))
-                → ⌞ (dep ⟨ x ⟩) ⌟
-                → ContextMorphism (extendedContext (SequentStructure.sequent ss ⟨ x ⟩)) (f h))
+        (real : Realisation ss dep h)
       → isProposition (CoherenceOf ss dep h real)
     coherenceOf-isProposition ss dep h real =
       →-level λ d₀ → →-level λ d₁ → →-level λ u → →-level λ g →
         ＝-isLevel ⦃ contextMorphism-isSet ⦄
 
-    transportedRealise :
-        (ss : SequentStructure 𝒥 so sa i)
-        (dep : Semifunctor (SequentStructure.dependency ss) (hSet-Semicategory sa))
-        (h₀ h₁ : A) (hh : A≈ h₀ h₁)
-        (real₀ : (x : Ob (SequentStructure.dependency ss))
-                 → ⌞ (dep ⟨ x ⟩) ⌟
-                 → ContextMorphism (extendedContext (SequentStructure.sequent ss ⟨ x ⟩)) (f h₀))
-        (x : Ob (SequentStructure.dependency ss))
-      → ⌞ (dep ⟨ x ⟩) ⌟
-      → ContextMorphism (extendedContext (SequentStructure.sequent ss ⟨ x ⟩)) (f h₁)
-    transportedRealise ss dep h₀ h₁ hh real₀ x u =
-      ContextEquivalence.morphism (headContext≈ hh) ∙ real₀ x u
-
     transportedCoherence :
         (ss : SequentStructure 𝒥 so sa i)
         (dep : Semifunctor (SequentStructure.dependency ss) (hSet-Semicategory sa))
         (h₀ h₁ : A) (hh : A≈ h₀ h₁)
-        (real₀ : (x : Ob (SequentStructure.dependency ss))
-                 → ⌞ (dep ⟨ x ⟩) ⌟
-                 → ContextMorphism (extendedContext (SequentStructure.sequent ss ⟨ x ⟩)) (f h₀))
+        (real₀ : Realisation ss dep h₀)
       → CoherenceOf ss dep h₀ real₀
       → CoherenceOf ss dep h₁ (transportedRealise ss dep h₀ h₁ hh real₀)
     transportedCoherence ss dep h₀ h₁ hh real₀ coh d₀ d₁ u g =
@@ -253,31 +231,21 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
     RealData : (ss : SequentStructure 𝒥 so sa i)
                (dep₀ : Semifunctor (SequentStructure.dependency ss) (hSet-Semicategory sa))
                (h₀ h₁ : A) (hh : A≈ h₀ h₁)
-               (real₀ : (x : Ob (SequentStructure.dependency ss))
-                        → ⌞ (dep₀ ⟨ x ⟩) ⌟
-                        → ContextMorphism
-                            (extendedContext (SequentStructure.sequent ss ⟨ x ⟩)) (f h₀))
+               (real₀ : Realisation ss dep₀ h₀)
              → DepData ss dep₀ → Type (o ⊔ a ⊔ so ⊔ sa ⊔ i)
     RealData ss dep₀ h₀ h₁ hh real₀ D =
-      ∑[ r ∶ ((x : Ob (SequentStructure.dependency ss))
-               → ⌞ (p₀ D ⟨ x ⟩) ⌟
-               → ContextMorphism (extendedContext (SequentStructure.sequent ss ⟨ x ⟩)) (f h₁)) ]
+      ∑[ r ∶ (Realisation ss (p₀ D) h₁) ]
         ((x : Ob (SequentStructure.dependency ss)) (u : ⌞ (dep₀ ⟨ x ⟩) ⌟)
           → ContextMorphismEquality
-              (ContextEquivalence.morphism (headContext≈ hh) ∙ real₀ x u)
+              (transportedRealise ss dep₀ h₀ h₁ hh real₀ x u)
               (r x (there (p₀ (p₁ D) x) u)
-                ∙ SequentMorphism.sequentMorphism
-                    (toSequentMorphism
-                       (sequentEquivalence-identity
-                          {s = SequentStructure.sequent ss ⟨ x ⟩}))))
+                ∙ identityAt ss x))
 
     baseFibre-Contractible :
         (ss : SequentStructure 𝒥 so sa i)
         (dep₀ : Semifunctor (SequentStructure.dependency ss) (hSet-Semicategory sa))
         (h₀ : A)
-        (real₀ : (x : Ob (SequentStructure.dependency ss))
-                 → ⌞ (dep₀ ⟨ x ⟩) ⌟
-                 → ContextMorphism (extendedContext (SequentStructure.sequent ss ⟨ x ⟩)) (f h₀))
+        (real₀ : Realisation ss dep₀ h₀)
         (coh₀ : CoherenceOf ss dep₀ h₀ real₀)
         (h₁ : A) (hh : A≈ h₀ h₁)
       → Contractible
@@ -336,18 +304,13 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
                    (ssw : SequentStructureEquality ss₀ ss₁)
                    (dep₀ : Semifunctor (SequentStructure.dependency ss₀) (hSet-Semicategory sa))
                    (h₀ h₁ : A) (hh : A≈ h₀ h₁)
-                   (real₀ : (x : Ob (SequentStructure.dependency ss₀))
-                            → ⌞ (dep₀ ⟨ x ⟩) ⌟
-                            → ContextMorphism
-                                (extendedContext (SequentStructure.sequent ss₀ ⟨ x ⟩)) (f h₀))
+                   (real₀ : Realisation ss₀ dep₀ h₀)
                  → DepDataOver ss₀ ss₁ ssw dep₀ → Type (o ⊔ a ⊔ so ⊔ sa ⊔ i)
     RealDataOver ss₀ ss₁ ssw dep₀ h₀ h₁ hh real₀ D =
-      ∑[ r ∶ ((x : Ob (SequentStructure.dependency ss₁))
-               → ⌞ (p₀ D ⟨ x ⟩) ⌟
-               → ContextMorphism (extendedContext (SequentStructure.sequent ss₁ ⟨ x ⟩)) (f h₁)) ]
+      ∑[ r ∶ (Realisation ss₁ (p₀ D) h₁) ]
         ((x : Ob (SequentStructure.dependency ss₀)) (u : ⌞ (dep₀ ⟨ x ⟩) ⌟)
           → ContextMorphismEquality
-              (ContextEquivalence.morphism (headContext≈ hh) ∙ real₀ x u)
+              (transportedRealise ss₀ dep₀ h₀ h₁ hh real₀ x u)
               (r _ (there (p₀ (p₁ D) x) u)
                 ∙ SequentMorphism.sequentMorphism
                     (toSequentMorphism (SequentStructureEquality.sequent≈ ssw x))))
@@ -357,10 +320,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
         (ssw : SequentStructureEquality ss₀ ss₁)
         (dep₀ : Semifunctor (SequentStructure.dependency ss₀) (hSet-Semicategory sa))
         (h₀ h₁ : A) (hh : A≈ h₀ h₁)
-        (real₀ : (x : Ob (SequentStructure.dependency ss₀))
-                 → ⌞ (dep₀ ⟨ x ⟩) ⌟
-                 → ContextMorphism
-                     (extendedContext (SequentStructure.sequent ss₀ ⟨ x ⟩)) (f h₀))
+        (real₀ : Realisation ss₀ dep₀ h₀)
       → Type (o ⊔ a ⊔ so ⊔ lsuc sa ⊔ i)
     SequentStructureFibre ss₀ ss₁ ssw dep₀ h₀ h₁ hh real₀ =
       ∑[ D ∶ DepDataOver ss₀ ss₁ ssw dep₀ ]
@@ -371,10 +331,7 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
         (ss₀ : SequentStructure 𝒥 so sa i)
         (dep₀ : Semifunctor (SequentStructure.dependency ss₀) (hSet-Semicategory sa))
         (h₀ : A)
-        (real₀ : (x : Ob (SequentStructure.dependency ss₀))
-                 → ⌞ (dep₀ ⟨ x ⟩) ⌟
-                 → ContextMorphism
-                     (extendedContext (SequentStructure.sequent ss₀ ⟨ x ⟩)) (f h₀))
+        (real₀ : Realisation ss₀ dep₀ h₀)
         (coh₀ : CoherenceOf ss₀ dep₀ h₀ real₀)
         (h₁ : A) (hh : A≈ h₀ h₁)
         {ss₁ : SequentStructure 𝒥 so sa i}

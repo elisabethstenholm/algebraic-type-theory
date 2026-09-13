@@ -67,6 +67,19 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄ {o a : Level} {𝒥 : De
     sequentSemicategorical : Semicategorical _ (Sequent 𝒥) SequentMorphism (λ _ _ → _＝_)
     sequentSemicategorical = record {}
 
+  infixr 40 _∙ˢ_
+  _∙ˢ_ : {i₀ i₁ i₂ : Level} {s₀ : Sequent 𝒥 i₀} {s₁ : Sequent 𝒥 i₁} {s₂ : Sequent 𝒥 i₂}
+       → SequentMorphism s₁ s₂ → SequentMorphism s₀ s₁ → SequentMorphism s₀ s₂
+  _∙ˢ_ = _∙_ ⦃ composableSequentMorphism ⦄
+
+  ∙ˢ-associative : {i₀ i₁ i₂ i₃ : Level}
+                   {s₀ : Sequent 𝒥 i₀} {s₁ : Sequent 𝒥 i₁} {s₂ : Sequent 𝒥 i₂} {s₃ : Sequent 𝒥 i₃}
+                   {f : SequentMorphism s₀ s₁} {g : SequentMorphism s₁ s₂} {h : SequentMorphism s₂ s₃}
+                 → h ∙ˢ (g ∙ˢ f) ＝ (h ∙ˢ g) ∙ˢ f
+  ∙ˢ-associative {s₀ = s₀} {s₁ = s₁} {s₂ = s₂} {s₃ = s₃} {f = f} {g = g} {h = h} =
+    ∙-associative ⦃ composableSequentMorphism ⦄ ⦃ associativeCompositionSequentMorphism ⦄
+      {A = s₀} {B = s₁} {C = s₂} {D = s₃} {f = f} {g = g} {h = h}
+
 SequentSemicategory : ⦃ _ : FunExt ⦄
                     → ⦃ _ : AllSetQuotients ⦄
                     → {o a : Level} (𝒥 : DependentSortVocabulary o a) (i : Level)

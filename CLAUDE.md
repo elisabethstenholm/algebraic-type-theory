@@ -134,7 +134,23 @@ Silent output with exit 0 means success. Interface files land in
 `_build/2.8.0/agda/`.
 
 Always keep track of type-checking performance when writing code; if a module's
-type-checking time suddenly blows up, try to optimize it.
+type-checking time suddenly blows up, try to optimize it. To measure, run
+`agda --build-library --profile=modules` on a cold copy of `src/` (copy `src/`
+and the `.agda-lib` file to a scratch directory; the nix `agda` wrapper resolves
+`UniLib` on its own), then `--profile=definitions` or `--profile=internal` on a
+single module after deleting its `.agdai`.
+
+- Never leave unused `where`-local helpers behind; each signature costs its own
+  elaboration even when nothing refers to it.
+- A pattern-matching helper that is used once, in a position where the expected
+  type is already known (an argument of `funExt`, the last argument of
+  `⁄-elim-proposition` after an explicit motive, a record field), is written
+  inline as an extended lambda `λ { pat → … ; pat → … }` instead of a named
+  function with a signature. A helper that is applied to an argument inside
+  another clause keeps its name and signature.
+- A deep term that recurs is bound once in the `where` block by a
+  signature-free name (`lhsMor = …`, `s₁ = mkSequent Γ₁ E₁'`) and the name is
+  used in every statement; never write such a term out at several sites.
 
 **Important:** always cap agda's memory usage to 5 GB. It tends to eat up the
 entire RAM if uncapped.
@@ -170,9 +186,10 @@ about the workings of `UniLib`.
 ## Conventions in this repo
 
 - Records should be constructed using `record { … }` syntax.
-- Naturality is stated as an equality of functions and proved by `funExt ∘
-  natural~`, where `natural~` is a pointwise homotopy defined by pattern
-  matching in a `where` block.
+- Naturality is stated as an equality of functions and proved by `funExt`
+  applied to an extended lambda that matches on the element; the proof is
+  wrapped in an `opaque` block in the `where` block when the record
+  is a context morphism.
 - Use `Foundation.Reasoning` for coherence proofs as a rule of thumb. However,
   there are instances where this slows down type checking as opposed to just
   composing the paths. In such cases, use path composition. But try with the

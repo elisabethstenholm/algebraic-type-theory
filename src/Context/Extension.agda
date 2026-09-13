@@ -349,15 +349,11 @@ module _ ⦃ _ : FunExt ⦄ {o a : Level} {𝒥 : DependentSortVocabulary o a} w
       component j (inl x) = inl ((Extension.arguments ϵ ⟨ j ⟩) x)
       component j (inr refl) = inr refl
 
-      natural~ : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
-               → (Γ ⋊ₑ ϵ) ⟨ f ⟩ ∘ component j₀ ~ component j₁ ∘ (𝒴⁺ (Extension.judgmentForm ϵ)) ⟨ f ⟩
-      natural~ f (inl x) = ap (λ h → inl (h x)) (ContextMorphism.natural (Extension.arguments ϵ) f)
-      natural~ f (inr refl) = refl
-
       opaque
         naturalPath : {j₀ j₁ : type (Judgment 𝒥)} (f : type (JudgmentDependency 𝒥 j₀ j₁))
                     → (Γ ⋊ₑ ϵ) ⟨ f ⟩ ∘ component j₀ ＝ component j₁ ∘ (𝒴⁺ (Extension.judgmentForm ϵ)) ⟨ f ⟩
-        naturalPath f = funExt (natural~ f)
+        naturalPath f = funExt (λ { (inl x) → ap (λ h → inl (h x)) (ContextMorphism.natural (Extension.arguments ϵ) f)
+                                  ; (inr refl) → refl })
 
 data CollapseRelation
   ⦃ _ : FunExt ⦄
@@ -460,7 +456,6 @@ _⋊_ : ⦃ _ : FunExt ⦄
     → (Γ : Context 𝒥 i) → ExtensionOrCollapse Γ → Context 𝒥 (o ⊔ i)
 Γ ⋊ extend ext = Γ ⋊ₑ ext
 Γ ⋊ collapse col = Γ ⋊ₖ col
-
 
 
 -- ============== Extension and collapse equalities are propositions ==============

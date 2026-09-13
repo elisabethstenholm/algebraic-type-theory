@@ -149,23 +149,8 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : Univalence ⦄ ⦃ _ : AllSetQuotients ⦄
             { (inl w') →
                 record { contextEquivalence≈ = record { morphism≈ = record { component≈ = λ j → refl } } }
             ; (inr y) →
-                record { contextEquivalence≈ = record { morphism≈ = record { component≈ = λ j → funExt (pt y j) } } } } }
-      where
-        pt : (y : _) (j : type (Judgment 𝒥))
-             (z : ⌞ Sequent.context (SequentStructure.sequent (b ⧺ ⋊ₛ r₀) ⟨ inr y ⟩) ⟨ j ⟩ ⌟)
-           → (ContextEquivalence.morphism
-                (SequentEquivalence.contextEquivalence
-                   (SequentStructureMorphism.sequentEquivalence m (inr y))) ⟨ j ⟩) z
-             ＝ (ContextEquivalence.morphism
-                  (SequentEquivalence.contextEquivalence
-                     (SequentStructureMorphism.sequentEquivalence
-                        (sequentStructureMorphism-⨾
-                          {s₀ = b ⧺ ⋊ₛ r₀} {s₁ = b ⧺ ⋊ₛ r₀} {s₂ = T₁}
-                          (castSSM {r = r₀} {b₀ = b} {b₁ = b}
-                                   (idContextWithTermsEquality b)) m)
-                        (inr y))) ⟨ j ⟩) z
-        pt y j (inl h) = refl
-        pt y j (inr v) = refl
+                record { contextEquivalence≈ = record { morphism≈ = record
+                  { component≈ = λ j → funExt (λ { (inl h) → refl ; (inr v) → refl }) } } } } }
 
   identityRuleMorphismEquality :
       (φ : RuleMorphism r₀ r₁) → RuleMorphismEquality φ φ

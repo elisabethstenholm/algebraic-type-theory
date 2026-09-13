@@ -190,13 +190,13 @@ weakenWithEmptyContext {so₀ = so₀} {sa₀ = sa₀} {i₀ = i₀} {𝒥 = �
             ＝ ℋ ⟨ Φ ⟨ f ⟩ ⟩
               ∙ toSequentMorphism (sequentEquivalence (inr y))
     natural {x} {y} f =
-         ap (_∙ C) (toSequentMorphism-⨾ (Ex-equivalence) (Φ-equivalence x))
-      ⨾  sym (∙-associative {f = C} {g = Ex} {h = Φx})
-      ⨾  ap (Φx ∙_) (weakenWithEmptySequentEquivalence-natural {k = i₀} (𝒢 ⟨ f ⟩))
-      ⨾  ∙-associative {f = Ey} {g = G} {h = Φx}
-      ⨾  ap (_∙ Ey) (SequentStructureMorphism.natural φ f)
-      ⨾  sym (∙-associative {f = Ey} {g = Φy} {h = S})
-      ⨾  ap (S ∙_) (sym (toSequentMorphism-⨾ (Ey-equivalence) (Φ-equivalence y)))
+         ap (_∙ˢ C) (toSequentMorphism-⨾ (Ex-equivalence) (Φ-equivalence x))
+      ⨾  sym (∙ˢ-associative {f = C} {g = Ex} {h = Φx})
+      ⨾  ap (Φx ∙ˢ_) (weakenWithEmptySequentEquivalence-natural {k = i₀} (𝒢 ⟨ f ⟩))
+      ⨾  ∙ˢ-associative {f = Ey} {g = G} {h = Φx}
+      ⨾  ap (_∙ˢ Ey) (SequentStructureMorphism.natural φ f)
+      ⨾  sym (∙ˢ-associative {f = Ey} {g = Φy} {h = S})
+      ⨾  ap (S ∙ˢ_) (sym (toSequentMorphism-⨾ (Ey-equivalence) (Φ-equivalence y)))
       where
         Φ-equivalence = SequentStructureMorphism.sequentEquivalence φ
         Ex-equivalence = weakenWithEmptySequentEquivalence {k = i₀} (𝒢 ⟨ x ⟩)
@@ -275,13 +275,13 @@ module _ ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
               → toSequentMorphism (sequentEquivalence x) ∙ 𝒢 ⟨ f ⟩
               ＝ ℐ ⟨ dependencyMorphism ⟨ f ⟩ ⟩ ∙ toSequentMorphism (sequentEquivalence y)
       natural {x} {y} f =
-           ap (_∙ Gf) (toSequentMorphism-⨾ (seφ x) (seψ (Φ ⟨ x ⟩)))
-        ⨾  sym (∙-associative {f = Gf} {g = Ax} {h = Bx})
-        ⨾  ap (Bx ∙_) (SequentStructureMorphism.natural φ f)
-        ⨾  ∙-associative {f = Ay} {g = Hf} {h = Bx}
-        ⨾  ap (_∙ Ay) (SequentStructureMorphism.natural ψ (Φ ⟨ f ⟩))
-        ⨾  sym (∙-associative {f = Ay} {g = By} {h = If})
-        ⨾  ap (If ∙_) (sym (toSequentMorphism-⨾ (seφ y) (seψ (Φ ⟨ y ⟩))))
+           ap (_∙ˢ Gf) (toSequentMorphism-⨾ (seφ x) (seψ (Φ ⟨ x ⟩)))
+        ⨾  sym (∙ˢ-associative {f = Gf} {g = Ax} {h = Bx})
+        ⨾  ap (Bx ∙ˢ_) (SequentStructureMorphism.natural φ f)
+        ⨾  ∙ˢ-associative {f = Ay} {g = Hf} {h = Bx}
+        ⨾  ap (_∙ˢ Ay) (SequentStructureMorphism.natural ψ (Φ ⟨ f ⟩))
+        ⨾  sym (∙ˢ-associative {f = Ay} {g = By} {h = If})
+        ⨾  ap (If ∙ˢ_) (sym (toSequentMorphism-⨾ (seφ y) (seψ (Φ ⟨ y ⟩))))
         where
           Ax = toSequentMorphism (seφ x)
           Ay = toSequentMorphism (seφ y)

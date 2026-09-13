@@ -118,7 +118,8 @@ module ExtendedSequentStructure ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
   opaque
     ob-isSet : isSet ob
     ob-isSet =
-      retract-level toSum fromSum retraction~
+      retract-level toSum fromSum (λ { (injOb x) → refl
+                                     ; newOb → refl })
         (+-level (SequentStructure.dependency-Ob-isSet (premises e)) 𝟙-isLevel)
       where
         toSum : ob → Ob 𝒟 + Unit {so}
@@ -128,10 +129,6 @@ module ExtendedSequentStructure ⦃ _ : FunExt ⦄ ⦃ _ : AllSetQuotients ⦄
         fromSum : Ob 𝒟 + Unit {so} → ob
         fromSum (inl x) = injOb x
         fromSum (inr ★) = newOb
-
-        retraction~ : fromSum ∘ toSum ~ id
-        retraction~ (injOb x) = refl
-        retraction~ newOb = refl
 
   opaque
     hom-isSet : (x y : ob) → isSet (hom x y)
